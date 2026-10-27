@@ -2,7 +2,7 @@
 
 **[Open the live library →](https://joshtapley.github.io/ai-driven-dashboard-component-library/)**
 
-A reference library of 59 dashboard components for people building dashboards with Claude, Cursor or any AI coding assistant. Every component is one self-contained HTML file with no libraries. Each comes with a spec and a tested, ready-to-paste build prompt, and all of them share one colour-blind-safe token set in light and dark.
+A reference library of 60 dashboard components for people building dashboards with Claude, Cursor or any AI coding assistant. Every component is one self-contained HTML file with no libraries. Each comes with a spec and a tested, ready-to-paste build prompt, and all of them share one colour-blind-safe token set in light and dark.
 
 ## What's inside
 
@@ -19,7 +19,7 @@ A reference library of 59 dashboard components for people building dashboards wi
 | UI patterns | toast notifications, slide-out dashboard menu |
 
 - **Three sample dashboards:** Revenue overview, Product growth and Service health. Each is assembled from live components.
-- **Twelve themes:** the default, Cobalt Lab (Dark), puts white cards on the navy of [joshtapley.github.io](https://joshtapley.github.io/). Switch themes from any page.
+- **Thirteen themes:** the default, Cobalt Lab (Dark), puts white cards on the navy of [joshtapley.github.io](https://joshtapley.github.io/). Switch themes from any page.
 - **Excel download:** every data table can export a formatted `.xlsx`, with colours, number formats and data bars.
 - **Light and dark:** every component supports both and is keyboard accessible.
 
@@ -32,7 +32,7 @@ A reference library of 59 dashboard components for people building dashboards wi
 
 ```
 index.html                     the gallery
-themes.html                    the twelve themes
+themes.html                    the thirteen themes
 dashboards/<name>.html         sample dashboards
 components/<NN-slug>/          index.html (live demo, standalone) + README.md (spec and prompt)
 components.json                metadata for every component

@@ -113,7 +113,7 @@ dd{margin:0;min-width:0}
 
 <div class="wrap">
   <a class="back" href="index.html">← Component library</a> <a class="back" href="https://joshtapley.github.io/">Josh Tapley · home</a><span class="eyebrow">AI Driven Dashboard Component Library · themes</span>
-  <h1>Twelve themes for the component library</h1>
+  <h1>Thirteen themes for the component library</h1>
   <p class="lede">Each theme below restyles every component: palette, type, shapes and a chart colour strategy. Every preview uses the same components and the same words, so the only thing that changes is the theme.</p>
   <nav class="toc" aria-label="Themes" id="toc"></nav>
 
@@ -245,7 +245,15 @@ const DIRS = [
     shape: "10px cards, pill buttons, hexagon clusters at two corners.",
     chart: "Slate for data, light slate for tracks, orange reserved for the one highlight.",
     t: { bg: "#F1F1F1", card: "#FFFFFF", ink: "#3F5170", muted: "#6E7787", soft: "#EE6A2C", acc: "#3F5170", line: "#DDE0E5", chip: "#DDE0E5", up: "#2F7D50", display: "'Source Sans 3',sans-serif", body: "'Source Sans 3',sans-serif", mono: "'Source Sans 3',sans-serif", btnR: "999px", cardR: "10px", mkR: "3px", hW: 700, wmW: 700, track: "0",
-      cls: "hex", deco: "hex", bars: ["#C6CBD3", "#C6CBD3", "#C6CBD3", "#C6CBD3", "#3F5170", "#C6CBD3"] } }
+      cls: "hex", deco: "hex", bars: ["#C6CBD3", "#C6CBD3", "#C6CBD3", "#C6CBD3", "#3F5170", "#C6CBD3"] } },
+  { id: "dispatch", name: "Service Dispatch", strat: "more",
+    thesis: "Practical and at-a-glance. A light grey page, plain white cards, deep indigo with orange, green and violet, and bold, plain numbers built for an operations wall.",
+    pal: [["Canvas", "#F4F5F7"], ["Card", "#FFFFFF"], ["Ink", "#111827"], ["Accent", "#33449A"], ["Second", "#F7941D"], ["Third", "#2DB57A"]],
+    type: "<b>Arimo</b> 700 for values and headings, Arimo 400/600 for labels.",
+    shape: "6px cards with hairline borders, round icon badges beside every KPI label.",
+    chart: "Indigo for the main series, then orange, green and violet; one colour per category in donuts and stacks.",
+    t: { bg: "#F4F5F7", card: "#FFFFFF", ink: "#111827", muted: "#6B7280", soft: "#F7941D", acc: "#33449A", line: "#E3E5EA", chip: "#EEF0F4", up: "#1E9E61", display: "'Arimo',Arial,sans-serif", body: "'Arimo',Arial,sans-serif", mono: "'Arimo',Arial,sans-serif", btnR: "6px", cardR: "6px", mkR: "50%", hW: 700, wmW: 700, track: "0",
+      bars: ["#33449A", "#F7941D", "#2DB57A", "#5B4FE9", "#33449A", "#F7941D"] } }
 ];
 const COMPARE = {
   cobaltdark: ["Friendly product tool, after dark", 0, "", "visitors to joshtapley.github.io and anyone who wants bright cards on a dark page"],
@@ -259,7 +267,8 @@ const COMPARE = {
   signal: ["Marketing agency", 0, "", "agencies and freelancers building branded dashboards for clients"],
   news: ["Data journalism", 0, "", "reporters, researchers and analysts publishing charts to the public"],
   retro: ["Social recap card", 0, "", "creators who share year-in-review and leaderboard posts"],
-  hex: ["Professional profile", 0, "", "individual analysts building portfolios and résumés"]
+  hex: ["Professional profile", 0, "", "individual analysts building portfolios and résumés"],
+  dispatch: ["Operations wall screen", 0, "", "field service, trades and operations teams tracking the day's jobs"]
 };
 const PRINCIPLES = [
   { name: "Type hierarchy", pts: ["Title around 20px and heavy; subtitle around 16px and lighter", "Axis and data labels around 12px; legend around 14px; source and notes around 11px", "Titles left-aligned; everything inside the chart in sentence case"] },

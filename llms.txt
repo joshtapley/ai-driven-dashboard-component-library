@@ -39,6 +39,7 @@
 - [Status KPI cards](components/14-kpi-status-tiles/README.md): The standard KPI card (label, big value, delta, sparkline) colour-coded by status — OK, Warning or Critical against configurable thresholds — with a switch between a full-colour tint and a left-edge highlight only.
 - [KPI tabs driving a chart](components/15-kpi-tabs-chart/README.md): A strip of compact KPI tiles that act as tabs: the selected KPI drives the large line chart below (this year vs last year with a crosshair), so one panel shows five metrics.
 - [KPI donut cards](components/59-kpi-donut/README.md): The standard KPI card with a progress donut: a ring fills toward the goal with the percent in its centre, beside the value, the goal and a delta vs the previous period. Switch between ring-beside and ring-on-top layouts.
+- [KPI icon cards](components/61-kpi-icon-cards/README.md): A full-width row of compact KPI cards, each led by an icon from one consistent line-icon set: the label beside the icon, a large value, a coloured delta (percent or points) and the comparison period. Switch the icon style between tinted badges, coloured outlines and a single neutral ink.
 
 ## Tables
 
