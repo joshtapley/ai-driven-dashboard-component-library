@@ -290,7 +290,7 @@ function grid() {
   const th = pm();
   $("#grid").innerHTML = items.length ? LIB.cats.filter(c => items.some(i => i.category === c)).map(c => `<h2 class="sec">${c}</h2>` + items.filter(i => i.category === c).map(i => `
     <article class="card" tabindex="0" role="link" data-s="${i.slug}" aria-label="${esc(i.title)}">
-      <div class="thumb"><iframe loading="lazy" tabindex="-1" aria-hidden="true" title="" src="${i.dir}/index.html?embed=1&theme=${th}${brandQ()}"></iframe></div>
+      <div class="thumb"><iframe loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true" title="" src="${i.dir}/index.html?embed=1&theme=${th}${brandQ()}"></iframe></div>
       <div class="meta"><div class="tags"><span class="tag tag-hl">${i.num} · ${esc(i.category)}</span></div><h3>${esc(i.title)}</h3><p>${esc(i.summary)}</p>
         <div class="tags bottom">${i.tags.slice(0, 3).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div><span class="open">Open component →</span></div>
     </article>`).join("")).join("") : `<p class="empty">No components match “${esc(q)}”.</p>`;
@@ -298,7 +298,7 @@ function grid() {
   $("#dashes").hidden = !!(q.trim() || cat !== "All");
   $("#dgrid").innerHTML = (LIB.dashboards || []).map(d => `
     <article class="card" tabindex="0" role="link" data-href="${d.href}" aria-label="${esc(d.title)} sample dashboard">
-      <div class="thumb"><iframe loading="lazy" tabindex="-1" aria-hidden="true" title="" data-w="1400" style="width:1400px;height:1200px" src="${d.href}?embed=1&theme=${th}${brandQ()}"></iframe></div>
+      <div class="thumb"><iframe loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true" title="" data-w="1400" style="width:1400px;height:1200px" src="${d.href}?embed=1&theme=${th}${brandQ()}"></iframe></div>
       <div class="meta"><div class="tags"><span class="tag tag-hl">Sample dashboard</span><span class="tag">${d.parts.length} components</span></div><h3>${esc(d.title)}</h3><p>${esc(d.summary)}</p>
         <span class="open">Open interactive dashboard →</span></div>
     </article>`).join("");
