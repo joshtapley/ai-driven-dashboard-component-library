@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voronoi treemap</title>
+<meta name="description" content="A two-level hierarchy (category › product line) packed into a circle as organic Voronoi cells whose areas match their values; click a category to zoom in and re-pack its lines to fill the circle.">
+<!-- Dashboard Components · voronoi-treemap · self-contained: no libraries, no network. Synthetic seeded data. -->
+<style>
+/* ---------- Design tokens (swap these for your brand; nothing below hard-codes a colour) ---------- */
+:root{
+  color-scheme:light;
+  --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f3f2ee;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --hover:rgba(11,11,11,.04);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --up:#006300; --down:#d03b3b; --de-emph:#c3c2b7;
+  --seq-0:#cde2fb; --seq-1:#9ec5f4; --seq-2:#6da7ec; --seq-3:#3987e5; --seq-4:#256abf; --seq-5:#184f95; --seq-6:#0d366b;
+  --div-neg:#d03b3b; --div-mid:#f0efec; --div-pos:#2a78d6;
+  --track:#e7eefa;
+  --radius:12px; --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232321;
+    --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --hover:rgba(255,255,255,.05);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+    --up:#0ca30c; --down:#e66767; --de-emph:#4a4a46;
+    --seq-0:#1d3047; --seq-1:#1c4370; --seq-2:#1f5ba0; --seq-3:#2f77cf; --seq-4:#5598e7; --seq-5:#86b6ef; --seq-6:#cde2fb;
+    --div-neg:#e66767; --div-mid:#383835; --div-pos:#3987e5;
+    --track:#1f2c3d;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232321;
+  --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --hover:rgba(255,255,255,.05);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --up:#0ca30c; --down:#e66767; --de-emph:#4a4a46;
+  --seq-0:#1d3047; --seq-1:#1c4370; --seq-2:#1f5ba0; --seq-3:#2f77cf; --seq-4:#5598e7; --seq-5:#86b6ef; --seq-6:#cde2fb;
+  --div-neg:#e66767; --div-mid:#383835; --div-pos:#3987e5;
+  --track:#1f2c3d;
+}
+/* ---------- Brand themes (generated from _src/_brands.json; off unless data-brand is set) ---------- */
+:root[data-brand="instrument"]{--font:'Geist',system-ui,sans-serif;--font-display:'Geist',system-ui,sans-serif;--radius:10px;--div-pos:#0B84D8;--s1:#0B84D8;--s2:#6E6E78;--s3:#7CC3F2;--s4:#145889;--s5:#52545c;--s6:#5F646C;--s7:#A7ABB2;--s8:#afafb5}
+:root[data-brand="instrument"][data-theme="light"]{--seq-0:#d3e9f8;--seq-1:#acd5f2;--seq-2:#80bfeb;--seq-3:#4fa6e3;--seq-4:#2390dc;--seq-5:#0b66a5;--seq-6:#0a4772;--track:#d8ebf9;--page:#FCFCFC;--surface:#FFFFFF;--surface-2:#F1F1F3;--ink:#0A0A0B;--ink-2:#45454D;--muted:#6E6E78;--grid:#E6E6E9;--axis:#CFCFD4;--border:rgba(10,10,11,.09)}
+:root[data-brand="instrument"][data-theme="dark"]{--seq-0:#172f3f;--seq-1:#144262;--seq-2:#125584;--seq-3:#0f6baa;--seq-4:#0B84D8;--seq-5:#54a9e4;--seq-6:#9dceef;--track:#182b38;--s4:#79bbea;--s5:#a8a8ae;--s6:#A7ABB2;--s7:#7D828A;--s8:#565860}
+:root[data-brand="cobalt"]{--font:'Plus Jakarta Sans',system-ui,sans-serif;--font-display:'Plus Jakarta Sans',system-ui,sans-serif;--radius:20px;--div-pos:#2D5BE3;--s1:#2D5BE3;--s2:#FF8A5B;--s3:#7FA0F0;--s4:#27428f;--s5:#b16649;--s6:#5F646C;--s7:#A7ABB2;--s8:#ffbfa5}
+:root[data-brand="cobalt"][data-theme="light"]{--seq-0:#d9e1fa;--seq-1:#b8c7f5;--seq-2:#92aaf0;--seq-3:#6889eb;--seq-4:#426be6;--seq-5:#274cba;--seq-6:#223e90;--track:#dde5fb;--page:#F2F4FA;--surface:#FFFFFF;--surface-2:#E9EDF7;--ink:#16213E;--ink-2:#3E4766;--muted:#5A6382;--grid:#E2E7F3;--axis:#C5CDE0;--border:rgba(22,33,62,.10)}
+:root[data-brand="cobalt"][data-theme="dark"]{--seq-0:#1e2741;--seq-1:#213366;--seq-2:#253e8a;--seq-3:#284bb3;--seq-4:#2D5BE3;--seq-5:#6c8ceb;--seq-6:#abbdf4;--track:#1d2439;--s4:#8ca5f0;--s5:#ffb99d;--s6:#A7ABB2;--s7:#7D828A;--s8:#bc6b4c}
+:root[data-brand="retro"]{--font:'Montserrat',system-ui,sans-serif;--font-display:'Montserrat',system-ui,sans-serif;--radius:14px;--div-pos:#63D2BF;--s1:#63D2BF;--s2:#F7953B;--s3:#FFD978;--s4:#F0592A}
+:root[data-brand="retro"][data-theme="light"]{--seq-0:#e0f4f0;--seq-1:#c8eee7;--seq-2:#ace6dc;--seq-3:#8eded0;--seq-4:#72d6c5;--seq-5:#4da092;--seq-6:#376e65;--track:#e4f5f1}
+:root[data-brand="retro"][data-theme="dark"]{--seq-0:#1f4553;--seq-1:#2e656b;--seq-2:#3e8584;--seq-3:#4fa89f;--seq-4:#63D2BF;--seq-5:#92e0d2;--seq-6:#c1ede5;--track:#1c3e4e;--page:#0B1B2E;--surface:#0E2238;--surface-2:#16304C;--ink:#FFFFFF;--ink-2:#D3DCE8;--muted:#A9B8CC;--grid:#1F3A58;--axis:#2D4C70;--border:rgba(255,255,255,.16)}
+:root[data-brand="night"]{--font:'Schibsted Grotesk',system-ui,sans-serif;--font-display:'Schibsted Grotesk',system-ui,sans-serif;--radius:12px;--div-pos:#FF6B5B;--s1:#FF6B5B;--s2:#4ADE80;--s3:#60A5FA}
+:root[data-brand="night"][data-theme="light"]{--seq-0:#fde2de;--seq-1:#fdcbc5;--seq-2:#feb1a8;--seq-3:#fe9488;--seq-4:#ff7a6b;--seq-5:#c25347;--seq-6:#853b33;--track:#fce5e1}
+:root[data-brand="night"][data-theme="dark"]{--seq-0:#452829;--seq-1:#6f3734;--seq-2:#98463f;--seq-3:#c7574c;--seq-4:#FF6B5B;--seq-5:#ff978c;--seq-6:#ffc4bd;--track:#3b2426;--page:#0A0B0E;--surface:#16171C;--surface-2:#1F2026;--ink:#F4F4F6;--ink-2:#C4C5CC;--muted:#8B8C94;--grid:#24252B;--axis:#34353C;--border:rgba(255,255,255,.10)}
+:root[data-brand="field"]{--font:'Public Sans',system-ui,sans-serif;--font-display:'Source Serif 4',Georgia,serif;--radius:4px;--div-pos:#007D9C;--s1:#007D9C;--s2:#4A6A93;--s3:#C0312B;--s4:#0e5468;--s5:#3b516e;--s6:#5F646C;--s7:#A7ABB2;--s8:#9badc4}
+:root[data-brand="field"][data-theme="light"]{--seq-0:#d1e8ed;--seq-1:#a8d3dd;--seq-2:#7abbcc;--seq-3:#47a1b8;--seq-4:#1a8aa6;--seq-5:#056a89;--seq-6:#0a5676;--track:#d6eaef;--page:#FBFBF8;--surface:#FFFFFF;--surface-2:#F1F3F2;--ink:#14304F;--ink-2:#3E5068;--muted:#5F6875;--grid:#E3E5E8;--axis:#C9CDD3;--border:rgba(20,48,79,.12)}
+:root[data-brand="field"][data-theme="dark"]{--seq-0:#152e33;--seq-1:#10404b;--seq-2:#0b5162;--seq-3:#06657d;--seq-4:#007D9C;--seq-5:#4ca4ba;--seq-6:#99cbd7;--track:#162a2e;--s4:#73b8c9;--s5:#92a6be;--s6:#A7ABB2;--s7:#7D828A;--s8:#3d5573}
+:root[data-brand="blueprint"]{--font:'IBM Plex Sans',system-ui,sans-serif;--font-display:'IBM Plex Sans',system-ui,sans-serif;--radius:2px;--div-pos:#1E5FD6;--s1:#1E5FD6;--s2:#E2462F;--s3:#6E8FC9;--s4:#1e4488;--s5:#9e3a2d;--s6:#5F646C;--s7:#A7ABB2;--s8:#ef998d}
+:root[data-brand="blueprint"][data-theme="light"]{--seq-0:#d6e2f8;--seq-1:#b2c9f1;--seq-2:#8aacea;--seq-3:#5d8ce1;--seq-4:#346fda;--seq-5:#1a52b2;--seq-6:#16448e;--track:#dbe5f8;--page:#F4F7FB;--surface:#FFFFFF;--surface-2:#EAF0F8;--ink:#0E2A47;--ink-2:#345170;--muted:#56708F;--grid:#DCE5F1;--axis:#B9CDEB;--border:rgba(30,95,214,.18)}
+:root[data-brand="blueprint"][data-theme="dark"]{--seq-0:#1b283f;--seq-1:#1c3461;--seq-2:#1c4183;--seq-3:#1d4ea9;--seq-4:#1E5FD6;--seq-5:#628fe2;--seq-6:#a5bfef;--track:#1b2537;--s4:#83a7e8;--s5:#ee9082;--s6:#A7ABB2;--s7:#7D828A;--s8:#a83c2d}
+:root[data-brand="consult"]{--font:'Outfit',system-ui,sans-serif;--font-display:'Outfit',system-ui,sans-serif;--radius:12px;--div-pos:#2D7F8C;--s1:#2D7F8C;--s2:#F2493A;--s3:#8FB8BF;--s4:#27565f;--s5:#a83c34;--s6:#5F646C;--s7:#A7ABB2;--s8:#f89b93}
+:root[data-brand="consult"][data-theme="light"]{--seq-0:#d9e8ea;--seq-1:#b8d3d8;--seq-2:#92bcc3;--seq-3:#68a3ac;--seq-4:#428c98;--seq-5:#246c79;--seq-6:#1c5a66;--track:#ddebed;--page:#EFF1F8;--surface:#FFFFFF;--surface-2:#F3F5FA;--ink:#0B3440;--ink-2:#2E5560;--muted:#4E6A72;--grid:#E3E8EF;--axis:#C4CED8;--border:rgba(11,52,64,.10)}
+:root[data-brand="consult"][data-theme="dark"]{--seq-0:#1e2e30;--seq-1:#214045;--seq-2:#255359;--seq-3:#286770;--seq-4:#2D7F8C;--seq-5:#6ca5ae;--seq-6:#abccd1;--track:#1d2a2b;--s4:#8cb9c0;--s5:#f79289;--s6:#A7ABB2;--s7:#7D828A;--s8:#b33e35}
+:root[data-brand="gold"]{--font:'Poppins',system-ui,sans-serif;--font-display:'Poppins',system-ui,sans-serif;--radius:14px;--div-pos:#6C63E0;--s1:#6C63E0;--s2:#F5B800;--s3:#A9A3F0;--s4:#49468d;--s5:#aa840e;--s6:#5F646C;--s7:#A7ABB2;--s8:#fad873}
+:root[data-brand="gold"][data-theme="light"]{--seq-0:#e5e3f9;--seq-1:#cdcaf4;--seq-2:#b3aeef;--seq-3:#958fe9;--seq-4:#7b73e3;--seq-5:#5851be;--seq-6:#453e9d;--track:#e7e6fa;--page:#FCFCFC;--surface:#FFFFFF;--surface-2:#F4F3FB;--ink:#1E1A5A;--ink-2:#433E7A;--muted:#5D5986;--grid:#E6E3F7;--axis:#CFCBEA;--border:rgba(30,26,90,.10)}
+:root[data-brand="gold"][data-theme="dark"]{--seq-0:#2a2941;--seq-1:#393665;--seq-2:#484388;--seq-3:#5851b0;--seq-4:#6C63E0;--seq-5:#9892e9;--seq-6:#c4c1f3;--track:#272639;--s4:#aea9ee;--s5:#f9d466;--s6:#A7ABB2;--s7:#7D828A;--s8:#b58b0c}
+:root[data-brand="signal"]{--font:'Barlow',system-ui,sans-serif;--font-display:'Barlow Condensed',system-ui,sans-serif;--radius:6px;--div-pos:#3B6AA8;--s1:#3B6AA8;--s2:#F26B1D;--s3:#FFC233;--s4:#2e4a6e;--s5:#a85221;--s6:#5F646C;--s7:#A7ABB2;--s8:#f8ae83}
+:root[data-brand="signal"][data-theme="light"]{--seq-0:#dce4ef;--seq-1:#bccce1;--seq-2:#99b2d2;--seq-3:#7294c0;--seq-4:#4f79b1;--seq-5:#2f578c;--seq-6:#234471;--track:#e0e7f1;--page:#F5F7FB;--surface:#FFFFFF;--surface-2:#EEF2F8;--ink:#0B1F3A;--ink-2:#33445E;--muted:#4D5D75;--grid:#DCE2EC;--axis:#BFC9D8;--border:rgba(11,31,58,.10)}
+:root[data-brand="signal"][data-theme="dark"]{--seq-0:#212a36;--seq-1:#27384f;--seq-2:#2c4769;--seq-3:#335786;--seq-4:#3B6AA8;--seq-5:#7697c2;--seq-6:#b1c3dc;--track:#1f2730;--s4:#93adcf;--s5:#f7a677;--s6:#A7ABB2;--s7:#7D828A;--s8:#b35520}
+:root[data-brand="news"]{--font:'Lato',system-ui,sans-serif;--font-display:'Lato',system-ui,sans-serif;--radius:2px;--div-pos:#2C6FA8;--s1:#2C6FA8;--s2:#C0312B;--s3:#7FA9CF;--s4:#264d6e;--s5:#882c2a;--s6:#5F646C;--s7:#A7ABB2;--s8:#dc8e8a}
+:root[data-brand="news"][data-theme="light"]{--seq-0:#d9e5ef;--seq-1:#b7cee1;--seq-2:#91b4d2;--seq-3:#6797c0;--seq-4:#417db1;--seq-5:#30628c;--seq-6:#335471;--track:#dde8f1;--page:#FFFFFF;--surface:#FFFFFF;--surface-2:#F4F4F4;--ink:#3A3A3A;--ink-2:#555555;--muted:#6B6B6B;--grid:#E6E6E6;--axis:#CBCBCB;--border:rgba(0,0,0,.10)}
+:root[data-brand="news"][data-theme="dark"]{--seq-0:#1e2b36;--seq-1:#213a4f;--seq-2:#244a69;--seq-3:#285b86;--seq-4:#2C6FA8;--seq-5:#6b9ac2;--seq-6:#abc5dc;--track:#1d2830;--s4:#8bb0cf;--s5:#d98380;--s6:#A7ABB2;--s7:#7D828A;--s8:#902d2a}
+:root[data-brand="hex"]{--font:'Source Sans 3',system-ui,sans-serif;--font-display:'Source Sans 3',system-ui,sans-serif;--radius:10px;--div-pos:#5A6E92;--s1:#5A6E92;--s2:#EE6A2C;--s3:#F2A43A;--s4:#3f4c62;--s5:#a6512b;--s6:#5F646C;--s7:#A7ABB2;--s8:#f6ad8b}
+:root[data-brand="hex"][data-theme="light"]{--seq-0:#e1e5eb;--seq-1:#c7ceda;--seq-2:#a9b4c6;--seq-3:#8897b1;--seq-4:#6a7c9d;--seq-5:#53678a;--seq-6:#4c6081;--track:#e5e8ee;--page:#F1F1F1;--surface:#FFFFFF;--surface-2:#EDEEF1;--ink:#3F5170;--ink-2:#55657F;--muted:#6E7787;--grid:#DDE0E5;--axis:#C6CBD3;--border:rgba(63,81,112,.12)}
+:root[data-brand="hex"][data-theme="dark"]{--seq-0:#272b31;--seq-1:#323a47;--seq-2:#3e495d;--seq-3:#4b5a75;--seq-4:#5A6E92;--seq-5:#8c9ab3;--seq-6:#bdc5d3;--track:#24272c;--s4:#a4afc3;--s5:#f5a680;--s6:#A7ABB2;--s7:#7D828A;--s8:#b0552b}
+/* ---------- Base ---------- */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ink);font:14px/1.45 var(--font);padding:24px 16px;-webkit-font-smoothing:antialiased}
+body.embed{padding:12px}
+/* ?tile=1: a tile inside a sample dashboard — no page padding, fills its slot, reports its height */
+body.tile{padding:0;background:transparent}
+body.tile .viz{padding:14px 16px}
+body.tile .viz-head{margin-bottom:10px}
+/* in a dashboard a tile shows its default view: layout and option switches belong on the component's own demo page */
+body.tile .seg,body.tile .viz-head .btn:not(.xl-btn),body.tile .xl-ctl{display:none!important}
+html:has(body.tile),body.tile{overflow:hidden}
+body.tile .stage{max-width:none}
+html:has(body.tile),body.tile,body.tile .stage{height:100%}
+body.tile .stage>.viz{min-height:100%}
+.stage{max-width:960px;margin:0 auto}
+.viz{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.viz-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.viz-title{font-size:15px;font-weight:600;margin:0;font-family:var(--font-display,var(--font))}
+.viz-sub{font-size:13px;color:var(--ink-2);margin:2px 0 0}
+.muted{color:var(--muted)} .ink2{color:var(--ink-2)}
+.num{font-variant-numeric:tabular-nums}
+svg{display:block;overflow:visible}
+svg text{fill:var(--muted);font:11px var(--font);font-variant-numeric:tabular-nums}
+svg text.ink{fill:var(--ink)} svg text.ink2{fill:var(--ink-2)}
+/* controls */
+.seg{display:inline-flex;background:var(--surface-2);border-radius:8px;padding:2px;gap:2px}
+.seg button{all:unset;cursor:pointer;font-size:12px;padding:4px 10px;border-radius:6px;color:var(--ink-2)}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--border)}
+.seg button:focus-visible,.btn:focus-visible{outline:2px solid var(--s1);outline-offset:1px}
+.btn{all:unset;cursor:pointer;font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);color:var(--ink-2);background:var(--surface)}
+.btn:hover{background:var(--hover);color:var(--ink)}
+input[type=search],input[type=text],select{font:13px var(--font);color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+/* Excel download: an opt-in switch beside the title, and a button whenever a data table is on screen */
+.viz-head:has(.xl){justify-content:flex-start} .viz-head:has(.xl)>:first-child{margin-right:auto}
+.xl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.xl-ctl{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.xl-btn[hidden]{display:none}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.delta{font-size:12px;font-weight:600;white-space:nowrap}
+.delta.up{color:var(--up)} .delta.down{color:var(--down)} .delta.flat{color:var(--muted)}
+/* tooltip */
+.v-tip{position:fixed;z-index:50;pointer-events:none;display:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.45;box-shadow:0 6px 24px rgba(0,0,0,.14);max-width:260px;font-variant-numeric:tabular-nums}
+.v-tip b{font-weight:600}
+.v-tip .k{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+/* theme toggle (hidden when embedded) */
+.theme-bar{position:fixed;top:10px;right:10px;z-index:40;display:flex;gap:6px;align-items:center}
+.theme-bar select{font-size:12px;padding:4px 8px;border-radius:8px}
+body.embed .theme-bar{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script>
+/* ---------- Tiny helper kit (V) — shared by every component, ~60 lines ---------- */
+const V = (() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, a, p) => { const e = document.createElementNS(NS, tag); for (const k in a || {}) if (a[k] != null) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+  const svg = (box, h, w) => { box.innerHTML = ""; const W = w || Math.max(160, box.clientWidth); return { s: el("svg", { width: W, height: h, viewBox: `0 0 ${W} ${h}`, role: "img" }, box), W, H: h }; };
+  const rng = seed => { let a = seed >>> 0, sp = null; const r = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const g = () => { if (sp !== null) { const s = sp; sp = null; return s; } let u, v, q; do { u = r() * 2 - 1; v = r() * 2 - 1; q = u * u + v * v; } while (!q || q >= 1); const m = Math.sqrt(-2 * Math.log(q) / q); sp = v * m; return u * m; };
+    return { r, g, int: (lo, hi) => lo + Math.floor(r() * (hi - lo + 1)), pick: a => a[Math.floor(r() * a.length)] }; };
+  const scale = (d0, d1, r0, r1) => { const f = v => r0 + (v - d0) / ((d1 - d0) || 1) * (r1 - r0); f.inv = p => d0 + (p - r0) / ((r1 - r0) || 1) * (d1 - d0); return f; };
+  const ticks = (lo, hi, n = 4) => { const span = (hi - lo) || 1, raw = span / n, mag = 10 ** Math.floor(Math.log10(raw)); const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => span / s <= n) || mag * 10; const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-6; v += step) out.push(+v.toFixed(10)); return out; };
+  const niceMax = (v, n = 4) => { const t = ticks(0, v * 1.0001, n); const s = (t[1] - t[0]) || 1; return Math.ceil(v / s) * s || 1; };
+  const short = (n, d) => { const a = Math.abs(n), s = n < 0 ? "−" : ""; const f = (x, u) => s + x.toFixed(d ?? (x < 10 ? 1 : 0)).replace(/\.0$/, "") + u; return a >= 1e9 ? f(a / 1e9, "B") : a >= 1e6 ? f(a / 1e6, "M") : a >= 1e3 ? f(a / 1e3, "K") : s + (Number.isInteger(a) ? a : a.toFixed(d ?? 1)); };
+  const comma = (n, d = 0) => (+n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const pct = (v, d = 1) => (v * 100).toFixed(d) + "%";
+  const money = (n, d) => (n < 0 ? "−$" : "$") + short(Math.abs(n), d);
+  const signed = (v, f = pct) => (v > 0 ? "+" : v < 0 ? "−" : "±") + f(Math.abs(v));
+  const sum = a => a.reduce((s, x) => s + x, 0), mean = a => a.length ? sum(a) / a.length : 0, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const hex2 = h => { h = h.replace("#", ""); if (h.length === 3) h = [...h].map(c => c + c).join(""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  const mix = (a, b, t) => { const A = hex2(a), B = hex2(b); return "#" + A.map((x, i) => Math.round(x + (B[i] - x) * t).toString(16).padStart(2, "0")).join(""); };
+  const ramp = t => { const st = [0, 1, 2, 3, 4, 5, 6].map(i => css("--seq-" + i)); t = clamp(t, 0, 1) * 6; const i = Math.min(5, Math.floor(t)); return mix(st[i], st[i + 1], t - i); };
+  const diverge = t => { t = clamp(t, -1, 1); return t < 0 ? mix(css("--div-mid"), css("--div-neg"), -t) : mix(css("--div-mid"), css("--div-pos"), t); };
+  const ink = bg => { const [r, g, b] = hex2(bg).map(c => { c /= 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }); return .2126 * r + .7152 * g + .0722 * b > .36 ? "#0b0b0b" : "#ffffff"; };
+  let tipEl;
+  const tip = (e, html) => { if (!tipEl) { tipEl = document.createElement("div"); tipEl.className = "v-tip"; document.body.appendChild(tipEl); }
+    tipEl.innerHTML = html; tipEl.style.display = "block"; const r = tipEl.getBoundingClientRect(); let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14; tipEl.style.left = Math.max(4, x) + "px"; tipEl.style.top = Math.max(4, y) + "px"; };
+  const untip = () => tipEl && (tipEl.style.display = "none");
+  const hover = (node, fn) => { node.addEventListener("mousemove", e => { const h = fn(e); h ? tip(e, h) : untip(); }); node.addEventListener("mouseleave", untip); };
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const seg = (box, opts, val, on) => { box.innerHTML = opts.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button type="button" data-v="${esc(v)}" aria-pressed="${String(v) === String(val)}">${esc(l)}</button>`; }).join("");
+    box.onclick = e => { const b = e.target.closest("button"); if (!b) return; box.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); on(b.dataset.v); }; };
+  // bar path with a 4px rounded data end and a square baseline end; dir = the way the bar grows: up | down | right | left
+  const bar = (x, y, w, h, dir = "up", r = 4) => { const v = dir === "up" || dir === "down"; r = Math.max(0, Math.min(r, v ? h : w, (v ? w : h) / 2));
+    if (dir === "up") return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+    if (dir === "down") return `M${x},${y}V${y + h - r}Q${x},${y + h} ${x + r},${y + h}H${x + w - r}Q${x + w},${y + h} ${x + w},${y + h - r}V${y}Z`;
+    if (dir === "right") return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+    return `M${x + w},${y}H${x + r}Q${x},${y} ${x},${y + r}V${y + h - r}Q${x},${y + h} ${x + r},${y + h}H${x + w}Z`; };
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  // mount(render): runs on load, on width change and on theme change
+  // fill(h): a chart's usual height, adjusted to fit its dashboard row when it sits in a tile (unchanged elsewhere)
+  let slack = 0, used = 0, rerun = null, fills = false, base = 0;
+  const fill = h => { fills = true; base = h; used = Math.max(140 - h, Math.min(slack, 420)); return h + used; };   // shrinks to 140px at least, grows by 420px at most
+  const mount = fn => { let w = 0, t; const run = () => { untip(); used = 0; fn(); }; rerun = run;
+    addEventListener("DOMContentLoaded", () => { const st = document.querySelector(".stage") || document.body;
+      w = st.clientWidth; run(); // render now; the observer only re-renders when the width really changes
+      new ResizeObserver(() => { const nw = st.clientWidth; if (nw && nw !== w) { w = nw; clearTimeout(t); t = setTimeout(run, 80); } }).observe(st); });
+    addEventListener("v-theme", run); matchMedia("(prefers-color-scheme: dark)").addEventListener("change", run); };
+  // theme: ?theme=dark|light, ?embed=1, postMessage({theme}), toggle button
+  const setTheme = th => { if (th === "dark" || th === "light") document.documentElement.dataset.theme = th; else delete document.documentElement.dataset.theme; dispatchEvent(new Event("v-theme")); };
+  // brand themes: ?brand=<id> or postMessage({brand}); fonts load on demand and trigger a re-render
+  const BRANDS = {"instrument": {"name": "Quiet Instrument", "mode": "light", "fonts": "family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500"}, "cobalt": {"name": "Cobalt Lab", "mode": "light", "fonts": "family=Plus+Jakarta+Sans:wght@400;600;800"}, "retro": {"name": "Retro Flashback", "mode": "dark", "fonts": "family=Montserrat:wght@500;700;800"}, "night": {"name": "Night Console", "mode": "dark", "fonts": "family=Schibsted+Grotesk:wght@400;600;800"}, "field": {"name": "Field Notes", "mode": "light", "fonts": "family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600"}, "blueprint": {"name": "Blueprint", "mode": "light", "fonts": "family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500"}, "consult": {"name": "Coral Consulting", "mode": "light", "fonts": "family=Outfit:wght@400;600;800;900"}, "gold": {"name": "Indigo & Gold", "mode": "light", "fonts": "family=Poppins:wght@400;600;800"}, "signal": {"name": "Navy & Signal", "mode": "light", "fonts": "family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600"}, "news": {"name": "Newsroom", "mode": "light", "fonts": "family=Lato:ital,wght@0,400;0,700;1,400"}, "hex": {"name": "Hex & Slate", "mode": "light", "fonts": "family=Source+Sans+3:wght@400;600;700"}};
+  // Quiet Instrument is the default theme: an unknown or empty id falls back to it (the neutral tokens on :root sit underneath every theme)
+  const DEF_BRAND = BRANDS.instrument ? "instrument" : "";
+  const setBrand = id => { if (!BRANDS[id]) id = DEF_BRAND; const b = BRANDS[id], root = document.documentElement;
+    if (!b) { delete root.dataset.brand; return; }
+    root.dataset.brand = id;
+    if (b.fonts && !document.getElementById("bf-" + id)) { const l = document.createElement("link"); l.id = "bf-" + id; l.rel = "stylesheet";
+      l.href = "https://fonts.googleapis.com/css2?" + b.fonts + "&display=swap"; l.onload = () => document.fonts.ready.then(() => dispatchEvent(new Event("v-theme"))); document.head.appendChild(l); } };
+  const q = new URLSearchParams(location.search);
+  setBrand(q.get("brand")); if (!q.get("theme") && BRANDS[q.get("brand")]) document.documentElement.dataset.theme = BRANDS[q.get("brand")].mode;
+  if (q.get("theme")) document.documentElement.dataset.theme = q.get("theme");
+  addEventListener("message", e => { if (!e.data) return; if ("brand" in e.data) setBrand(e.data.brand); if ("theme" in e.data) setTheme(e.data.theme); else if ("brand" in e.data) dispatchEvent(new Event("v-theme")); });
+  addEventListener("DOMContentLoaded", () => { if (q.get("embed")) document.body.classList.add("embed");
+    if (q.get("tile") && parent !== window) { document.body.classList.add("tile"); let h = 0;
+      // report the natural height (the card stretches to fill its slot, so measure its content, not the card)
+      const natural = () => { let b = 0; for (const el of document.querySelector(".stage").children) { if (/^(SCRIPT|STYLE)$/.test(el.tagName)) continue;
+        if (el.classList.contains("viz")) { const cs = getComputedStyle(el), top = el.getBoundingClientRect().top; let inner = 0;
+          for (const k of el.children) inner = Math.max(inner, k.getBoundingClientRect().bottom - top);
+          b = Math.max(b, top + inner + parseFloat(cs.paddingBottom) + parseFloat(cs.borderBottomWidth)); } else b = Math.max(b, el.getBoundingClientRect().bottom); }
+        return Math.ceil(b + scrollY) - used; };
+      // fit(): match the chart to the frame; runs when the frame resizes and whenever the natural height changes,
+      // because a frame that starts at its final height never gets a resize event
+      const fit = () => { const ns = innerHeight - h; if (fills && Math.abs(ns - slack) > 2) { slack = ns; rerun && rerun(); } };
+      const ro = new ResizeObserver(() => { const nh = natural(); if (nh !== h) { h = nh;
+        // dcMin: the shortest this tile can get (a resizable chart shrinks to 140px), so a row never squeezes a tile into scrolling
+        parent.postMessage({ dcHeight: nh, dcMin: fills ? nh - Math.max(0, base - 140) : nh, fills }, "*"); fit(); } });
+      ro.observe(document.body); document.querySelectorAll(".stage > .viz > *").forEach(k => ro.observe(k));
+      // the dashboard sets this frame's height to its row height; charts that use fill() grow or shrink to fit
+      addEventListener("resize", fit); }
+    // Excel download (pages that show a data table): an Off/On switch beside the title, and a button while a table is on screen;
+    // ?excel=1 starts it on, which is how a dashboard turns it on for its table tiles
+    const viz = document.querySelector(".stage > .viz"), head = viz && viz.querySelector(".viz-head");
+    if (head && document.body.dataset.tables) { let on = !!q.get("excel");
+      const box = document.createElement("div"); box.className = "xl";
+      box.innerHTML = '<div class="xl-ctl"><span>Excel download</span><div class="seg"></div></div><button class="btn xl-btn" type="button" title="Download this table as an Excel workbook" hidden>⤓ Excel</button>';
+      head.appendChild(box); const btn = box.querySelector(".xl-btn");
+      const sync = () => { btn.hidden = !on || ![...viz.querySelectorAll("table")].some(x => x.getClientRects().length); };
+      seg(box.querySelector(".seg"), [["0", "Off"], ["1", "On"]], on ? "1" : "0", v => { on = v === "1"; sync(); });
+      btn.onclick = exportExcel; new MutationObserver(sync).observe(viz, { childList: true, subtree: true }); setTimeout(sync); }
+    const bar = document.createElement("div"); bar.className = "theme-bar";
+    const sel = document.createElement("select"); sel.setAttribute("aria-label", "Theme");
+    sel.innerHTML = Object.entries(BRANDS).map(([id, b]) => `<option value="${id}">${esc(b.name)}</option>`).join("");
+    sel.value = document.documentElement.dataset.brand || DEF_BRAND;
+    sel.onchange = () => { const id = sel.value, b = BRANDS[id]; setBrand(id);
+      try { const u = new URL(location.href); id ? u.searchParams.set("brand", id) : u.searchParams.delete("brand"); history.replaceState(null, "", u); } catch {} // keep the theme on reload where the page allows it
+      if (b && b.mode !== getComputedStyle(document.documentElement).colorScheme) setTheme(b.mode); else dispatchEvent(new Event("v-theme")); };
+    const b = document.createElement("button"); b.className = "btn"; b.type = "button"; b.textContent = "◐ Light / dark"; b.title = "Toggle light / dark";
+    b.onclick = () => setTheme(getComputedStyle(document.documentElement).colorScheme === "dark" ? "light" : "dark");
+    bar.append(sel, b); document.body.appendChild(bar); });
+  // ---------- save(filename, blob): the claude.ai viewer grants downloads to the top page, so a framed page hands the file up ----------
+  const save = async (filename, blob) => {
+    const dl = window.claude ? await window.claude.use("downloads") : null;
+    if (dl) { try { await dl.save({ filename, data: blob }); } catch {} return; }
+    if (parent !== window) { const ack = new Promise(r => { const f = e => { if (e.data && e.data.dcSaved === filename) { removeEventListener("message", f); r(true); } }; addEventListener("message", f); setTimeout(() => r(false), 600); });
+      parent.postMessage({ dcSave: { filename, blob } }, "*"); if (await ack) return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
+  addEventListener("message", e => { const d = e.data && e.data.dcSave; if (d && e.source) { e.source.postMessage({ dcSaved: d.filename }, "*"); save(d.filename, d.blob); } });
+  // ---------- xlsx(viz): the table on screen as a styled Excel workbook, written by hand (a stored zip of SpreadsheetML; no libraries) ----------
+  const crcT = Array.from({ length: 256 }, (_, n) => { for (let k = 0; k < 8; k++) n = n & 1 ? 0xEDB88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; });
+  const crc32 = b => { let c = ~0; for (const x of b) c = crcT[(c ^ x) & 255] ^ (c >>> 8); return ~c >>> 0; };
+  const zip = files => { const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+    for (const [name, text] of files) { const n = enc.encode(name), d = enc.encode(text), c = crc32(d), h = new DataView(new ArrayBuffer(30)), ch = new DataView(new ArrayBuffer(46));
+      [[0, 0x04034b50, 4], [4, 20], [6, 0x0800], [12, 0x5B21], [14, c, 4], [18, d.length, 4], [22, d.length, 4], [26, n.length]].forEach(([o, v, w]) => w ? h.setUint32(o, v, true) : h.setUint16(o, v, true));
+      [[0, 0x02014b50, 4], [4, 20], [6, 20], [8, 0x0800], [14, 0x5B21], [16, c, 4], [20, d.length, 4], [24, d.length, 4], [28, n.length], [42, off, 4]].forEach(([o, v, w]) => w ? ch.setUint32(o, v, true) : ch.setUint16(o, v, true));
+      parts.push(h, n, d); cen.push(ch, n); off += 30 + n.length + d.length; }
+    const e = new DataView(new ArrayBuffer(22)), size = cen.reduce((s, p) => s + p.byteLength, 0);
+    [[0, 0x06054b50, 4], [8, files.length], [10, files.length], [12, size, 4], [16, off, 4]].forEach(([o, v, w]) => w ? e.setUint32(o, v, true) : e.setUint16(o, v, true));
+    return new Blob([...parts, ...cen, e], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }); };
+  const X = s => String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // computed colour → "RRGGBB" (null when transparent); translucent colours are blended over the card
+  const rgb = (s, over = [255, 255, 255]) => { const m = String(s).match(/-?[\d.]+/g); if (!m || m.length < 3) return null; let [r, g, b, a = 1] = m.map(Number);
+    if (/^color\(/.test(s)) [r, g, b] = [r, g, b].map(x => x * 255); if (a === 0) return null;
+    return [r, g, b].map((x, i) => Math.round(x * a + over[i] * (1 - a)).toString(16).padStart(2, "0")).join("").toUpperCase(); };
+  const SKIP = ".av,.xb,.cv,.sr,.sp,svg,.xl";
+  // a cell's words, one line per block (account + owner, KPI name + target); sort arrows dropped from headers
+  const textOf = (cell, head) => { let out = "", nl = false;
+    const walk = n => { for (const k of n.childNodes) { if (k.nodeType === 3) { if (k.nodeValue.trim() && nl && out.trim()) out += "\n"; if (k.nodeValue.trim()) nl = false; out += k.nodeValue; }
+      else if (k.nodeType === 1 && !k.matches(SKIP)) { const d = getComputedStyle(k).display; if (d === "none") continue; const fx = /flex|grid/.test(getComputedStyle(n).display), blk = !/^inline/.test(d) && !fx; if (fx && out.trim() && !/\s$/.test(out)) out += " "; if (blk) nl = true; walk(k); if (blk) nl = true; } } };
+    walk(cell); out = out.replace(/[ \t ]+/g, " ").replace(/ *\n */g, "\n").trim(); return head ? out.replace(/ *[▲▼↺]$/gm, "") : out; };
+  // "$18,400" → 18400 as "$"#,##0 · "+12.0%" → 0.12 as +0.0% · "−$2.1K" → −2100; anything else stays text
+  const num = t => { const m = t.replace(/−/g, "-").replace(/^[▲▼]\s*/, "").match(/^([+±-])?(-)?(\$)?(\d[\d,]*\.?\d*|\.\d+)([KMB%])?$/); if (!m) return null;
+    const [, sg, sg2, cur, dg, suf] = m; let v = parseFloat(dg.replace(/,/g, "")); if (sg === "-" || sg2 === "-") v = -v;
+    const z = (dg.split(".")[1] || "").length, dec = z ? "." + "0".repeat(z) : "";
+    let f = (/,/.test(dg) || cur || Math.abs(v) >= 1e4 ? "#,##0" : "0") + dec;
+    if (suf === "%") { v /= 100; f += "%"; } else if (suf) { const k = "KMB".indexOf(suf) + 1; v *= 1e3 ** k; f += ",".repeat(k) + `"${suf}"`; }
+    if (cur) f = '"$"' + f;
+    f = sg === "+" || sg === "±" ? `"+"${f};"-"${f};"±"${f}` : cur ? `${f};"-"${f}` : f;
+    return { v, f }; };
+  const xval = (x, f) => /^\d{4}-\d\d-\d\d$/.test(x) ? { v: (Date.UTC(+x.slice(0, 4), +x.slice(5, 7) - 1, +x.slice(8)) - Date.UTC(1899, 11, 30)) / 864e5, f: f || "mmm d, yyyy" } : x !== "" && !isNaN(x) ? { v: +x, f: f || "General" } : null;
+  const colL = n => { let s = ""; for (n++; n; n = (n - 1 - (n - 1) % 26) / 26) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; };
+  const xlsx = viz => {
+    const t = [...viz.querySelectorAll("table")].find(x => x.getClientRects().length); if (!t) return null;
+    const card = rgb(getComputedStyle(viz).backgroundColor) || "FFFFFF", over = hex2(card), INK = rgb(getComputedStyle(viz).color);
+    const fonts = ['<font><sz val="10"/><name val="Calibri"/></font>'], fills = ['<fill><patternFill patternType="none"/></fill>', '<fill><patternFill patternType="gray125"/></fill>'], borders = ["<border/>"], fmts = [], xfs = ['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'];
+    const at = (a, x) => { let i = a.indexOf(x); if (i < 0) i = a.push(x) - 1; return i; };
+    const side = (k, s) => s ? `<${k} style="${s[0]}"><color rgb="FF${s[1]}"/></${k}>` : `<${k}/>`;
+    const sty = s => at(xfs, `<xf numFmtId="${!s.f || s.f === "General" ? 0 : 164 + at(fmts, s.f)}" fontId="${at(fonts, `<font>${s.b ? "<b/>" : ""}<sz val="${s.sz || 10}"/>${s.c ? `<color rgb="FF${s.c}"/>` : ""}<name val="Calibri"/></font>`)}" fillId="${s.bg ? at(fills, `<fill><patternFill patternType="solid"><fgColor rgb="FF${s.bg}"/><bgColor indexed="64"/></patternFill></fill>`) : 0}" borderId="${s.bd ? at(borders, `<border>${side("left", s.bd.l)}${side("right", s.bd.r)}${side("top", s.bd.t)}${side("bottom", s.bd.b)}<diagonal/></border>`) : 0}" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"${s.h ? ` horizontal="${s.h}"` : ""}${s.wrap ? ' wrapText="1"' : ""}${s.ind ? ` indent="${s.ind}"` : ""}/></xf>`);
+    const cell = (r, c, val, s) => val == null || val === "" ? `<c r="${colL(c)}${r + 1}" s="${s}"/>` : typeof val === "number" ? `<c r="${colL(c)}${r + 1}" s="${s}"><v>${val}</v></c>` : `<c r="${colL(c)}${r + 1}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${X(val)}</t></is></c>`;
+    // pass 1: read every visible row into a grid of { text/number, style }
+    const grid = [], occ = new Set(), merges = [], width = [], heads = [];
+    for (const tr of t.rows) { if (!tr.getClientRects().length) continue; const r = grid.length, row = { cells: [], lvl: +tr.getAttribute("aria-level") || 0, ht: tr.getBoundingClientRect().height, head: tr.parentElement.tagName === "THEAD" };
+      if (row.head) heads.push(r); grid.push(row); let c = 0;
+      for (const td of tr.cells) { const cs = getComputedStyle(td); if (cs.display === "none") continue; while (occ.has(r + "," + c)) c++;
+        const sp = td.colSpan || 1, rs = td.rowSpan || 1; for (let i = 0; i < sp; i++) for (let j = 0; j < rs; j++) occ.add((r + j) + "," + (c + i));
+        if (sp > 1 || rs > 1) merges.push([r, c, r + rs - 1, c + sp - 1]);
+        const head = row.head || td.tagName === "TH" && !td.closest("tbody"), txt = textOf(td, head);
+        const nv = td.dataset.x != null ? xval(td.dataset.x, td.dataset.xf) : head || txt.includes("\n") ? null : num(txt);
+        // colours and weight come from the element that holds the words (a status pill, a +/− delta)
+        const w = document.createTreeWalker(td, NodeFilter.SHOW_TEXT, { acceptNode: n => n.nodeValue.trim() && !n.parentElement.closest(SKIP) ? 1 : 3 }), tn = w.nextNode(), te = tn ? tn.parentElement : td, ts = getComputedStyle(te);
+        let bg = rgb(cs.backgroundColor, over); if (bg === card) bg = null;
+        if (!bg) { const p = [...td.querySelectorAll("*")].find(e => !e.closest(SKIP) && e.tagName !== "I" && e.textContent.trim() && rgb(getComputedStyle(e).backgroundColor)); if (p) bg = rgb(getComputedStyle(p).backgroundColor, over); }
+        let fc = rgb(ts.color, hex2("#" + (bg || card))); if (fc === INK) fc = null;
+        const ln = (k, cs) => parseFloat(cs["border" + k + "Width"]) > 0 && rgb(cs["border" + k + "Color"]) ? [parseFloat(cs["border" + k + "Width"]) >= 2 ? "medium" : "thin", rgb(cs["border" + k + "Color"], over)] : null;
+        const bd = { t: ln("Top", cs), b: ln("Bottom", cs) };
+        if (cs.boxShadow && cs.boxShadow !== "none") { const ring = ["medium", rgb(cs.boxShadow.match(/rgba?\([^)]*\)|color\([^)]*\)/)?.[0] || "") || "0B0B0B"]; Object.assign(bd, { l: ring, r: ring, t: ring, b: ring }); }
+        const ta = cs.textAlign, bar = [...td.querySelectorAll("i")].find(e => e.getBoundingClientRect().width > 0 && rgb(getComputedStyle(e).backgroundColor));
+        row.cells[c] = { v: nv ? nv.v : txt, bar: nv && bar ? rgb(getComputedStyle(bar).backgroundColor, over) : null, s: { f: nv && nv.f, b: head || +ts.fontWeight >= 600, sz: head ? 10 : Math.round(clamp(parseFloat(ts.fontSize) * .75, 8, 12)),
+          c: fc, bg, bd: bd.t || bd.b || bd.l ? bd : null, h: /right|end/.test(ta) ? "right" : ta === "center" ? "center" : nv ? "left" : null, wrap: txt.includes("\n"), ind: c === 0 && row.lvl > 1 ? (row.lvl - 1) * 2 : 0 } };
+        if (sp === 1) width[c] = Math.max(width[c] || 0, td.getBoundingClientRect().width);
+        c += sp; } }
+    // drop columns that hold only pictures (expand chevrons, sparklines): nothing to put in a cell
+    const ncol = Math.max(0, ...grid.map(r => r.cells.length)), keep = [];
+    for (let c = 0; c < ncol; c++) if (merges.length || grid.some(r => !r.head && r.cells[c] && r.cells[c].v !== "")) keep.push(c);
+    // pass 2: write the sheet — title and subtitle on top, header frozen, rows grouped by level, inline bars as data bars
+    const title = viz.querySelector(".viz-title")?.textContent.trim() || "Table", sub = viz.querySelector(".viz-sub")?.textContent.trim();
+    const rows = [`<row r="1" ht="21" customHeight="1">${cell(0, 0, title, sty({ b: 1, sz: 14 }))}</row>`]; let top = 2;
+    if (sub) { rows.push(`<row r="2">${cell(1, 0, sub, sty({ c: css("--ink-2").replace("#", "").toUpperCase() || "52514E" }))}</row>`); top = 3; }
+    const bars = {};
+    grid.forEach((row, i) => { const r = top + i, lines = Math.max(1, ...row.cells.map(x => x ? String(x.v).split("\n").length : 1));
+      rows.push(`<row r="${r + 1}" ht="${Math.max(lines * 13.5, Math.round(row.ht * .75 * 2) / 2)}" customHeight="1"${row.lvl > 1 ? ` outlineLevel="${row.lvl - 1}"` : ""}>` +
+        keep.map((c, j) => { const x = row.cells[c]; if (!x) return ""; if (x.bar) (bars[j] = bars[j] || { c: x.bar, at: [] }).at.push(colL(j) + (r + 1)); return cell(r, j, x.v, sty(x.s)); }).join("") + "</row>"); });
+    const hr = heads.length, last = top + grid.length, lc = colL(Math.max(0, keep.length - 1)), filter = hr === 1 && t.querySelector("thead button") && !grid.some(r => r.lvl) && !merges.length && !grid[0].cells.some(x => x && x.s.wrap);
+    const name = title.replace(/[[\]:*?/\\]/g, " ").slice(0, 31);
+    const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+      (grid.some(r => r.lvl > 1) ? '<sheetPr><outlinePr summaryBelow="0"/></sheetPr>' : "") + `<dimension ref="A1:${lc}${last}"/>` +
+      `<sheetViews><sheetView workbookViewId="0" showGridLines="0">${hr ? `<pane ySplit="${top + hr}" topLeftCell="A${top + hr + 1}" activePane="bottomLeft" state="frozen"/>` : ""}</sheetView></sheetViews>` +
+      `<sheetFormatPr defaultRowHeight="15"/><cols>${keep.map((c, j) => `<col min="${j + 1}" max="${j + 1}" width="${clamp(Math.round((width[c] || 80) / 6.5), 8, 60)}" customWidth="1"/>`).join("")}</cols>` +
+      `<sheetData>${rows.join("")}</sheetData>` + (filter ? `<autoFilter ref="A${top + 1}:${lc}${last}"/>` : "") +
+      (merges.length ? `<mergeCells count="${merges.length}">${merges.map(([a, b, c, d]) => `<mergeCell ref="${colL(b)}${top + a + 1}:${colL(d)}${top + c + 1}"/>`).join("")}</mergeCells>` : "") +
+      Object.values(bars).map((b, i) => `<conditionalFormatting sqref="${b.at.join(" ")}"><cfRule type="dataBar" priority="${i + 1}"><dataBar><cfvo type="num" val="0"/><cfvo type="max"/><color rgb="FF${b.c}"/></dataBar></cfRule></conditionalFormatting>`).join("") +
+      '<pageMargins left="0.5" right="0.5" top="0.75" bottom="0.75" header="0.3" footer="0.3"/><pageSetup orientation="landscape" fitToHeight="0"/></worksheet>';
+    const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"', REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships", PKG = "http://schemas.openxmlformats.org/package/2006/relationships";
+    return zip([
+      ["[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+      ["_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+      ["xl/workbook.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook ${NS} xmlns:r="${REL}"><sheets><sheet name="${X(name)}" sheetId="1" r:id="rId1"/></sheets>${filter ? `<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'${X(name.replace(/'/g, "''"))}'!$A$${top + 1}:$${lc}$${last}</definedName></definedNames>` : ""}</workbook>`],
+      ["xl/_rels/workbook.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${REL}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${REL}/styles" Target="styles.xml"/></Relationships>`],
+      ["xl/styles.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet ${NS}>${fmts.length ? `<numFmts count="${fmts.length}">${fmts.map((f, i) => `<numFmt numFmtId="${164 + i}" formatCode="${X(f)}"/>`).join("")}</numFmts>` : ""}<fonts count="${fonts.length}">${fonts.join("")}</fonts><fills count="${fills.length}">${fills.join("")}</fills><borders count="${borders.length}">${borders.join("")}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join("")}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`],
+      ["xl/worksheets/sheet1.xml", sheet]]); };
+  // exportExcel(): re-render in the light theme so the workbook matches a printed page, let the component show every row (window.XL_PREP), write, restore
+  const exportExcel = async () => { const viz = document.querySelector(".stage > .viz"), root = document.documentElement, th = root.dataset.theme; let blob;
+    root.dataset.theme = "light"; dispatchEvent(new Event("v-theme")); const undo = window.XL_PREP ? window.XL_PREP() : null;
+    try { blob = xlsx(viz); } finally { if (undo) undo(); if (th) root.dataset.theme = th; else delete root.dataset.theme; dispatchEvent(new Event("v-theme")); }
+    if (blob) await save((viz.querySelector(".viz-title")?.textContent.trim() || "table").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".xlsx", blob); };
+  return { save, xlsx, exportExcel, el, svg, fill, rng, scale, ticks, niceMax, short, comma, pct, money, signed, sum, mean, clamp, css, mix, ramp, diverge, ink, tip, untip, hover, esc, seg, bar, MON, DOW, mount, setTheme };
+})();
+</script>
+</head>
+<body>
+<div class="stage">
+<style>
+.vw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:20px;align-items:center}
+@media (max-width:680px){.vw{grid-template-columns:1fr}}
+.list{display:grid;gap:2px}
+.list button{all:unset;cursor:pointer;display:grid;grid-template-columns:12px 1fr auto auto;gap:10px;align-items:center;font-size:13px;padding:7px 10px;border-radius:8px;color:var(--ink)}
+.list button:hover,.list button[aria-current="true"]{background:var(--hover)}
+.list button:focus-visible{outline:2px solid var(--s1)}
+.list i{width:12px;height:12px;border-radius:3px}
+.list .v{font-variant-numeric:tabular-nums;color:var(--ink)} .list .p{font-variant-numeric:tabular-nums;color:var(--ink-2);width:44px;text-align:right}
+.crumb{display:flex;gap:8px;align-items:center;min-height:30px;margin-bottom:6px;font-size:13px;color:var(--ink-2)}
+.cell{cursor:pointer}
+</style>
+
+<div class="viz">
+  <div class="viz-head">
+    <div>
+      <h2 class="viz-title">Revenue mix, FY2026</h2>
+      <p class="viz-sub">Area = revenue · click a category to see its product lines</p>
+    </div>
+  </div>
+  <div class="crumb" id="crumb"></div>
+  <div class="vw"><div id="chart"></div><div class="list" id="list"></div></div>
+</div>
+
+<script>
+const DATA = { Electronics: { Phones: 32, Laptops: 26, Audio: 12, Wearables: 9, Accessories: 7 }, Home: { Furniture: 18, Kitchen: 14, Decor: 8, Bedding: 6 },
+  Apparel: { Women: 20, Men: 14, Shoes: 11, Kids: 7 }, Outdoors: { Camping: 9, Cycling: 7, Fitness: 6 }, Beauty: { Skincare: 10, Makeup: 6, Fragrance: 4 } };
+const CATS = Object.entries(DATA).map(([name, kids], i) => ({ name, c: `--s${i + 1}`, kids: Object.entries(kids).map(([n, v]) => ({ name: n, value: v })) }));
+CATS.forEach(c => c.value = V.sum(c.kids.map(k => k.value)));
+const TOTAL = V.sum(CATS.map(c => c.value)), S = 500;
+
+// ---- power-diagram Voronoi treemap ----
+const areaOf = p => { let a = 0; for (let i = 0; i < p.length; i++) { const [x0, y0] = p[i], [x1, y1] = p[(i + 1) % p.length]; a += x0 * y1 - x1 * y0; } return a / 2; };
+const centroid = p => { let a = 0, cx = 0, cy = 0; for (let i = 0; i < p.length; i++) { const [x0, y0] = p[i], [x1, y1] = p[(i + 1) % p.length], f = x0 * y1 - x1 * y0; a += f; cx += (x0 + x1) * f; cy += (y0 + y1) * f; } return Math.abs(a) < 1e-9 ? p[0] : [cx / (3 * a), cy / (3 * a)]; };
+function clip(poly, a, b, c) { // keep the side where a·x + b·y ≤ c
+  const out = []; for (let i = 0; i < poly.length; i++) { const P = poly[i], Q = poly[(i + 1) % poly.length], fp = a * P[0] + b * P[1] - c, fq = a * Q[0] + b * Q[1] - c;
+    if (fp <= 0) out.push(P); if (fp * fq < 0) { const t = fp / (fp - fq); out.push([P[0] + (Q[0] - P[0]) * t, P[1] + (Q[1] - P[1]) * t]); } }
+  return out; }
+const inside = (poly, [x, y]) => { const sgn = areaOf(poly) > 0 ? 1 : -1; return poly.every((p, i) => { const q = poly[(i + 1) % poly.length]; return sgn * ((q[0] - p[0]) * (y - p[1]) - (q[1] - p[1]) * (x - p[0])) >= 0; }); };
+function cells(bound, sites, w) { return sites.map((p, i) => { let poly = bound; sites.forEach((q, j) => { if (i === j || poly.length < 3) return;
+  poly = clip(poly, 2 * (q[0] - p[0]), 2 * (q[1] - p[1]), q[0] ** 2 + q[1] ** 2 - p[0] ** 2 - p[1] ** 2 - w[j] + w[i]); }); return poly; }); }
+function voronoiTreemap(bound, values, seed, iters = 160) {
+  const R = V.rng(seed), A = Math.abs(areaOf(bound)), tot = V.sum(values), target = values.map(v => A * v / tot);
+  const xs = bound.map(p => p[0]), ys = bound.map(p => p[1]), rand = () => { for (;;) { const pt = [Math.min(...xs) + R.r() * (Math.max(...xs) - Math.min(...xs)), Math.min(...ys) + R.r() * (Math.max(...ys) - Math.min(...ys))]; if (inside(bound, pt)) return pt; } };
+  let sites = values.map(rand), w = target.map(t => t * .05), cs;
+  for (let it = 0; it < iters; it++) {
+    cs = cells(bound, sites, w);
+    cs.forEach((poly, i) => { const a = poly.length >= 3 ? Math.abs(areaOf(poly)) : 0;
+      if (a < 1e-6) { sites[i] = rand(); w[i] = target[i] * .01; return; }
+      sites[i] = centroid(poly); w[i] = Math.max(1e-6, w[i] * target[i] / a); });
+    sites.forEach((p, i) => { const nn = Math.min(...sites.map((q, j) => j === i ? Infinity : (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2)); w[i] = Math.min(w[i], nn); });
+  }
+  return cells(bound, sites, w);
+}
+const circle = (cx, cy, r, n = 72) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; });
+const BOUND = circle(S / 2, S / 2, S / 2 - 4);
+let overview = null; const zoomCache = {};
+function getOverview() { if (overview) return overview;
+  const top = voronoiTreemap(BOUND, CATS.map(c => c.value), 42);
+  overview = CATS.map((c, i) => ({ cat: c, poly: top[i], kids: voronoiTreemap(top[i], c.kids.map(k => k.value), 100 + i, 120) }));
+  return overview; }
+function getZoom(i) { return zoomCache[i] || (zoomCache[i] = voronoiTreemap(BOUND, CATS[i].kids.map(k => k.value), 200 + i)); }
+
+let zoom = null;
+const tint = (c, k, n) => V.mix(V.css(c), V.css("--surface"), n > 1 ? k / (n - 1) * .5 : 0);
+const pathOf = p => "M" + p.map(q => q[0].toFixed(1) + "," + q[1].toFixed(1)).join("L") + "Z";
+function render() {
+  const box = document.getElementById("chart"), size = Math.min(box.clientWidth, 520), { s } = V.svg(box, size, size);
+  s.setAttribute("viewBox", `0 0 ${S} ${S}`); const fs = S / size; // keep text at a fixed on-screen size
+  const crumb = document.getElementById("crumb");
+  crumb.innerHTML = zoom === null ? `All categories · <b style="color:var(--ink)">${V.money(TOTAL * 1e6, 0)}</b>` : `<button class="btn" id="back" type="button">← All categories</button> <b style="color:var(--ink)">${CATS[zoom].name}</b> · ${V.money(CATS[zoom].value * 1e6, 0)} · ${V.pct(CATS[zoom].value / TOTAL, 0)} of revenue`;
+  const bk = document.getElementById("back"); if (bk) bk.onclick = () => { zoom = null; render(); };
+  document.getElementById("list").innerHTML = CATS.map((c, i) => `<button type="button" data-i="${i}" aria-current="${zoom === i}"><i style="background:var(${c.c})"></i><span>${c.name}</span><span class="v">${V.money(c.value * 1e6, 0)}</span><span class="p">${V.pct(c.value / TOTAL, 0)}</span></button>`).join("");
+  document.querySelectorAll("#list button").forEach(b => b.onclick = () => { zoom = zoom === +b.dataset.i ? null : +b.dataset.i; render(); });
+  const label = (x, y, lines, size1, fill) => lines.forEach((t, k) => V.el("text", { x, y: y + (k - (lines.length - 1) / 2) * size1 * fs * 1.25 + size1 * fs * .35, "text-anchor": "middle",
+    style: `font-size:${(k ? size1 * .85 : size1) * fs}px;font-weight:${k ? 400 : 600};fill:${fill};pointer-events:none;paint-order:stroke;stroke:${fill === "var(--ink)" ? "var(--surface)" : "none"};stroke-width:${3 * fs}px` }, s).textContent = t);
+  if (zoom === null) {
+    const ov = getOverview();
+    s.setAttribute("aria-label", "Voronoi treemap of revenue: " + CATS.map(c => `${c.name} ${V.pct(c.value / TOTAL, 0)}`).join(", "));
+    ov.forEach(({ cat, kids }, i) => kids.forEach((poly, k) => { const kid = cat.kids[k], f = tint(cat.c, k, cat.kids.length);
+      const p = V.el("path", { class: "cell", d: pathOf(poly), fill: f, stroke: "var(--surface)", "stroke-width": 1.5 * fs }, s);
+      p.addEventListener("click", () => { zoom = i; render(); });
+      V.hover(p, () => `<span class="k" style="background:var(${cat.c})"></span><b>${cat.name} › ${kid.name}</b><br>${V.money(kid.value * 1e6, 0)} · ${V.pct(kid.value / cat.value, 0)} of ${cat.name} · ${V.pct(kid.value / TOTAL, 1)} of total<br><span class="muted">Click to zoom</span>`); }));
+    ov.forEach(({ poly }) => V.el("path", { d: pathOf(poly), fill: "none", stroke: "var(--surface)", "stroke-width": 4 * fs, style: "pointer-events:none" }, s));
+    ov.forEach(({ cat, poly }) => { const [x, y] = centroid(poly); label(x, y, [cat.name, V.pct(cat.value / TOTAL, 0)], 14, "var(--ink)"); });
+  } else {
+    const cat = CATS[zoom], zs = getZoom(zoom);
+    s.setAttribute("aria-label", `${cat.name} product lines: ` + cat.kids.map(k => `${k.name} ${V.money(k.value * 1e6, 0)}`).join(", "));
+    zs.forEach((poly, k) => { const kid = cat.kids[k], f = tint(cat.c, k, cat.kids.length);
+      const p = V.el("path", { d: pathOf(poly), fill: f, stroke: "var(--surface)", "stroke-width": 3 * fs }, s);
+      V.hover(p, () => `<b>${kid.name}</b><br>${V.money(kid.value * 1e6, 0)} · ${V.pct(kid.value / cat.value, 0)} of ${cat.name}`);
+      const [x, y] = centroid(poly); if (Math.abs(areaOf(poly)) > 2600) label(x, y, [kid.name, V.money(kid.value * 1e6, 0)], 14, V.ink(f)); });
+  }
+}
+addEventListener("keydown", e => { if (e.key === "Escape" && zoom !== null) { zoom = null; render(); } });
+V.mount(render);
+</script>
+</div>
+</body>
+</html>
