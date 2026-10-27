@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0}</style></head><body>
+<title>Themes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;600;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600&family=Nunito:wght@600;800;900&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;600;800;900&family=Poppins:wght@400;600;800&family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600;800&family=Merriweather:wght@900&family=Karla:wght@400;600&family=Lato:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@500;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: a quiet neutral frame (index chips + long column) so each direction's live preview carries the colour */
+:root{
+  --bg:#f7f7f9; --panel:#ffffff; --fg:#15161b; --fg2:#4b4d57; --muted:#80828c; --line:#e3e3ea; --chip:#efeff4; --accent:#3d40d9; --ok:#0e8a4a;
+  --display:"Hanken Grotesk",system-ui,sans-serif; --body:"Hanken Grotesk",system-ui,sans-serif; --mono:"Geist Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111216;--panel:#191a20;--fg:#ececf1;--fg2:#b4b6c0;--muted:#83858f;--line:#2a2b33;--chip:#23242c;--accent:#8f91ff;--ok:#4ade80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111216;--panel:#191a20;--fg:#ececf1;--fg2:#b4b6c0;--muted:#83858f;--line:#2a2b33;--chip:#23242c;--accent:#8f91ff;--ok:#4ade80;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,5vw,52px);line-height:1.05;letter-spacing:-.02em;font-weight:700}
+.lede{font-size:18px;color:var(--fg2);max-width:62ch;margin:14px 0 0}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{margin-top:64px}
+h2{font-size:26px;letter-spacing:-.01em;margin:6px 0 14px}
+p{max-width:68ch}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.toc a{font-size:14px;color:var(--fg);text-decoration:none;padding:6px 12px;border-radius:999px;background:var(--chip)}
+.toc a:hover,.toc a:focus-visible{background:var(--line);outline:none}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:760px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 12px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--panel)}
+tr:last-child td{border-bottom:0}
+/* principles */
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+.gcard h3{font-size:17px;margin:2px 0 8px}
+.gcard ul{margin:8px 0 0;padding-left:18px;font-size:14px;color:var(--fg2)}
+.gcard li{margin:4px 0}
+.gcard p{font-size:14px;color:var(--fg2);margin:6px 0 0}
+.strip{display:flex;height:16px;border-radius:4px;overflow:hidden;margin-top:10px}
+.strip i{flex:1}
+.maps{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.maps a{font-size:12.5px;color:var(--fg);text-decoration:none;background:var(--chip);border-radius:999px;padding:2px 9px}
+.rules ul{list-style:none;padding:0;margin:8px 0 0}
+.rules li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px;font-size:14.5px;padding:8px 0;border-top:1px solid var(--line)}
+.rules li:first-child{border-top:0}
+.ok{color:var(--ok);font-weight:700} .add{color:var(--accent);font-weight:700}
+.sub3{font-size:20px;margin:34px 0 6px}
+/* direction blocks: same structure for every direction */
+.dir{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:28px;padding-top:28px;border-top:1px solid var(--line);margin-top:28px;align-items:start}
+@media (max-width:900px){.dir{grid-template-columns:1fr}}
+.dir h3{font-size:30px;letter-spacing:-.015em;margin-top:6px}
+.thesis{font-size:17px;color:var(--fg2);margin:8px 0 18px}
+dl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px 16px;margin:0;font-size:15px}
+dt{font:500 12px/1.9 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+dd{margin:0;min-width:0}
+.pal{display:flex;flex-wrap:wrap;gap:8px}
+.pal span{display:inline-flex;align-items:center;gap:6px;font:12px var(--mono);color:var(--fg2);background:var(--chip);padding:4px 8px 4px 4px;border-radius:6px}
+.pal i{width:18px;height:18px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.risk{font-size:14px;color:var(--fg2);margin-top:14px;padding:10px 12px;border-radius:8px;background:var(--chip)}
+.risk b{color:var(--fg)}
+/* the live preview: identical components; every value comes from the direction's own tokens */
+.pv{position:relative;border-radius:16px;overflow:hidden;background:var(--p-bg);color:var(--p-ink);font-family:var(--p-body);box-shadow:0 1px 0 var(--line),0 12px 40px rgba(10,10,30,.08);min-width:0}
+.pv .in{position:relative;z-index:1;padding:18px 20px 22px}
+.pv .deco{position:absolute;pointer-events:none;z-index:0}
+.pv nav{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--p-muted);margin-bottom:26px}
+.pv .wm{font-family:var(--p-display);font-weight:var(--p-wm-w,700);color:var(--p-ink);font-size:15px;margin-right:auto;display:flex;gap:7px;align-items:center;letter-spacing:var(--p-track,0)}
+.pv .mk{width:20px;height:20px;border-radius:var(--p-mk-r,6px);background:var(--p-acc);display:inline-block}
+.pv .hl{font-family:var(--p-display);font-weight:var(--p-h-w,700);font-size:clamp(26px,3.4vw,36px);line-height:1.05;letter-spacing:var(--p-track,0);margin:0 0 10px}
+.pv .hl em{font-style:normal;color:var(--p-soft)}
+.pv .sub{font-size:14px;color:var(--p-muted);margin:0 0 16px;max-width:44ch}
+.pv .ctas{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.pv .b1,.pv .b2{font:600 13px var(--p-body);padding:9px 14px;border-radius:var(--p-btn-r);border:var(--p-btn-border,0) solid var(--p-ink)}
+.pv .b1{background:var(--p-btn-bg,var(--p-acc));color:var(--p-btn-fg,#fff);box-shadow:var(--p-btn-shadow,none)}
+.pv .b2{background:transparent;color:var(--p-ink);border:1px solid var(--p-line)}
+.pv .row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:12px}
+@media (max-width:520px){.pv .row{grid-template-columns:1fr}}
+.pv .card{background:var(--p-card);border:var(--p-card-border,1px) solid var(--p-line);border-radius:var(--p-card-r);padding:14px;box-shadow:var(--p-card-shadow,none);min-width:0}
+.pv .lbl{font:var(--p-lbl-font,500 11px var(--p-mono));text-transform:uppercase;letter-spacing:.06em;color:var(--p-muted)}
+.pv .val{font-family:var(--p-num,var(--p-display));font-weight:700;font-size:28px;margin:4px 0 2px;letter-spacing:var(--p-track,0)}
+.pv .dl{font-size:12px;font-weight:600;color:var(--p-up)}
+.pv .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.pv .chip{font-size:11.5px;padding:3px 9px;border-radius:var(--p-chip-r,999px);background:var(--p-chip);color:var(--p-ink)}
+.pv svg{display:block;width:100%;height:auto;margin-top:8px}
+/* backgrounds and type treatments only; no extra components */
+.pv.grid{background-image:linear-gradient(var(--p-gridline) 1px,transparent 1px),linear-gradient(90deg,var(--p-gridline) 1px,transparent 1px);background-size:22px 22px}
+.pv.glow{background:radial-gradient(120% 70% at 85% -10%,rgba(255,107,91,.22),transparent 60%),var(--p-bg)}
+.pv.rule .in>nav{border-bottom:2px solid var(--p-ink);padding-bottom:10px}
+.pv.float nav{background:var(--p-card);border-radius:999px;padding:8px 14px;box-shadow:0 8px 24px rgba(11,52,64,.13)}
+.pv.float .row{background:var(--p-band);margin:0 -20px -22px;padding:14px 20px 22px}
+.pv.caps .hl{text-transform:uppercase;letter-spacing:.01em;line-height:1.02}
+.pv.goldrule .hl::after{content:"";display:block;width:56px;height:4px;border-radius:2px;background:var(--p-soft);margin-top:12px}
+.pv.toprule .in{border-top:6px solid var(--p-acc)}
+.pv.news .in>nav{border-bottom:1px solid var(--p-line);padding-bottom:10px}
+.pv.news .hl{font-size:clamp(24px,3vw,30px)}
+.pv.news .card{padding:4px 0 0}
+.pv.news .row{gap:32px}
+.pv.keyline{box-shadow:0 0 0 3px #FFFFFF inset,0 12px 40px rgba(10,10,30,.12)}
+.pv.hex .in>nav{padding-right:84px}
+/* comparison */
+.score{display:inline-flex;gap:3px;vertical-align:-1px}
+.score i{width:9px;height:9px;border-radius:2px;background:var(--line)}
+.score i.on{background:var(--accent)}
+.rec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 26px}
+.rec h2{margin-top:0}
+.rec ol{padding-left:20px;margin:10px 0 0;max-width:72ch}
+.rec li{margin:8px 0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <a class="back" href="index.html">← Component library</a><span class="eyebrow">AI Driven Dashboard Component Library · themes</span>
+  <h1>Eleven themes for the component library</h1>
+  <p class="lede">Each theme below restyles every component: palette, type, shapes and a chart colour strategy. Every preview uses the same components and the same words, so the only thing that changes is the theme.</p>
+  <nav class="toc" aria-label="Themes" id="toc"></nav>
+
+  <section aria-labelledby="h-play">
+    <span class="eyebrow">Chart theming</span>
+    <h2 id="h-play">Principles for themed charts</h2>
+    <p>A theme only works for a chart library if it also defines how the charts look. These principles are common ground across published chart style guides from newsrooms, research organisations and design systems.</p>
+    <div class="grid4" id="principles"></div>
+    <h3 class="sub3">Four palette strategies</h3>
+    <p>Each theme uses one of these, which keeps its charts consistent and recognisable.</p>
+    <div class="grid4" id="arch"></div>
+    <h3 class="sub3">Chart rules for the library</h3>
+    <p>Every component follows these rules, whichever theme is applied.</p>
+    <div class="grid4 rules" id="rules"></div>
+  </section>
+
+  <section aria-labelledby="h-dirs">
+    <span class="eyebrow">Themes</span>
+    <h2 id="h-dirs">The themes</h2>
+    <p>Each preview shows a page header, a KPI card and a bar chart in the theme's style. The default theme is a neutral, colour-blind-safe token set; swap the tokens to use your own brand.</p>
+    <div id="dirs"></div>
+  </section>
+
+  <section aria-labelledby="h-compare">
+    <span class="eyebrow">Side by side</span>
+    <h2 id="h-compare">How they compare</h2>
+    <div class="tw"><table id="compare"><thead><tr><th>Theme</th><th>Feels like</th><th>Good for</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</div>
+
+<script>
+// identical preview content for every direction
+const COPY = { hl: ["Dashboard components", "your AI can follow."], sub: "Charts, KPI cards and tables, each with a spec and a ready-to-paste prompt." };
+const STRATS = { all: "Prepare for everything", fewer: "Fewer hues, more shades", more: "More hues, fewer shades", min: "Minimalist" };
+// every direction uses the same fields in the same order
+const DIRS = [
+  { id: "instrument", name: "Quiet Instrument", strat: "min",
+    thesis: "Calm and engineering-grade. A near-white canvas, hairline borders, tight medium-weight type and a single cool accent.",
+    pal: [["Canvas", "#FCFCFC"], ["Card", "#FFFFFF"], ["Ink", "#0A0A0B"], ["Accent", "#0B84D8"], ["Second", "#8A8A93"], ["Third", "#E6E6E9"]],
+    type: "<b>Geist</b> 500 for headlines, Geist 400 for body, <b>Geist Mono</b> for every number and token.",
+    shape: "8px corners, 1px hairlines, no shadows, two-tone headlines with the claim in ink and the qualifier in grey.",
+    chart: "Greys for context, one accent for the series that matters, monospace tick labels and a hairline grid.",
+    t: { bg: "#FCFCFC", card: "#FFFFFF", ink: "#0A0A0B", muted: "#6E6E78", soft: "#9B9BA4", acc: "#0B84D8", line: "#E6E6E9", chip: "#F1F1F3", up: "#0A7D44", display: "'Geist',sans-serif", body: "'Geist',sans-serif", mono: "'Geist Mono',monospace", num: "'Geist Mono',monospace", btnR: "8px", cardR: "10px", mkR: "4px", hW: 500, wmW: 600, track: "-0.03em",
+      btnBg: "#0A0A0B", bars: ["#D9D9DE", "#D9D9DE", "#D9D9DE", "#D9D9DE", "#0B84D8", "#D9D9DE"] } },
+  { id: "cobalt", name: "Cobalt Lab", strat: "fewer",
+    thesis: "Approachable and clearly about data. A cool grey-blue canvas, a cobalt accent with a warm peach second colour, confident, friendly headlines and rounded-square shapes.",
+    pal: [["Canvas", "#F2F4FA"], ["Card", "#FFFFFF"], ["Ink", "#16213E"], ["Accent", "#2D5BE3"], ["Second", "#FF8A5B"], ["Third", "#DDE5FB"]],
+    type: "<b>Plus Jakarta Sans</b> 800 for headlines (open, friendly and crisp at every size), Plus Jakarta Sans 400/600 for body, Geist Mono for numbers.",
+    shape: "Pill buttons, 20px cards, rounded-square chips and marks, tints instead of borders.",
+    chart: "Cobalt shades for series, peach for the one highlight, tints for context.",
+    t: { bg: "#F2F4FA", card: "#FFFFFF", ink: "#16213E", muted: "#5A6382", soft: "#2D5BE3", acc: "#2D5BE3", line: "#E2E7F3", chip: "#DDE5FB", up: "#0F8A4F", display: "'Plus Jakarta Sans',system-ui,sans-serif", body: "'Plus Jakarta Sans',system-ui,sans-serif", mono: "'Geist Mono',monospace", btnR: "999px", cardR: "20px", mkR: "8px", hW: 800, track: "-0.025em", chipR: "8px",
+      bars: ["#DDE5FB", "#DDE5FB", "#9DB3F1", "#DDE5FB", "#2D5BE3", "#FF8A5B"] } },
+  { id: "retro", name: "Retro Flashback", strat: "more",
+    thesis: "Celebratory and shareable. A deep navy canvas, a white keyline and thin rounded bars in 70s orange, teal, yellow and red.",
+    pal: [["Canvas", "#0E2238"], ["Card", "#16304C"], ["Ink", "#FFFFFF"], ["Accent", "#63D2BF"], ["Second", "#F7953B"], ["Third", "#FFD978"]],
+    type: "<b>Montserrat</b> 800 for headlines and numbers, Montserrat 500 for labels.",
+    shape: "Rounded cards with a white keyline and round-ended bars with labels underneath.",
+    chart: "Bars rotate through orange, teal, yellow and red for single-series leaderboards, with white labels.",
+    t: { bg: "#0E2238", card: "#16304C", ink: "#FFFFFF", muted: "#A9B8CC", soft: "#63D2BF", acc: "#63D2BF", line: "rgba(255,255,255,.18)", chip: "rgba(255,255,255,.12)", up: "#63D2BF", display: "'Montserrat',sans-serif", body: "'Montserrat',sans-serif", mono: "'Montserrat',sans-serif", btnR: "999px", cardR: "14px", mkR: "50%", hW: 800, wmW: 800, track: "-0.01em",
+      btnFg: "#0E2238", cls: "keyline", bars: ["#F7953B", "#63D2BF", "#FFD978", "#F0592A", "#F7953B", "#63D2BF"] } },
+  { id: "night", name: "Night Console", strat: "more",
+    thesis: "Premium and dark-first. A near-black canvas, translucent glass panels, a warm coral glow and heavy grotesque headlines.",
+    pal: [["Canvas", "#0A0B0E"], ["Card", "#16171C"], ["Ink", "#F4F4F6"], ["Accent", "#FF6B5B"], ["Second", "#4ADE80"], ["Third", "#8B8C94"]],
+    type: "<b>Schibsted Grotesk</b> 800 for headlines, 400 for body, IBM Plex Mono for numbers.",
+    shape: "12px glass panels at 4–8% white with 1px light borders and a soft glow behind the hero.",
+    chart: "A tuned dark-mode categorical set, gridlines at 8% white, coral reserved for highlights and alerts.",
+    t: { bg: "#0A0B0E", card: "rgba(255,255,255,.05)", ink: "#F4F4F6", muted: "#8B8C94", soft: "#8B8C94", acc: "#FF6B5B", line: "rgba(255,255,255,.10)", chip: "rgba(255,255,255,.08)", up: "#4ADE80", display: "'Schibsted Grotesk',sans-serif", body: "'Schibsted Grotesk',sans-serif", mono: "'IBM Plex Mono',monospace", btnR: "10px", cardR: "12px", mkR: "6px", hW: 800, track: "-0.025em",
+      btnBg: "#F4F4F6", btnFg: "#0A0B0E", cls: "glow", bars: ["#2A2B31", "#2A2B31", "#3A3B42", "#2A2B31", "#FF6B5B", "#3A3B42"] } },
+  { id: "field", name: "Field Notes", strat: "fewer",
+    thesis: "Credible and explanatory. Paper-white pages, a sturdy serif, navy ink and petrol-teal highlights.",
+    pal: [["Canvas", "#FBFBF8"], ["Card", "#FFFFFF"], ["Ink", "#14304F"], ["Accent", "#007D9C"], ["Second", "#C0312B"], ["Third", "#DADCE0"]],
+    type: "<b>Source Serif 4</b> 700 for headlines, <b>Public Sans</b> for body and interface, tabular figures throughout.",
+    shape: "4px corners, 2px ink rules under headers, footnote-style source lines under charts.",
+    chart: "Navy and teal shades for series, red only for emphasis, a takeaway title on every chart.",
+    t: { bg: "#FBFBF8", card: "#FFFFFF", ink: "#14304F", muted: "#5F6875", soft: "#007D9C", acc: "#007D9C", line: "#DADCE0", chip: "#E7F1F4", up: "#0E7A3E", display: "'Source Serif 4',Georgia,serif", body: "'Public Sans',sans-serif", mono: "'Public Sans',sans-serif", btnR: "4px", cardR: "4px", mkR: "2px", hW: 700, track: "-0.01em", chipR: "3px",
+      btnBg: "#14304F", cls: "rule", lblFont: "600 11px 'Public Sans',sans-serif", bars: ["#BFD9E1", "#BFD9E1", "#BFD9E1", "#BFD9E1", "#007D9C", "#BFD9E1"] } },
+  { id: "blueprint", name: "Blueprint", strat: "all",
+    thesis: "Exact and technical. A drafting-grid canvas, blueprint blue, monospace annotations and dimension lines.",
+    pal: [["Canvas", "#F4F7FB"], ["Card", "#FFFFFF"], ["Ink", "#0E2A47"], ["Accent", "#1E5FD6"], ["Second", "#E2462F"], ["Third", "#DCE5F1"]],
+    type: "<b>IBM Plex Sans</b> 600 for headlines, 400 for body, <b>IBM Plex Mono</b> for labels and measurements.",
+    shape: "2px corners, 1px blue rules, a 22px grid behind hero areas, callout lines pointing at parts.",
+    chart: "The full validated eight-colour order plus documented sequential and diverging ramps.",
+    t: { bg: "#F4F7FB", card: "#FFFFFF", ink: "#0E2A47", muted: "#56708F", soft: "#1E5FD6", acc: "#1E5FD6", line: "#C9D7EA", chip: "#E3ECF8", up: "#0B7A4B", display: "'IBM Plex Sans',sans-serif", body: "'IBM Plex Sans',sans-serif", mono: "'IBM Plex Mono',monospace", num: "'IBM Plex Mono',monospace", btnR: "2px", cardR: "2px", mkR: "1px", hW: 600, track: "-0.015em", chipR: "2px",
+      gridline: "#DCE5F1", cls: "grid", bars: ["#B9CDEB", "#B9CDEB", "#B9CDEB", "#E2462F", "#1E5FD6", "#B9CDEB"] } },
+  { id: "consult", name: "Coral Consulting", strat: "fewer",
+    thesis: "Confident and advisory. Pale bands behind white cards, deep teal-ink type, coral calls to action and heavy geometric headlines.",
+    pal: [["Canvas", "#EFF1F8"], ["Card", "#FFFFFF"], ["Ink", "#0B3440"], ["Accent", "#F2493A"], ["Second", "#2D7F8C"], ["Third", "#A9C6CC"]],
+    type: "<b>Outfit</b> 900 for headlines, Outfit 400 for body, IBM Plex Mono for numbers.",
+    shape: "A floating capsule navigation with a soft shadow, pill buttons, 12px cards on pale bands.",
+    chart: "Teal-ink shades for series and one coral highlight on the mark the headline is about.",
+    t: { bg: "#FFFFFF", card: "#FFFFFF", ink: "#0B3440", muted: "#4E6A72", soft: "#2D7F8C", acc: "#F2493A", line: "#DCE2EC", chip: "#EFF1F8", up: "#0E7A3E", display: "'Outfit',sans-serif", body: "'Outfit',sans-serif", mono: "'IBM Plex Mono',monospace", btnR: "999px", cardR: "12px", mkR: "50%", hW: 900, wmW: 800, track: "-0.01em",
+      band: "#EFF1F8", cls: "float", bars: ["#A9C6CC", "#A9C6CC", "#A9C6CC", "#A9C6CC", "#F2493A", "#A9C6CC"] } },
+  { id: "gold", name: "Indigo & Gold", strat: "fewer",
+    thesis: "Bold and optimistic. A near-white canvas, deep indigo, golden yellow and lavender, with heavy all-caps headlines.",
+    pal: [["Canvas", "#FCFCFC"], ["Card", "#FFFFFF"], ["Ink", "#1E1A5A"], ["Accent", "#F5B800"], ["Second", "#8B83E6"], ["Third", "#ECEAFB"]],
+    type: "<b>Poppins</b> 800 in capitals for headlines with a short gold rule beneath, Poppins 400/600 for body.",
+    shape: "14px white cards with gentle shadows, circular icon badges, pill buttons.",
+    chart: "Indigo and lavender shades for series and gold for the single highlight.",
+    t: { bg: "#FCFCFC", card: "#FFFFFF", ink: "#1E1A5A", muted: "#5D5986", soft: "#F5B800", acc: "#1E1A5A", line: "#E6E3F7", chip: "#ECEAFB", up: "#0E7A3E", display: "'Poppins',sans-serif", body: "'Poppins',sans-serif", mono: "'IBM Plex Mono',monospace", btnR: "999px", cardR: "14px", mkR: "4px", hW: 800, wmW: 800, track: "0",
+      cls: "caps goldrule", cardShadow: "0 6px 18px rgba(30,26,90,.08)", bars: ["#C9C4F4", "#8B83E6", "#C9C4F4", "#1E1A5A", "#F5B800", "#8B83E6"] } },
+  { id: "signal", name: "Navy & Signal", strat: "fewer",
+    thesis: "Punchy and high-contrast. A cool white canvas, deep navy, signal orange and heavy condensed capitals.",
+    pal: [["Canvas", "#F5F7FB"], ["Card", "#FFFFFF"], ["Ink", "#0B1F3A"], ["Accent", "#F26B1D"], ["Second", "#23406B"], ["Third", "#FFC233"]],
+    type: "<b>Barlow Condensed</b> 800 in capitals for headlines, <b>Barlow</b> 400/600 for body.",
+    shape: "A 6px orange top rule on hero panels, 6px cards, round icon badges.",
+    chart: "Navy shades for series, orange for the one highlight, yellow only for annotations.",
+    t: { bg: "#F5F7FB", card: "#FFFFFF", ink: "#0B1F3A", muted: "#4D5D75", soft: "#F26B1D", acc: "#F26B1D", line: "#DCE2EC", chip: "#E6ECF5", up: "#0E7A3E", display: "'Barlow Condensed',sans-serif", body: "'Barlow',sans-serif", mono: "'IBM Plex Mono',monospace", btnR: "6px", cardR: "6px", mkR: "50%", hW: 800, wmW: 800, track: "0",
+      cls: "caps toprule", bars: ["#9FB0C8", "#23406B", "#9FB0C8", "#23406B", "#F26B1D", "#9FB0C8"] } },
+  { id: "news", name: "Newsroom", strat: "fewer",
+    thesis: "Measured and analytical. A plain white page, a quiet grey headline, borderless panels and a strong blue-to-red scale.",
+    pal: [["Canvas", "#FFFFFF"], ["Card", "#FFFFFF"], ["Ink", "#3A3A3A"], ["Accent", "#2C6FA8"], ["Second", "#C0312B"], ["Third", "#DADADA"]],
+    type: "<b>Lato</b> 400 for titles (large, grey, never bold), Lato 700 for labels, Lato italic for notes.",
+    shape: "No cards: content sits under a single hairline rule, with a dark footer band for source and logo.",
+    chart: "Small multiples on one shared scale, and blue-to-red diverging with a grey midpoint for change.",
+    t: { bg: "#FFFFFF", card: "#FFFFFF", ink: "#3A3A3A", muted: "#6B6B6B", soft: "#7A7A7A", acc: "#2C6FA8", line: "#DADADA", chip: "#EEF2F7", up: "#1F6B3A", display: "'Lato',sans-serif", body: "'Lato',sans-serif", mono: "'Lato',sans-serif", btnR: "999px", cardR: "0px", mkR: "6px", hW: 400, wmW: 700, track: "0",
+      cls: "news", cardBorder: "0px", bars: ["#2C6FA8", "#7FA9CF", "#D9D9D9", "#E8A08C", "#C0312B", "#7FA9CF"] } },
+  { id: "hex", name: "Hex & Slate", strat: "fewer",
+    thesis: "Polished and professional. A light grey canvas, slate-navy headings, an orange highlight and hexagon clusters in the corners.",
+    pal: [["Canvas", "#F1F1F1"], ["Card", "#FFFFFF"], ["Ink", "#3F5170"], ["Accent", "#EE6A2C"], ["Second", "#C6CBD3"], ["Third", "#F2A43A"]],
+    type: "<b>Source Sans 3</b> 700 for headings, 400 for body.",
+    shape: "10px cards, pill buttons, hexagon clusters at two corners.",
+    chart: "Slate for data, light slate for tracks, orange reserved for the one highlight.",
+    t: { bg: "#F1F1F1", card: "#FFFFFF", ink: "#3F5170", muted: "#6E7787", soft: "#EE6A2C", acc: "#3F5170", line: "#DDE0E5", chip: "#DDE0E5", up: "#2F7D50", display: "'Source Sans 3',sans-serif", body: "'Source Sans 3',sans-serif", mono: "'Source Sans 3',sans-serif", btnR: "999px", cardR: "10px", mkR: "3px", hW: 700, wmW: 700, track: "0",
+      cls: "hex", deco: "hex", bars: ["#C6CBD3", "#C6CBD3", "#C6CBD3", "#C6CBD3", "#3F5170", "#C6CBD3"] } }
+];
+const COMPARE = {
+  cobalt: ["Friendly product tool", 0, "", "analysts moving from BI tools into AI-assisted building"],
+  instrument: ["Developer infrastructure", 0, "", "developers and product engineers using AI coding tools"],
+  night: ["Power-user app", 0, "", "senior engineers who live in dark mode and keyboard shortcuts"],
+  field: ["Trusted publication", 0, "", "data journalists, analysts and teachers who value good practice"],
+  blueprint: ["Technical reference", 0, "", "teams that want a precise, documented standard to build against"],
+  consult: ["Expert consultancy", 0, "", "business and BI teams presenting to leadership and clients"],
+  gold: ["Corporate marketing", 0, "", "business owners and marketers who want polished, on-brand dashboards"],
+  signal: ["Marketing agency", 0, "", "agencies and freelancers building branded dashboards for clients"],
+  news: ["Data journalism", 0, "", "reporters, researchers and analysts publishing charts to the public"],
+  retro: ["Social recap card", 0, "", "creators who share year-in-review and leaderboard posts"],
+  hex: ["Professional profile", 0, "", "individual analysts building portfolios and résumés"]
+};
+const PRINCIPLES = [
+  { name: "Type hierarchy", pts: ["Title around 20px and heavy; subtitle around 16px and lighter", "Axis and data labels around 12px; legend around 14px; source and notes around 11px", "Titles left-aligned; everything inside the chart in sentence case"] },
+  { name: "Chart chrome", pts: ["No axis titles when the subtitle names the unit", "No tick marks or axis lines; horizontal gridlines only, with a heavier zero line", "Legend above the plot with no legend title", "A source line and a small logo under every chart"] },
+  { name: "Colour order", pts: ["A fixed categorical order chosen so neighbouring colours always contrast", "Separate tuned sets for light and dark themes", "Status colours kept apart from series colours", "No gradients across multiple categories"] },
+  { name: "Greys and dark mode", pts: ["Grey is the most important colour; plan more greys than you think", "Gridlines lighter than labels, labels lighter than titles", "Dark mode keeps the same contrast relationships instead of simply inverting"] }
+];
+const ARCH = [
+  { k: "all", sw: ["#1D4ED8", "#DB2777", "#059669", "#D97706", "#7C3AED", "#0891B2", "#DC2626", "#65A30D"], text: "A broad palette across the colour wheel, with a defined order so most charts still use the first two or three." },
+  { k: "fewer", sw: ["#0F2D4A", "#2E5C86", "#6F9BC4", "#B8D0E6", "#E3120B", "#7FBFB8"], text: "Two or three brand hues used in a fixed order; extra categories get shades, not new hues. The most recognisable approach." },
+  { k: "more", sw: ["#0B7A75", "#E07A1F", "#7A3EB1", "#D63864", "#2F6FD6", "#9AA0A6"], text: "Five or six distinct hues, with the first three or four doing most of the work. Flexible, a little less recognisable." },
+  { k: "min", sw: ["#E6E6E9", "#C9C9CF", "#9B9BA4", "#5F5F68", "#0B84D8", "#0A5E9C"], text: "One or two hue families. Calm and distinctive for simple charts, harder for many categories and colour-blind readers." }
+];
+const RULES = [
+  ["ok", "Fixed categorical order, validated for colour-blind contrast"], ["ok", "Status colours kept separate from series colours"],
+  ["ok", "Horizontal gridlines only, no tick marks, heavier zero line"], ["ok", "Grey hierarchy: grid lightest, labels mid, titles darkest"],
+  ["ok", "Legend above the plot, plus direct labels for up to four series"], ["ok", "Dark mode with its own tuned steps, not an inversion"]
+];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nameOf = Object.fromEntries(DIRS.map(d => [d.id, d.name]));
+document.getElementById("toc").innerHTML = DIRS.map(d => `<a href="#${d.id}">${d.name}</a>`).join("");
+document.getElementById("principles").innerHTML = PRINCIPLES.map(g => `<div class="gcard"><h3>${g.name}</h3><ul>${g.pts.map(p => `<li>${p}</li>`).join("")}</ul></div>`).join("");
+document.getElementById("arch").innerHTML = ARCH.map(a => `<div class="gcard"><h3>${STRATS[a.k]}</h3><div class="strip" aria-hidden="true">${a.sw.map(c => `<i style="background:${c}"></i>`).join("")}</div><p>${a.text}</p><div class="maps">${DIRS.filter(d => d.strat === a.k).map(d => `<a href="#${d.id}">${d.name}</a>`).join("")}</div></div>`).join("");
+const half = k => RULES.filter(r => r[0] === k).map(r => `<li><span class="${k}" aria-label="${k === "ok" ? "Already in the library" : "Worth adding"}">${k === "ok" ? "✓" : "+"}</span><span>${r[1]}</span></li>`).join("");
+document.getElementById("rules").innerHTML = `<div class="gcard"><span class="eyebrow">In every component</span><ul>${half("ok")}</ul></div>`;
+const spark = t => { const v = [12, 14, 13, 17, 16, 19, 18, 22, 21, 25]; const W = 160, H = 40, x = i => 6 + i / 9 * (W - 12), y = n => H - 4 - (n - 10) / 16 * (H - 8);
+  const d = v.map((n, i) => (i ? "L" : "M") + x(i).toFixed(1) + "," + y(n).toFixed(1)).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="${d}L${x(9)},${H}L${x(0)},${H}Z" fill="${t.acc}" fill-opacity=".12"/><path d="${d}" fill="none" stroke="${t.acc}" stroke-width="2" stroke-linejoin="round"/><circle cx="${x(9)}" cy="${y(25)}" r="3.5" fill="${t.acc}" stroke="${t.card.startsWith("rgba") ? t.bg : t.card}" stroke-width="2"/></svg>`; };
+const bars = t => { const v = [42, 55, 61, 48, 78, 66], W = 220, H = 92, bw = 22, gap = (W - bw * 6) / 5;
+  return `<svg viewBox="0 0 ${W} ${H + 16}" aria-hidden="true">` + v.map((n, i) => { const h = n / 80 * H, x = i * (bw + gap), r = Math.min(4, parseInt(t.cardR) || 0);
+    return `<path d="M${x},${H}V${H - h + r}Q${x},${H - h} ${x + r},${H - h}H${x + bw - r}Q${x + bw},${H - h} ${x + bw},${H - h + r}V${H}Z" fill="${t.bars[i]}"/><text x="${x + bw / 2}" y="${H + 13}" text-anchor="middle" font-size="9.5" fill="${t.muted}" font-family="${t.mono.replace(/'/g, "")}">${["M", "T", "W", "T", "F", "S"][i]}</text>`; }).join("") + `</svg>`; };
+const hexPts = (cx, cy, r) => [0, 1, 2, 3, 4, 5].map(i => { const a = Math.PI / 3 * i; return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`; }).join(" ");
+const HEX_DECO = `<svg class="deco" style="right:0;top:0;width:110px;height:76px;margin:0" viewBox="0 0 110 76" aria-hidden="true">${[[30, 14, "#C6CBD3"], [58, 0, "#3F5170"], [86, 14, "#8E99AC"], [58, 30, "#DDE0E5"], [86, 46, "#3F5170"], [110, 30, "#C6CBD3"], [110, 0, "#5D6E8C"]].map(([x, y, c]) => `<polygon points="${hexPts(x, y, 15)}" fill="${c}" stroke="#F1F1F1" stroke-width="2"/>`).join("")}</svg><svg class="deco" style="left:0;bottom:0;width:96px;height:70px;margin:0" viewBox="0 0 96 70" aria-hidden="true">${[[0, 40, "#F7C9AF"], [26, 56, "#EE6A2C"], [26, 24, "#F49A6A"], [52, 70, "#F7C9AF"], [0, 72, "#F49A6A"]].map(([x, y, c]) => `<polygon points="${hexPts(x, y, 15)}" fill="${c}" stroke="#F1F1F1" stroke-width="2"/>`).join("")}</svg>`;
+const vars = t => [["bg", t.bg], ["card", t.card], ["ink", t.ink], ["muted", t.muted], ["soft", t.soft], ["acc", t.acc], ["line", t.line], ["chip", t.chip], ["up", t.up], ["display", t.display], ["body", t.body], ["mono", t.mono], ["btn-r", t.btnR], ["card-r", t.cardR], ["mk-r", t.mkR], ["h-w", t.hW], ["track", t.track],
+  ["wm-w", t.wmW], ["num", t.num], ["btn-bg", t.btnBg], ["btn-fg", t.btnFg], ["btn-border", t.btnBorder], ["btn-shadow", t.btnShadow], ["card-border", t.cardBorder], ["card-shadow", t.cardShadow], ["chip-r", t.chipR], ["gridline", t.gridline], ["lbl-font", t.lblFont], ["band", t.band]]
+  .filter(([, v]) => v !== undefined).map(([k, v]) => `--p-${k}:${v}`).join(";");
+document.getElementById("dirs").innerHTML = DIRS.map(d => { const t = d.t;
+  return `<article class="dir" id="${d.id}" aria-labelledby="t-${d.id}">
+    <div><span class="eyebrow">Palette strategy · ${STRATS[d.strat]}</span><h3 id="t-${d.id}">${d.name}</h3><p class="thesis">${d.thesis}</p>
+      <dl><dt>Palette</dt><dd><div class="pal">${d.pal.map(([n, h]) => `<span><i style="background:${h}"></i>${n} ${h}</span>`).join("")}</div></dd>
+      <dt>Type</dt><dd>${d.type}</dd><dt>Shapes</dt><dd>${d.shape}</dd><dt>Charts</dt><dd><b>${STRATS[d.strat]}.</b> ${d.chart}</dd></dl></div>
+    <div class="pv ${t.cls || ""}" style="${vars(t)}" role="img" aria-label="${esc(d.name)} preview: site header, headline, buttons, a KPI card and a bar chart in this theme's style">
+      <div class="in"><nav><span class="wm"><span class="mk"></span>Dashboard Components</span><span>Library</span><span>Themes</span></nav>
+        <p class="hl">${COPY.hl[0]} <em>${COPY.hl[1]}</em></p><p class="sub">${COPY.sub}</p>
+        <div class="ctas"><span class="b1">Browse components</span><span class="b2">Read a spec</span></div>
+        <div class="row"><div class="card"><div class="lbl">Weekly revenue</div><div class="val">$248.6K</div><div class="dl">▲ 12.4% vs last week</div>${spark(t)}</div>
+          <div class="card"><div class="lbl">Orders by day</div>${bars(t)}<div class="chips"><span class="chip">KPI cards</span><span class="chip">Gauges</span><span class="chip">Maps</span></div></div></div></div>${t.deco === "hex" ? HEX_DECO : ""}</div>
+  </article>`; }).join("");
+const dots = n => `<span class="score" aria-label="${n} of 5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`;
+document.querySelector("#compare tbody").innerHTML = DIRS.map(d => { const c = COMPARE[d.id]; return `<tr><td><a href="#${d.id}" style="color:var(--fg);font-weight:600">${d.name}</a></td><td>${c[0]}</td><td>${c[3]}</td></tr>`; }).join("");
+</script>
+
+<style>
+.back{display:inline-block;margin-bottom:16px;font-size:14px;color:var(--fg);text-decoration:none;padding:6px 12px;border-radius:999px;background:var(--chip)}
+.back:hover,.back:focus-visible{background:var(--line);outline:none}
+.use{all:unset;box-sizing:border-box;cursor:pointer;margin-top:14px;display:inline-flex;gap:8px;align-items:center;font:600 14px var(--body);padding:9px 16px;border-radius:999px;background:var(--fg);color:var(--bg)}
+.use[aria-pressed="true"]{background:var(--accent);color:#fff}
+.use:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+<script>
+// Themes page inside the component library: each direction can be applied to every component
+(() => {
+  let cur = "instrument"; try { cur = localStorage.getItem("dc-brand") || cur; } catch {}
+  const go = id => { try { localStorage.setItem("dc-brand", id); } catch {} location.href = "index.html#brand-" + (id || "default"); };
+  document.querySelectorAll(".dir").forEach(d => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "use";
+    const on = cur === d.id; b.setAttribute("aria-pressed", String(on));
+    b.textContent = on ? "✓ Current theme · open the library" : "Use this theme";
+    b.onclick = () => go(d.id);
+    d.firstElementChild.appendChild(b);
+  });
+  const lede = document.querySelector(".lede");
+  if (lede) { const p = document.createElement("p"); p.className = "lede"; p.style.fontSize = "15px";
+    p.innerHTML = 'Choose <b>Use this theme</b> on any theme to restyle every component in the library. Quiet Instrument is the default.';
+    lede.after(p); }
+})();
+</script>
+
+</body></html>
