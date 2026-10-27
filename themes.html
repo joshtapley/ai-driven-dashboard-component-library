@@ -4,7 +4,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;600;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600&family=Nunito:wght@600;800;900&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;600;800;900&family=Poppins:wght@400;600;800&family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600;800&family=Merriweather:wght@900&family=Karla:wght@400;600&family=Lato:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@500;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;600;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600&family=Nunito:wght@600;800;900&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;600;800;900&family=Poppins:wght@400;600;800&family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&family=Plus+Jakarta+Sans:wght@400;600;800&family=Merriweather:wght@900&family=Karla:wght@400;600&family=Lato:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@500;800&family=Source+Sans+3:wght@400;600;700&family=Inter:wght@400;500;700;800&display=swap">
 <style>
 /* Layout: a quiet neutral frame (index chips + long column) so each direction's live preview carries the colour */
 :root{
@@ -111,8 +111,8 @@ dd{margin:0;min-width:0}
 </style>
 
 <div class="wrap">
-  <a class="back" href="index.html">← Component library</a><span class="eyebrow">AI Driven Dashboard Component Library · themes</span>
-  <h1>Eleven themes for the component library</h1>
+  <a class="back" href="index.html">← Component library</a> <a class="back" href="https://joshtapley.github.io/">Josh Tapley · home</a><span class="eyebrow">AI Driven Dashboard Component Library · themes</span>
+  <h1>Twelve themes for the component library</h1>
   <p class="lede">Each theme below restyles every component: palette, type, shapes and a chart colour strategy. Every preview uses the same components and the same words, so the only thing that changes is the theme.</p>
   <nav class="toc" aria-label="Themes" id="toc"></nav>
 
@@ -173,6 +173,14 @@ const DIRS = [
     chart: "Bars rotate through orange, teal, yellow and red for single-series leaderboards, with white labels.",
     t: { bg: "#0E2238", card: "#16304C", ink: "#FFFFFF", muted: "#A9B8CC", soft: "#63D2BF", acc: "#63D2BF", line: "rgba(255,255,255,.18)", chip: "rgba(255,255,255,.12)", up: "#63D2BF", display: "'Montserrat',sans-serif", body: "'Montserrat',sans-serif", mono: "'Montserrat',sans-serif", btnR: "999px", cardR: "14px", mkR: "50%", hW: 800, wmW: 800, track: "-0.01em",
       btnFg: "#0E2238", cls: "keyline", bars: ["#F7953B", "#63D2BF", "#FFD978", "#F0592A", "#F7953B", "#63D2BF"] } },
+  { id: "tapley", name: "Josh Tapley", strat: "all",
+    thesis: "Matches joshtapley.github.io. A deep navy canvas, layered navy cards, the Tableau 10 palette led by a lifted blue and orange, and crisp Inter headlines with monospace labels.",
+    pal: [["Canvas", "#0B1220"], ["Card", "#131D33"], ["Ink", "#F8FAFC"], ["Accent", "#6B9BD1"], ["Second", "#F28E2B"], ["Third", "#59A14F"]],
+    type: "<b>Inter</b> 700–800 for headlines, Inter 400/500 for body, <b>IBM Plex Mono</b> for labels and section numbers.",
+    shape: "10px cards with 1px navy borders, small uppercase monospace labels, orange for highlights and tags.",
+    chart: "The full Tableau 10 order, blue first and orange second, with a warm cream light mode that keeps the same colours.",
+    t: { bg: "#0B1220", card: "#131D33", ink: "#F8FAFC", muted: "#94A3B8", soft: "#F28E2B", acc: "#6B9BD1", line: "#22314F", chip: "#18243D", up: "#59A14F", display: "'Inter',sans-serif", body: "'Inter',sans-serif", mono: "'IBM Plex Mono',monospace", btnR: "8px", cardR: "10px", mkR: "3px", hW: 800, wmW: 700, track: "-0.02em",
+      btnBg: "#F28E2B", btnFg: "#0B1220", bars: ["#2C3D5E", "#2C3D5E", "#4E79A7", "#2C3D5E", "#6B9BD1", "#F28E2B"] } },
   { id: "night", name: "Night Console", strat: "more",
     thesis: "Premium and dark-first. A near-black canvas, translucent glass panels, a warm coral glow and heavy grotesque headlines.",
     pal: [["Canvas", "#0A0B0E"], ["Card", "#16171C"], ["Ink", "#F4F4F6"], ["Accent", "#FF6B5B"], ["Second", "#4ADE80"], ["Third", "#8B8C94"]],
@@ -241,6 +249,7 @@ const DIRS = [
 const COMPARE = {
   cobalt: ["Friendly product tool", 0, "", "analysts moving from BI tools into AI-assisted building"],
   instrument: ["Developer infrastructure", 0, "", "developers and product engineers using AI coding tools"],
+  tapley: ["Personal portfolio", 0, "", "visitors to joshtapley.github.io and anyone who likes its navy and Tableau colours"],
   night: ["Power-user app", 0, "", "senior engineers who live in dark mode and keyboard shortcuts"],
   field: ["Trusted publication", 0, "", "data journalists, analysts and teachers who value good practice"],
   blueprint: ["Technical reference", 0, "", "teams that want a precise, documented standard to build against"],
