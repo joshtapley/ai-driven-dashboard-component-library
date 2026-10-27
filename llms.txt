@@ -1,0 +1,90 @@
+# Dashboard Components
+
+> A reference library of dashboard components for people building dashboards with AI coding assistants. Each component is one self-contained HTML file (no libraries) plus a spec and a ready-to-paste prompt. All share one validated, colour-blind-safe token set with light and dark themes.
+
+## Basic charts
+
+- [Line chart](components/49-line-chart/README.md): The everyday multi-series line chart: three channels over twelve months with straight segments, a toggleable legend, optional point markers, direct end labels and a shared crosshair tooltip.
+- [Curved line chart](components/50-curved-line/README.md): Daily sessions as faint raw points with a smoothed 7-day average on top, and a curve switch between monotone (no overshoot), natural spline and step interpolation, so you can see how each curve treats the same data.
+- [Area chart](components/51-area-chart/README.md): A single-series area chart for a volume measure: accent line over a soft fill anchored at zero, a dashed target line with a label, a date-range switch, and a crosshair that reports the value and the gap to target.
+- [Stacked area chart](components/52-stacked-area/README.md): Four product lines stacked over twelve months with a Stacked / 100% switch, straight or smooth edges, a legend that toggles layers, and a crosshair tooltip with every layer, its share and the total.
+- [Vertical bar (column) chart](components/53-column-chart/README.md): Monthly profit as columns that grow up from zero for gains and down for losses, with rounded data ends, an optional target line, best/worst highlighting and value labels on demand.
+- [Horizontal bar chart](components/54-horizontal-bar/README.md): Product categories as horizontal bars with readable long labels, sorting by value or name, value labels at the tips, and an optional last-year tick on each bar for a quiet comparison.
+- [Grouped bar chart](components/55-grouped-bar/README.md): Quarterly revenue for three channels as side-by-side bars within each quarter, switchable between vertical and horizontal, with legend toggles, optional value labels and per-group hover.
+- [Stacked bar chart](components/56-stacked-bar/README.md): Monthly support tickets stacked by channel, switchable between vertical and horizontal and between absolute and 100%, with 2px surface gaps between segments, totals on top, inside labels where they fit, and per-segment hover.
+- [Donut chart (optional labels)](components/58-donut-labeled/README.md): A clean donut with no legend and the total in the centre. Labels are off by default for a minimal ring with a hover readout; switch them on to name every slice directly with its share, joined by a short leader line.
+
+## Maps
+
+- [Square tile US map](components/01-us-tile-square/README.md): Every state is an equal square on a 12×8 grid, coloured on a binned sequential or diverging scale, with a metric switch and a click-to-inspect detail panel.
+- [Circle tile US map](components/02-us-tile-circle/README.md): States as circles on the tile grid: circle area shows size (revenue) and a diverging colour shows change (growth), with a region filter that dims the rest.
+- [Hex tile US map](components/03-us-tile-hex/README.md): A hexagon tile map coloured by a category (the leading sales channel per state), where the legend doubles as a filter and shows each category's count.
+- [Sparkline tile US map](components/04-us-tile-sparkline/README.md): Each state tile holds its own 24-month trend line, so the map shows shape over time instead of a single number; a filter highlights rising or falling states.
+- [Globe with flight paths](components/48-globe-path/README.md): A dotted orthographic globe with great-circle routes arcing out of a hub: route width = passengers, animated travellers along each path, drag to spin, auto-rotate, and a ranked route list that flies the globe to any destination.
+
+## Gauges
+
+- [Ring meters with severity](components/06-gauge-ring/README.md): A grid of 270° ring meters for capacity-style metrics, where the fill colour carries severity (accent → warning → critical) and each ring shows used / total underneath.
+- [Activity rings (goal tracker)](components/07-gauge-activity-rings/README.md): Three concentric rings track daily goals (calls, demos, deals); rings can lap past 100%, and a week strip of mini rings lets you pick the day.
+- [Bullet chart list](components/08-gauge-bullet/README.md): A stack of horizontal bullet charts — actual bar, target tick, prior-year marker and three grey performance bands — with % of target and a sort control.
+- [Speedometer gauge (configurable)](components/57-gauge-banded/README.md): A bold speedometer: a thick arc that sweeps 180–270°, three gauge styles (banded zones, progress fill, lit segments), a tapered needle with a round hub, an optional target notch and the value set large in the gauge's opening.
+
+## KPI cards
+
+- [KPI cards with sparkline](components/09-kpi-sparkline/README.md): The workhorse KPI row: label, big value, signed delta vs the previous period, and a sparkline of the current period over a grey ghost of the previous one, with a 7D / 30D / 90D switch.
+- [KPI cards with target and pace](components/10-kpi-target-pace/README.md): Month-to-date KPI cards that show actual vs target as a progress meter, plus a pace marker for where you should be today and a projected month-end finish.
+- [KPI cards with year-over-year columns](components/11-kpi-yoy-columns/README.md): KPI cards whose mini column chart doubles as a month picker: grey columns for the year, the selected month in accent, prior-year ticks above each, and the headline value follows your click.
+- [KPI cards with breakdown bar](components/12-kpi-breakdown/README.md): A KPI total with a single 100% stacked bar beneath it showing what it's made of; hovering a segment or legend row highlights the pair and shows its share.
+- [Hero KPI with expected range](components/13-kpi-hero-range/README.md): One big number with its change, a trend line drawn inside an expected-range band, and a generated sentence that says whether the latest value is normal, unusually high or unusually low.
+- [Status KPI cards](components/14-kpi-status-tiles/README.md): The standard KPI card (label, big value, delta, sparkline) colour-coded by status — OK, Warning or Critical against configurable thresholds — with a switch between a full-colour tint and a left-edge highlight only.
+- [KPI tabs driving a chart](components/15-kpi-tabs-chart/README.md): A strip of compact KPI tiles that act as tabs: the selected KPI drives the large line chart below (this year vs last year with a crosshair), so one panel shows five metrics.
+- [KPI donut cards](components/59-kpi-donut/README.md): The standard KPI card with a progress donut: a ring fills toward the goal with the percent in its centre, beside the value, the goal and a delta vs the previous period. Switch between ring-beside and ring-on-top layouts.
+
+## Tables
+
+- [Interactive data table](components/16-table-interactive/README.md): A full-featured accounts table: search, region and status filters, sortable columns, pagination, inline MRR bars, status pills, expandable rows with a 12-month trend, and CSV export of the filtered set.
+- [Highlight table (heatmap table)](components/17-table-heatmap/README.md): A region × month crosstab where every cell is shaded on a sequential ramp, with a switch to scale colour across the whole table, within each row, or within each column, plus marginal total bars.
+- [Leaderboard table with sparklines](components/18-table-sparkline/README.md): A ranked product leaderboard with a 12-week sparkline per row, rank movement arrows, the current value, change vs last week and a share-of-total bar; every column sorts.
+- [Expandable pivot table](components/19-table-pivot/README.md): A three-level tree table (category › sub-category › product) with subtotals, expand/collapse per row or all at once, % of total bars and a profit-margin column that flags losses.
+- [Scorecard table vs target](components/20-table-scorecard/README.md): Teams × KPIs scorecard where each cell is tinted on a diverging scale by its distance from target (blue = better, red = worse, grey = on target), with an overall score bar and best-in-column markers.
+
+## Charts
+
+- [Line chart: this year vs last year vs target](components/21-line-comparison/README.md): A time-series line chart with this year, last year and a dashed target, a date-range control (3M / 6M / YTD / 12M), cumulative vs periodic toggle, clickable legend and a shared crosshair tooltip.
+- [Ranked bar chart with highlight](components/22-bar-ranked/README.md): Horizontal bars ranked by value with a Top 5 / 10 / All control that folds the rest into 'Other', an average reference line, value labels at the tips and click-to-highlight.
+- [Waterfall (bridge) chart](components/23-waterfall/README.md): A profit-and-loss bridge from revenue to net income: floating bars for each increase or decrease, solid subtotal bars, connector lines between steps and value labels; switch quarters to watch the bridge rebuild.
+- [Conversion funnel](components/24-funnel/README.md): A stage-by-stage funnel drawn as aligned horizontal bars on an ordinal blue ramp, with step conversion and drop-off between stages, overall conversion, and a device segment switch.
+- [Calendar heatmap](components/25-calendar-heatmap/README.md): A GitHub-style year calendar: one square per day in week columns, shaded on a 5-step sequential scale, with month labels, a Less → More legend, streak and busiest-day stats, and click-to-inspect.
+- [Day × hour heatmap with marginals](components/26-punchcard-heatmap/README.md): A 7 × 24 weekday-by-hour heatmap with marginal bar charts on top (by hour) and right (by day), a metric switch, and crosshair highlighting of the hovered row and column.
+- [Donut with interactive legend](components/27-donut-legend/README.md): A donut chart whose centre shows the total (or the hovered slice), with a legend table that toggles slices on and off and recomputes shares — the polished way to do the pie everyone asks for.
+- [Slopegraph](components/28-slopegraph/README.md): Two vertical axes (before and after) joined by one line per category: biggest riser and faller highlighted by default, everything else grey, hover to spotlight any line, and a Value / Rank switch.
+- [Dumbbell (gap) chart](components/29-dumbbell/README.md): One row per category with two dots joined by a bar — this year vs target, or group A vs group B — sortable by gap, current value or name, with the gap printed at the end of each row.
+- [Waffle chart (part of 100)](components/30-waffle/README.md): A 10 × 10 grid where each square is 1% — 'of every $100 we spend…' — with a dataset switch, a legend that highlights its squares on hover, and largest-remainder rounding so it always totals 100.
+- [Streamgraph](components/34-streamgraph/README.md): Six categories as flowing streams over a year, centred on a wavy baseline, with a Stream / Stacked / 100% offset switch, direct labels on the widest part of each stream and a hover crosshair that reads every layer.
+- [Bump chart](components/37-bump-chart/README.md): Rank over time for ten apps across twelve weeks: smooth lines between rank positions, everything grey except up to three picked apps in colour with rank numbers at every point, and labels at both ends.
+- [Beeswarm](components/38-beeswarm/README.md): Every employee as a dot along a salary axis, swarmed so no dot overlaps, one row per department with a median tick, coloured by level, with level filters and an All-together view.
+- [Radar chart](components/40-radar/README.md): Product profiles across seven scored attributes on a shared 0–100 scale: up to three products as outlined polygons with light fills, an industry benchmark as a dashed ink outline, toggleable legend and per-vertex tooltips, plus a table view.
+- [Area bump chart](components/43-area-bump/README.md): A bump chart whose lines are ribbons: at each quarter the services are stacked in rank order, ribbon thickness is their share, and smooth crossovers show overtakes, with direct labels and hover focus.
+- [Polar area (Nightingale rose)](components/44-polar-area/README.md): Twelve monthly wedges whose area (not radius) is proportional to value, stacked by cause like Nightingale's rose, with a stacked / single-cause switch, square-root rings and hover readouts.
+- [Ternary plot](components/46-ternary-plot/README.md): Each store's sales mix across three channels (online, in-store, wholesale) as a point in a triangle, sized by revenue and coloured by format, with guide lines to the three axes on hover and arrows showing how the mix moved since last year.
+- [Gantt chart with progress](components/60-gantt/README.md): A project plan as a Gantt chart: a task table (owner, status, due) beside a month timeline where each task's bar fills with its progress, grouped into collapsible phases with tinted bands, milestones as diamonds and a today line.
+
+## Flows & networks
+
+- [Tapered funnel](components/31-funnel-shape/README.md): A true funnel shape: each stage is a slice whose top width is that stage's count and whose curved sides narrow to the next stage, with conversion between stages on the right and a segment switch that morphs the shape.
+- [Sankey diagram](components/32-sankey/README.md): A three-stage Sankey (traffic source → landing page → outcome) with ribbons sized by volume, coloured by source, hover-to-trace highlighting, click-to-pin and vertically draggable nodes.
+- [Network (node-link) diagram](components/33-network/README.md): A force-directed network of who collaborates with whom: node size = connections, colour = team, link width = interactions; hover to see neighbours, drag nodes, filter by team and search by name.
+- [Chord diagram](components/39-chord-diagram/README.md): Customer switching between five brands drawn as a chord diagram: arc length = customers lost, ribbon ends sized by flow in each direction and coloured by the brand that wins the exchange, with net gain/loss on hover and a matrix view.
+- [Radial Sankey](components/45-radial-sankey/README.md): A budget flowing outward from a centre total through departments to programmes: concentric rings of arcs with curved bands fanning between them, coloured by department, with hover tracing and a list view.
+- [Tournament bracket](components/47-tournament-bracket/README.md): A 16-team single-elimination bracket in four rounds plus a champion card: match boxes with seeds and scores, winners in bold, elbow connectors, hover any team to light up its path, and a round filter for narrow screens.
+
+## Hierarchies
+
+- [Collapsible tree diagram](components/41-tree-diagram/README.md): A left-to-right tidy tree of an organisation (company › departments › teams › squads): node size = headcount, branches coloured by department, click any node to expand or collapse it, with expand-all, collapse-all and a search that opens the path to a match.
+- [Voronoi treemap](components/42-voronoi-treemap/README.md): A two-level hierarchy (category › product line) packed into a circle as organic Voronoi cells whose areas match their values; click a category to zoom in and re-pack its lines to fill the circle.
+
+## UI patterns
+
+- [Toast notifications](components/35-toast-notices/README.md): Card-style toasts with a 4px status edge, a filled status icon, a bold title, a one-line message and a close button, in four variants, plus a live stack with position control, auto-dismiss progress, pause on hover and an Undo action.
+- [Slide-out dashboard menu](components/36-slideout-menu/README.md): A dashboard sidebar that collapses to an icon rail and slides out to a full menu: workspace monogram, page links with an active accent bar, a collapsible Reports group, a filters section that drives the page, and an off-canvas drawer with a scrim on narrow screens.
+

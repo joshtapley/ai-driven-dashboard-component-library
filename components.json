@@ -1,0 +1,3029 @@
+[
+ {
+  "title": "Square tile US map",
+  "category": "Maps",
+  "tags": [
+   "choropleth",
+   "tile grid map",
+   "geo",
+   "click to inspect"
+  ],
+  "summary": "Every state is an equal square on a 12×8 grid, coloured on a binned sequential or diverging scale, with a metric switch and a click-to-inspect detail panel.",
+  "use_when": [
+   "You compare a rate or per-capita value across states and small states (RI, DE, DC) must be as visible as Texas",
+   "The audience knows US geography roughly; exact borders don't matter",
+   "You need a compact map that fits in a dashboard card"
+  ],
+  "avoid_when": [
+   "The value is a raw total that tracks population (show a ranked bar instead, or normalise first)",
+   "Exact location or distance matters (use a real projection)",
+   "You have county or ZIP data"
+  ],
+  "anatomy": [
+   "Header: title + one-line subtitle naming the metric and period",
+   "Metric switch (segmented control) above the map",
+   "12×8 grid of square tiles, 2px gap, 4px corner radius, state abbreviation centred",
+   "Label ink chosen per tile by fill luminance (white on dark fills, ink on light)",
+   "Binned legend (5 classes) with range labels below the map",
+   "Detail panel: state name, value, national rank, region average and a share-of-region bar"
+  ],
+  "data": "[{ state: \"CA\", revenue: 48200000, growth: 0.081, orders_per_1k: 31.2 }, …] — one row per state + DC (51 rows)",
+  "interactions": [
+   "Hover a tile: tooltip with state, value and rank",
+   "Click or Enter on a tile: selects it (2px ink ring) and fills the detail panel",
+   "Metric switch: re-bins and re-colours; growth switches to a diverging blue↔red scale centred on 0",
+   "Keyboard: every tile is focusable (Tab), Enter selects"
+  ],
+  "a11y": [
+   "Each tile has an aria-label with state name and formatted value",
+   "Legend shows ranges as text, never colour alone",
+   "\"Table\" toggle swaps the map for a sortable list of the same numbers"
+  ],
+  "tokens": [
+   "--seq-0…--seq-6",
+   "--div-neg / --div-mid / --div-pos",
+   "--ink",
+   "--surface"
+  ],
+  "prompt": "Build a square tile-grid US map in a single self-contained HTML file (no libraries). Lay out all 50 states + DC as equal squares on a 12-column × 8-row grid using the standard NPR-style tile positions (AK top-left, ME top-right, HI and TX on the bottom row, FL bottom-right). Tiles are squares with a 2px gap and 4px radius, the state abbreviation centred; choose white or near-black label text per tile from the fill's luminance. Colour with 5 equal-interval bins from a single-hue sequential ramp (light = low); for a signed metric such as growth, switch to a diverging blue↔red ramp with a neutral grey midpoint at 0 and symmetric bins. Put a segmented control above the map to switch metrics, a binned legend with numeric ranges below it, and a detail panel to the right (stacked below on narrow screens) that shows the clicked state's value, national rank and region average. Hover shows a tooltip; tiles are keyboard-focusable and Enter selects. Add a Table toggle that shows the same data as a sorted list. Use CSS variables for every colour and support light and dark themes.",
+  "num": "01",
+  "slug": "us-tile-square",
+  "dir": "components/01-us-tile-square"
+ },
+ {
+  "title": "Circle tile US map",
+  "category": "Maps",
+  "tags": [
+   "proportional symbol",
+   "tile grid map",
+   "diverging",
+   "two encodings"
+  ],
+  "summary": "States as circles on the tile grid: circle area shows size (revenue) and a diverging colour shows change (growth), with a region filter that dims the rest.",
+  "use_when": [
+   "You need two measures per state at once: a magnitude and a signed change",
+   "Big states should look big without hiding small ones",
+   "The question is 'where is growth coming from, and does it matter?'"
+  ],
+  "avoid_when": [
+   "Precise comparison of the size measure matters (circle area is read loosely; add a ranked bar)",
+   "Only one measure is needed (use the square tile map)"
+  ],
+  "anatomy": [
+   "Faint square grid cell behind every state keeps the map shape readable when circles are small",
+   "Circle area ∝ value (radius = √value), largest circle fills the cell",
+   "Diverging fill: red = decline, grey ≈ flat, blue = growth; symmetric around 0",
+   "State abbreviation inside circles large enough to fit it, otherwise below",
+   "Two legends: size key (3 nested circles) and colour ramp with signed labels"
+  ],
+  "data": "[{ state: \"TX\", revenue: 52100000, growth: 0.064 }, …]",
+  "interactions": [
+   "Hover: tooltip with revenue, growth and share of total",
+   "Region filter (All / West / Midwest / South / Northeast) dims other regions to 25% and totals the selection",
+   "Size toggle: 'Revenue' or 'Equal' (equal circles turn it into a pure colour map)"
+  ],
+  "a11y": [
+   "Circles carry aria-labels",
+   "Growth is also written in the tooltip and summary line, so colour is not the only channel",
+   "Dimmed states stay hoverable"
+  ],
+  "tokens": [
+   "--div-neg / --div-mid / --div-pos",
+   "--surface-2",
+   "--ink"
+  ],
+  "prompt": "Build a circle tile-grid US map as a single self-contained HTML file with no libraries. Use the standard 12×8 tile positions for the 50 states + DC. In each cell draw a faint rounded square in a surface tint, then a circle whose AREA is proportional to revenue (radius = sqrt(value / max) × half the cell) and whose fill comes from a diverging red ↔ grey ↔ blue scale for year-over-year growth, symmetric around zero. Put the state abbreviation inside the circle when it fits, choosing white or dark text by fill luminance, otherwise just below it in muted text. Add a size legend (three nested circles with values) and a diverging colour legend with signed % labels. Add a region segmented control that dims other regions to 25% opacity and updates a summary line ('South: $X revenue, +Y% growth'). Add a Size toggle for Revenue vs Equal circles. Hover tooltips show revenue, growth and share of total. Use CSS variables for every colour and support light and dark themes.",
+  "num": "02",
+  "slug": "us-tile-circle",
+  "dir": "components/02-us-tile-circle"
+ },
+ {
+  "title": "Hex tile US map",
+  "category": "Maps",
+  "tags": [
+   "hexbin",
+   "tile grid map",
+   "categorical",
+   "legend filter"
+  ],
+  "summary": "A hexagon tile map coloured by a category (the leading sales channel per state), where the legend doubles as a filter and shows each category's count.",
+  "use_when": [
+   "Each state has one winning category (top channel, party, plan tier, vendor)",
+   "You want a softer, more organic map than squares with the same equal-area fairness",
+   "Three or fewer categories — the colour set stays distinguishable for colour-blind readers"
+  ],
+  "avoid_when": [
+   "More than 3–4 categories (fold extras into 'Other' or use small multiples)",
+   "The value is continuous (use a sequential tile map)"
+  ],
+  "anatomy": [
+   "Pointy-top hexagons; odd rows shifted half a hex so neighbours nest",
+   "Categorical fills in fixed order (slot 1, 2, 3); never re-coloured when filtered",
+   "2px surface-coloured gap between hexes",
+   "Legend chips: swatch + label + count, clickable",
+   "Margin of victory shown as fill opacity is NOT used — opacity is reserved for filtering"
+  ],
+  "data": "[{ state: \"OH\", channel: \"Retail\", share: 0.46 }, …]",
+  "interactions": [
+   "Click a legend chip to isolate that category (others drop to 15%); click again to reset",
+   "Hover a hex: state, winning channel and its share",
+   "Keyboard: legend chips are buttons"
+  ],
+  "a11y": [
+   "Legend chips are real buttons with aria-pressed",
+   "Category name always appears in the tooltip and legend text",
+   "Uses only the first three categorical slots, which pass all-pairs colour-blind checks"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--surface"
+  ],
+  "prompt": "Build a hexagon tile-grid US map in one self-contained HTML file (no libraries). Use pointy-top hexagons laid out from the standard 12×8 US tile grid, shifting odd rows right by half a hex width so tiles nest; leave a 2px gap. Colour each state by its leading category (e.g. top sales channel: Online, Retail, Partner) using the first three categorical colour tokens in fixed order. Centre the state abbreviation with text colour chosen by fill luminance. Below the title, render legend chips (swatch, label, count of states) that act as filters: clicking one dims every other category to 15% opacity, clicking again resets; colours never change when filtering. Hover tooltips show the state, the winning category and its share. CSS variables for all colours, light and dark themes.",
+  "num": "03",
+  "slug": "us-tile-hex",
+  "dir": "components/03-us-tile-hex"
+ },
+ {
+  "title": "Sparkline tile US map",
+  "category": "Maps",
+  "tags": [
+   "small multiples",
+   "tile grid map",
+   "trend",
+   "sparkline"
+  ],
+  "summary": "Each state tile holds its own 24-month trend line, so the map shows shape over time instead of a single number; a filter highlights rising or falling states.",
+  "use_when": [
+   "The story is how each state's trend moved, not where the level is highest",
+   "You want regional patterns in trajectories (e.g. the South rising, the Midwest flat)",
+   "There is room for ~60px tiles"
+  ],
+  "avoid_when": [
+   "Phone-width layouts (tiles become too small for lines; switch to a ranked list of sparklines)",
+   "Exact values matter (use a table with sparklines)"
+  ],
+  "anatomy": [
+   "Tile background in surface tint; state code top-left; % change bottom-right",
+   "Each line indexed to its own first month (local y-scale) — shape, not size, is compared",
+   "Line in the accent colour, end dot ≥ 8px with a surface ring",
+   "Tiles with the selected trend stay full strength, the rest fade"
+  ],
+  "data": "[{ state: \"GA\", series: [100, 101.4, …24 monthly values] }, …]",
+  "interactions": [
+   "Highlight control: All / Rising / Falling / Flat",
+   "Hover a tile: tooltip with first and last value and % change, plus a crosshair-free enlarged line"
+  ],
+  "a11y": [
+   "% change printed on each tile so trend direction is never colour-only",
+   "aria-label per tile with start, end and change"
+  ],
+  "tokens": [
+   "--s1",
+   "--surface-2",
+   "--up",
+   "--down",
+   "--ink-2"
+  ],
+  "prompt": "Build a sparkline tile-grid US map in a single self-contained HTML file. Use the standard 12×8 US tile grid; each state tile is a rounded square in a light surface tint containing: the state code top-left (small, semibold), a 24-month sparkline filling the middle (2px accent line, a light 10% area wash, an end dot with a surface-coloured ring), and the % change bottom-right in green or red text with a ▲/▼ glyph. Each sparkline uses its own y-scale so shapes are comparable. Add a segmented control (All / Rising / Falling / Flat, where flat = within ±2%) that fades non-matching tiles to 20% opacity, and a summary count. Hover shows start, end and change. CSS variables for every colour, light and dark themes.",
+  "num": "04",
+  "slug": "us-tile-sparkline",
+  "dir": "components/04-us-tile-sparkline"
+ },
+ {
+  "title": "Ring meters with severity",
+  "category": "Gauges",
+  "tags": [
+   "donut gauge",
+   "utilisation",
+   "capacity",
+   "meter"
+  ],
+  "summary": "A grid of 270° ring meters for capacity-style metrics, where the fill colour carries severity (accent → warning → critical) and each ring shows used / total underneath.",
+  "use_when": [
+   "Showing utilisation of a fixed capacity: quota, storage, budget spent, seats",
+   "Several resources share the same 0–100% scale",
+   "Severity bands are well understood (e.g. >80% warning, >95% critical)"
+  ],
+  "avoid_when": [
+   "Values can exceed 100% meaningfully (use activity rings or a bullet chart)",
+   "Comparing values that aren't percentages of a whole"
+  ],
+  "anatomy": [
+   "270° ring (open at the bottom) so the end is easy to judge, 10px stroke, round caps",
+   "Track is a lighter step of the fill's own hue so state reads across the whole ring",
+   "Fill: accent below 75%, warning 75–90%, critical above 90%",
+   "Centre: % used (semibold) and the resource name",
+   "Below: used / total in absolute units and an icon + word status"
+  ],
+  "data": "[{ name: \"Storage\", used: 7.4, total: 10, unit: \"TB\" }, …]",
+  "interactions": [
+   "Workspace switch re-draws all rings",
+   "Hover a ring: used, total, headroom left"
+  ],
+  "a11y": [
+   "role=meter with aria-valuenow",
+   "Severity has an icon and word next to it",
+   "Percent is printed, never only implied by the arc"
+  ],
+  "tokens": [
+   "--s1",
+   "--warn",
+   "--crit",
+   "--track",
+   "--surface-2"
+  ],
+  "prompt": "Build a responsive grid of 270° ring meters (open at the bottom) as one self-contained HTML file with inline SVG. Each ring has a 10px round-capped stroke; the track is a pale tint of the same hue as the fill; the fill colour encodes severity — accent under 75%, warning 75–90%, critical over 90% — and the track tints follow. Centre the percentage (semibold, ~22px) with the resource name under it; below the ring print 'used / total unit' and a status with an icon (● Healthy, ▲ High, ■ Critical). Add a segmented control to switch between workspaces with different values. Hover shows used, total and headroom. role=meter with aria values. CSS variables for every colour, light and dark themes.",
+  "num": "06",
+  "slug": "gauge-ring",
+  "dir": "components/06-gauge-ring"
+ },
+ {
+  "title": "Activity rings (goal tracker)",
+  "category": "Gauges",
+  "tags": [
+   "concentric rings",
+   "goals",
+   "daily targets",
+   "overflow"
+  ],
+  "summary": "Three concentric rings track daily goals (calls, demos, deals); rings can lap past 100%, and a week strip of mini rings lets you pick the day.",
+  "use_when": [
+   "A person or team has 2–3 daily or weekly goals with different units",
+   "Over-achievement should be visible (a second lap)",
+   "A motivational, personal view — sales reps, coaches, habit trackers"
+  ],
+  "avoid_when": [
+   "Comparing goals across many people (use a table or bullet charts)",
+   "More than 3 rings — inner rings get too short to read"
+  ],
+  "anatomy": [
+   "Three concentric 270°→full rings, outer to inner = series slots 1, 2, 3 in fixed order",
+   "Track = 18% tint of each ring's colour",
+   "Progress past 100% keeps going as a second lap with a surface-coloured ring on its end cap",
+   "Legend column: swatch, goal name, value / goal and % — the legend is the readout",
+   "Week strip: seven small ring sets; the selected day is outlined"
+  ],
+  "data": "{ goals: [{ name: \"Calls\", goal: 40 }, …], days: [{ date: \"Mon\", values: [38, 3, 1] }, …] }",
+  "interactions": [
+   "Click a day in the strip (or use arrow keys) to show it in the big rings",
+   "Hover a ring: value, goal and %"
+  ],
+  "a11y": [
+   "Values and % written in the legend — rings are never the only channel",
+   "Day buttons are real buttons with aria-pressed and arrow-key navigation",
+   "Uses the three categorical slots validated for all-pairs colour-blind separation"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--surface"
+  ],
+  "prompt": "Build an activity-rings goal tracker in one self-contained HTML file with inline SVG. Draw three concentric rings (outer → inner = categorical colours 1, 2, 3) on tracks that are 18% tints of each colour, 14px wide with round caps, starting at 12 o'clock and running clockwise; if progress exceeds 100%, continue drawing a second lap on top with a 2px surface-coloured outline around its end cap so the overlap is visible. To the right, a legend that doubles as the readout: swatch, goal name, 'value / goal' and percentage. Under it, a strip of seven small ring sets (Mon–Sun) as buttons; clicking one (or arrow keys) loads that day into the big rings, and the selected day is outlined. Hover tooltips on rings. CSS variables for every colour, light and dark themes.",
+  "num": "07",
+  "slug": "gauge-activity-rings",
+  "dir": "components/07-gauge-activity-rings"
+ },
+ {
+  "title": "Bullet chart list",
+  "category": "Gauges",
+  "tags": [
+   "bullet graph",
+   "target vs actual",
+   "qualitative bands",
+   "Stephen Few"
+  ],
+  "summary": "A stack of horizontal bullet charts — actual bar, target tick, prior-year marker and three grey performance bands — with % of target and a sort control.",
+  "use_when": [
+   "Many metrics need actual vs target in little space (the dense replacement for a wall of gauges)",
+   "Each metric has its own scale and its own 'poor / satisfactory / good' bands",
+   "You want prior period as a secondary comparison"
+  ],
+  "avoid_when": [
+   "There is no target or band to compare against (use a plain bar)",
+   "The audience needs a trend (pair with a sparkline column)"
+  ],
+  "anatomy": [
+   "Label column: metric name + unit",
+   "Three bands in stepped neutral greys (darkest = poor) behind the bar, full row height",
+   "Actual bar: one-third of band height, accent colour, 4px rounded end",
+   "Target: 2px ink tick, taller than the bar",
+   "Prior year: small hollow diamond marker",
+   "Value + % of target on the right; % in up/down text colour"
+  ],
+  "data": "[{ name: \"Revenue\", unit: \"$K\", actual: 270, target: 250, prior: 231, zones: [150, 225, 300] }, …]",
+  "interactions": [
+   "Sort: original order, % of target, or gap to target",
+   "Hover a row: actual, target, prior year and band reached"
+  ],
+  "a11y": [
+   "% of target written as text with a ▲/▼ glyph",
+   "Each row has an aria-label summarising actual vs target"
+  ],
+  "tokens": [
+   "--s1",
+   "--surface-2",
+   "--axis",
+   "--ink",
+   "--up",
+   "--down"
+  ],
+  "prompt": "Build a list of horizontal bullet charts in one self-contained HTML file with inline SVG (no libraries). One row per metric, each with its own scale from 0 to the top of its range. In each row draw: three qualitative bands as stepped neutral greys (darkest = poor) spanning the row height; the actual value as an accent bar one-third the band height with a 4px rounded end; a 2px ink target tick taller than the bar; a small hollow diamond for the prior-year value. A left label column shows the metric name and unit; a right column shows the actual value and % of target with ▲/▼ in success/danger text colours. Add a segmented sort control (Default / % of target / Gap) and hover tooltips. Rows animate to their new positions when sorted. Include a tiny legend explaining bar, tick, diamond and bands. CSS variables for all colours, light and dark themes.",
+  "num": "08",
+  "slug": "gauge-bullet",
+  "dir": "components/08-gauge-bullet"
+ },
+ {
+  "title": "KPI cards with sparkline",
+  "category": "KPI cards",
+  "tags": [
+   "stat tile",
+   "sparkline",
+   "delta badge",
+   "period comparison"
+  ],
+  "summary": "The workhorse KPI row: label, big value, signed delta vs the previous period, and a sparkline of the current period over a grey ghost of the previous one, with a 7D / 30D / 90D switch.",
+  "use_when": [
+   "The top row of almost any dashboard: 3–5 headline numbers",
+   "Readers need both 'how much' and 'which way' at a glance",
+   "Comparing to the immediately previous period is meaningful"
+  ],
+  "avoid_when": [
+   "More than ~6 KPIs (group them or use a table with sparklines)",
+   "There is a single headline number (use a hero KPI)"
+  ],
+  "anatomy": [
+   "Label in secondary ink, sentence case, no colon",
+   "Value: 28px semibold, auto-compacted ($1.28M, 12.9K), proportional figures",
+   "Delta: signed %, ▲/▼, colour = direction × whether up is good, followed by 'vs prev. 30 days' in muted text",
+   "Sparkline: current period as a 2px accent line with a 10% area wash; previous period as a 1.5px grey line behind it",
+   "Crosshair readout on hover"
+  ],
+  "data": "{ label: \"Revenue\", fmt: \"$\", upIsGood: true, daily: [ …180 numbers, oldest first ] } — current and previous periods are sliced from the same series",
+  "interactions": [
+   "Period switch re-slices every card (7 / 30 / 90 days)",
+   "Hover a sparkline: crosshair dot and tooltip with the day's value and the same day last period"
+  ],
+  "a11y": [
+   "Delta direction carried by ▲/▼ and sign, not just colour",
+   "Each card is an article with an aria-label summarising value and change",
+   "Sparkline is decorative-plus: the numbers it encodes are in the tooltip and label"
+  ],
+  "tokens": [
+   "--s1",
+   "--de-emph",
+   "--up",
+   "--down",
+   "--ink-2"
+  ],
+  "prompt": "Build a responsive row of four KPI cards in one self-contained HTML file with inline SVG. Each card: a label in secondary ink, the value in 28px semibold (auto-compact: $1.28M, 12.9K), a delta line with ▲/▼, signed percent and 'vs prev. N days' (green when the change is good, red when bad — respect metrics where down is good, like refund rate), and a 48px-tall sparkline of the current period as a 2px accent line with a 10% area wash, drawn over the previous period as a thinner grey line. Generate 180 days of seeded synthetic data per metric and add a 7D / 30D / 90D segmented control that re-slices current vs previous period and recomputes totals and deltas (sum for counts, mean for rates). Hovering a sparkline shows a dot and a tooltip with that day's value and the same day in the previous period. CSS variables for all colours, light and dark themes.",
+  "num": "09",
+  "slug": "kpi-sparkline",
+  "dir": "components/09-kpi-sparkline"
+ },
+ {
+  "title": "KPI cards with target and pace",
+  "category": "KPI cards",
+  "tags": [
+   "progress",
+   "month to date",
+   "pacing",
+   "forecast"
+  ],
+  "summary": "Month-to-date KPI cards that show actual vs target as a progress meter, plus a pace marker for where you should be today and a projected month-end finish.",
+  "use_when": [
+   "Goals reset each month or quarter and the question is 'are we on pace?'",
+   "Sales quotas, fundraising, hiring plans, content output",
+   "You want an early warning before the period ends"
+  ],
+  "avoid_when": [
+   "Values are not cumulative within the period (rates, averages)",
+   "There is no target"
+  ],
+  "anatomy": [
+   "Value as a fraction: actual (semibold) / target (muted)",
+   "Progress meter: 8px track in a pale accent, fill in accent; fill switches to warning when behind pace by >5%",
+   "Pace marker: 2px ink tick at (day ÷ days in month) × target, labelled 'Today'",
+   "Status line with icon: ✓ Ahead of pace / ! Behind pace, by how much",
+   "Projected finish: actual ÷ day × days in month, shown vs target"
+  ],
+  "data": "[{ name: \"New ARR\", target: 400000, daily: [ …30 numbers ] }, …]",
+  "interactions": [
+   "'Day of month' slider replays the month so you can see pacing change",
+   "Hover a meter: actual, expected by today, projected finish"
+  ],
+  "a11y": [
+   "role=progressbar on each meter with aria-valuenow / max",
+   "Status is an icon + sentence, not just the meter colour",
+   "Slider has a visible label and value"
+  ],
+  "tokens": [
+   "--s1",
+   "--warn",
+   "--track",
+   "--ink",
+   "--up",
+   "--down"
+  ],
+  "prompt": "Build month-to-date KPI cards with pacing in one self-contained HTML file. Each card shows the metric name, then actual / target as a fraction (actual semibold, target muted), an 8px progress meter (pale accent track, accent fill that turns to the warning colour when more than 5% behind pace), a 2px ink pace tick at (day ÷ days in month) × target labelled 'Today', a status line with an icon (✓ Ahead of pace by X / ! Behind pace by X) and a projected month-end finish (actual ÷ day × days) vs target. Generate seeded daily data for 30 days and add a labelled 'Day of month' range slider that recomputes everything as if it were that day. Meters are role=progressbar. Hover tooltips with actual, expected and projected. CSS variables for every colour, light and dark themes.",
+  "num": "10",
+  "slug": "kpi-target-pace",
+  "dir": "components/10-kpi-target-pace"
+ },
+ {
+  "title": "KPI cards with year-over-year columns",
+  "category": "KPI cards",
+  "tags": [
+   "month selector",
+   "prior year",
+   "mini column chart",
+   "click to drill"
+  ],
+  "summary": "KPI cards whose mini column chart doubles as a month picker: grey columns for the year, the selected month in accent, prior-year ticks above each, and the headline value follows your click.",
+  "use_when": [
+   "Monthly business reviews: 'how did March do, and vs last March?'",
+   "Seasonality matters, so year-over-year beats month-over-month",
+   "You want the KPI and its 12-month context in one card"
+  ],
+  "avoid_when": [
+   "Daily or weekly granularity (use a sparkline card)",
+   "There is no prior-year data"
+  ],
+  "anatomy": [
+   "Header: label + selected month name",
+   "Value (semibold 26px) and YoY delta with ▲/▼",
+   "12 mini columns (max 16px wide, 4px rounded top, 2px gaps): de-emphasis grey, selected month in accent",
+   "Prior-year value per month as a short 2px ink tick",
+   "Month initials under the columns"
+  ],
+  "data": "[{ label: \"Bookings\", cy: [12 monthly values], py: [12 monthly values], upIsGood: true }, …]",
+  "interactions": [
+   "Click any column (in any card) to select that month across all cards",
+   "Arrow keys move the selection when a card has focus",
+   "Hover a column: this year, last year and the change"
+  ],
+  "a11y": [
+   "Columns are focusable via the card; arrow keys change month",
+   "Delta text includes direction glyph",
+   "aria-live region announces the selected month"
+  ],
+  "tokens": [
+   "--s1",
+   "--de-emph",
+   "--ink",
+   "--up",
+   "--down"
+  ],
+  "prompt": "Build three KPI cards with year-over-year mini columns in one self-contained HTML file. Each card: label and the selected month name in muted text, the selected month's value (26px semibold), a YoY delta with ▲/▼ (green if good, red if bad, respecting metrics where down is good), and a 12-month column chart (bars ≤16px wide, 4px rounded tops, square at the baseline, de-emphasis grey) where the selected month is the accent colour and each month has a short 2px ink tick at last year's value. Month initials sit under the columns. Clicking a column selects that month in every card; when a card is focused, Left/Right arrow keys move the month. Hover tooltips show this year, last year and the change. Seeded synthetic data with seasonality. CSS variables for all colours, light and dark themes.",
+  "num": "11",
+  "slug": "kpi-yoy-columns",
+  "dir": "components/11-kpi-yoy-columns"
+ },
+ {
+  "title": "KPI cards with breakdown bar",
+  "category": "KPI cards",
+  "tags": [
+   "part to whole",
+   "stacked bar",
+   "composition",
+   "legend highlight"
+  ],
+  "summary": "A KPI total with a single 100% stacked bar beneath it showing what it's made of; hovering a segment or legend row highlights the pair and shows its share.",
+  "use_when": [
+   "The total matters and so does its mix (revenue by channel, tickets by tier, spend by team)",
+   "There are 2–5 parts",
+   "You need composition without a donut taking up a whole panel"
+  ],
+  "avoid_when": [
+   "More than 5 parts (fold the tail into 'Other')",
+   "The parts don't add up to the total (overlapping categories)"
+  ],
+  "anatomy": [
+   "Label, value (28px semibold) and delta",
+   "One 12px-tall 100% bar; segments in categorical order with 2px surface gaps; outer ends rounded 4px",
+   "Legend list under the bar: swatch, name, value, share — right-aligned tabular numbers",
+   "Highlight: hovered part stays full strength, others drop to 30%"
+  ],
+  "data": "{ label: \"Revenue\", total: 1280000, parts: [{ name: \"Online\", value: 610000 }, …] }",
+  "interactions": [
+   "Hover a segment or a legend row: both highlight together and a tooltip shows value and share",
+   "Toggle Value / Share in the legend"
+  ],
+  "a11y": [
+   "Every value is in the legend as text — the bar is a summary, not the only carrier",
+   "Legend rows are focusable and highlight on focus as well as hover"
+  ],
+  "tokens": [
+   "--s1 … --s5",
+   "--surface",
+   "--ink-2"
+  ],
+  "prompt": "Build two KPI cards with a composition bar in one self-contained HTML file. Each card: label, total value (28px semibold), a delta vs last period with ▲/▼, then a single 12px-tall 100% stacked bar with segments in fixed categorical colour order, 2px surface-coloured gaps between segments and 4px rounding only on the two outer ends. Under it, a legend list with swatch, part name, value and share (tabular numbers, right-aligned). Hovering or focusing a segment or a legend row highlights that pair (others drop to 30% opacity) and shows a tooltip. A segmented control switches the legend between Value and Share. Max 5 parts; fold extras into 'Other'. CSS variables for every colour, light and dark themes.",
+  "num": "12",
+  "slug": "kpi-breakdown",
+  "dir": "components/12-kpi-breakdown"
+ },
+ {
+  "title": "Hero KPI with expected range",
+  "category": "KPI cards",
+  "tags": [
+   "hero number",
+   "anomaly",
+   "expected range",
+   "narrative",
+   "Pulse style"
+  ],
+  "summary": "One big number with its change, a trend line drawn inside an expected-range band, and a generated sentence that says whether the latest value is normal, unusually high or unusually low.",
+  "use_when": [
+   "One metric deserves the spotlight (the north-star or the metric a page is about)",
+   "Readers need to know if a move is noise or signal",
+   "You want the dashboard to explain itself in words"
+  ],
+  "avoid_when": [
+   "Several metrics are equally important (use a KPI row)",
+   "Too little history to estimate a range (< ~8 periods)"
+  ],
+  "anatomy": [
+   "Hero value ≥ 48px semibold, exactly one per view",
+   "Delta vs prior week with ▲/▼ and vs-period text",
+   "Narrative sentence built from the data; the key phrase in ink weight",
+   "Line: 2px accent; expected range: band of mean ± 2σ of the trailing 8 weeks in a 12% accent wash",
+   "Latest point: 8px marker with a surface ring; points outside the band get a hollow ring"
+  ],
+  "data": "{ metric: \"Weekly active users\", weekly: [ …26 numbers ] }",
+  "interactions": [
+   "Metric switch rebuilds the number, sentence and band",
+   "Hover the line: crosshair with value, expected range and whether it was inside"
+  ],
+  "a11y": [
+   "The sentence states the conclusion in words",
+   "Outliers are marked by shape (hollow ring), not colour alone"
+  ],
+  "tokens": [
+   "--s1",
+   "--ink",
+   "--ink-2",
+   "--up",
+   "--down"
+  ],
+  "prompt": "Build a hero KPI panel in one self-contained HTML file with inline SVG. Show one metric: its latest weekly value as a hero number (≥48px semibold), a delta vs the prior week with ▲/▼ coloured by whether the move is good, and a generated plain-English sentence such as 'Weekly active users were 48.2K, unusually high — 6% above the expected range of 41.0K–45.5K.' Below, a 26-week line chart (2px accent line) inside an expected-range band computed per week as mean ± 2 standard deviations of the previous 8 weeks, drawn as a 12% accent wash; mark the latest point with an 8px dot and a surface ring and give any out-of-band week a hollow ring. Hover shows a crosshair with value, range and in/out status. A segmented control switches between three metrics. Seeded synthetic data. CSS variables for all colours, light and dark themes.",
+  "num": "13",
+  "slug": "kpi-hero-range",
+  "dir": "components/13-kpi-hero-range"
+ },
+ {
+  "title": "Status KPI cards",
+  "category": "KPI cards",
+  "tags": [
+   "threshold",
+   "ops board",
+   "status colour",
+   "alerting",
+   "sparkline"
+  ],
+  "summary": "The standard KPI card (label, big value, delta, sparkline) colour-coded by status — OK, Warning or Critical against configurable thresholds — with a switch between a full-colour tint and a left-edge highlight only.",
+  "use_when": [
+   "An ops or on-call view where 'what needs attention?' matters as much as the numbers",
+   "Every metric has agreed warning and critical thresholds",
+   "You want status cards that sit next to ordinary KPI cards without looking like a different system"
+  ],
+  "avoid_when": [
+   "Business reporting where most metrics have no threshold (status colour becomes decoration)",
+   "Comparing magnitudes across cards (status hides scale)"
+  ],
+  "anatomy": [
+   "Same card as the KPI row: 1px hairline border, 10px radius, label in secondary ink, 28px semibold value with unit, delta line, 48px sparkline",
+   "Status badge top-right: icon + word (✓ OK, ! Warning, ✕ Critical) — status is never colour alone",
+   "Full colour mode: background is a 12% tint of the status colour and the border a 40% tint",
+   "Left edge mode: neutral card with a 4px status-coloured edge on the left",
+   "Sparkline: 2px line and 10% area wash in the status colour, warning and critical thresholds as faint dashed lines, end dot with a surface ring",
+   "Delta: change vs 30 minutes ago with ▲/▼, green when it moved the good way, red when the bad way",
+   "Footer: the threshold rule as text ('warn ≥ 250 ms · crit ≥ 400 ms')"
+  ],
+  "data": "[{ name: \"p95 latency\", unit: \"ms\", warn: 250, crit: 400, higherIsWorse: true, last30: [ … ] }, …]",
+  "interactions": [
+   "Style switch: Full colour / Left edge",
+   "Threshold profile switch (Default / Strict) re-evaluates every card",
+   "'Simulate tick' appends a new point to every series",
+   "Hover a sparkline: value at that minute; hover the card header: thresholds and distance to the next state"
+  ],
+  "a11y": [
+   "Status as icon + word in the badge",
+   "Each card's aria-label states value and status; a polite live region announces status changes",
+   "Status colours are reserved and never used for series; value text stays in ink"
+  ],
+  "tokens": [
+   "--good / --warn / --crit",
+   "--ink",
+   "--ink-2",
+   "--grid",
+   "--surface",
+   "--up",
+   "--down"
+  ],
+  "prompt": "Build a row of status-coded KPI cards in one self-contained HTML file with inline SVG. Each card uses the standard KPI card layout — 1px hairline border, 10px radius, a secondary-ink label, a 28px semibold value with its unit, a delta line (▲/▼ change vs 30 minutes ago, green when it moved the good way and red when the bad way, respecting higher-is-worse vs lower-is-worse metrics) and a 48px sparkline — plus a status badge top-right with an icon and word (✓ OK, ! Warning, ✕ Critical) from warning and critical thresholds. Colour the card by status in one of two modes chosen with a segmented control: Full colour (background = 12% tint of the status colour, border = 40% tint) or Left edge (neutral card with a 4px status-coloured left edge). Draw the sparkline as a 2px line with a 10% area wash in the status colour, the two thresholds as faint dashed lines and an end dot with a surface ring. Add a footer stating the threshold rule, a threshold-profile control (Default / Strict), a 'Simulate tick' button that appends a random-walk point to every card, and an aria-live region announcing status changes. Keep all text in ink tokens, never in the status colour. CSS variables for all colours, light and dark themes.",
+  "num": "14",
+  "slug": "kpi-status-tiles",
+  "dir": "components/14-kpi-status-tiles"
+ },
+ {
+  "title": "KPI tabs driving a chart",
+  "category": "KPI cards",
+  "tags": [
+   "tabs",
+   "master-detail",
+   "line chart",
+   "crosshair",
+   "Stripe style"
+  ],
+  "summary": "A strip of compact KPI tiles that act as tabs: the selected KPI drives the large line chart below (this year vs last year with a crosshair), so one panel shows five metrics.",
+  "use_when": [
+   "Space is tight but several metrics each need a trend",
+   "Metrics share the same time axis",
+   "Product analytics or finance overviews (the Stripe / GA pattern)"
+  ],
+  "avoid_when": [
+   "Readers need to compare two metrics' trends side by side (use small multiples)",
+   "Mobile-first layouts with >4 tabs (tiles get cramped)"
+  ],
+  "anatomy": [
+   "Tab strip: label, value and delta per tile; the selected tab gets a 2px accent top border and surface background, others sit on the tinted strip",
+   "Chart title repeats the selected metric",
+   "Two series: this year (2px accent) and last year (1.5px grey); legend with both + direct end label",
+   "Hairline y-grid, compact y ticks, monthly x labels",
+   "Crosshair with both values and the change"
+  ],
+  "data": "[{ key: \"revenue\", label: \"Gross volume\", cy: [52 weekly values], py: [52 weekly values], fmt: \"$\" }, …]",
+  "interactions": [
+   "Click a tab or use ←/→ when the tab strip has focus (proper ARIA tabs pattern)",
+   "Hover the chart: crosshair, two dots and tooltip"
+  ],
+  "a11y": [
+   "role=tablist / tab / tabpanel with aria-selected and roving tabindex",
+   "Legend present for the two series; delta has glyph and sign"
+  ],
+  "tokens": [
+   "--s1",
+   "--de-emph",
+   "--surface-2",
+   "--grid",
+   "--up",
+   "--down"
+  ],
+  "prompt": "Build a KPI-tabs-plus-chart panel in one self-contained HTML file with inline SVG. Across the top, a strip of 5 compact KPI tiles (label, value, YoY delta with ▲/▼) implemented as an accessible ARIA tablist with roving tabindex and Left/Right arrow keys. The selected tab has a surface background and 2px accent top border; the rest sit on a tinted strip. Below, a 260px line chart for the selected KPI: 52 weeks of this year (2px accent line, 10% area wash) and last year (1.5px grey line), hairline gridlines, compact y ticks, month labels on x, a legend for both series, and a crosshair tooltip with both values and the change. Switching tabs redraws the chart. Seeded synthetic data. CSS variables for every colour, light and dark themes.",
+  "num": "15",
+  "slug": "kpi-tabs-chart",
+  "dir": "components/15-kpi-tabs-chart"
+ },
+ {
+  "title": "Interactive data table",
+  "category": "Tables",
+  "maxw": 1040,
+  "tags": [
+   "sort",
+   "search",
+   "filter",
+   "pagination",
+   "row expand",
+   "inline bars",
+   "CSV export",
+   "Excel export"
+  ],
+  "summary": "A full-featured accounts table: search, region and status filters, sortable columns, pagination, inline MRR bars, status pills, expandable rows with a 12-month trend, and CSV export of the filtered set.",
+  "use_when": [
+   "People need to find, rank and act on individual records (accounts, orders, tickets)",
+   "The dashboard's charts summarise and this table lets people drill to the rows",
+   "More than ~15 rows"
+  ],
+  "avoid_when": [
+   "Fewer than ~8 rows (a simple static table or bar list reads faster)",
+   "The point is a pattern, not lookup (chart it)"
+  ],
+  "anatomy": [
+   "Toolbar: search box, region select, status filter chips with counts, result count, Export CSV",
+   "Header: sentence-case labels, numeric columns right-aligned, sort indicator ▲/▼ and aria-sort",
+   "Account cell: initials avatar + name + owner in muted text",
+   "Status pill: icon + word on a tinted background",
+   "MRR: tabular number with a thin inline bar scaled to the column max",
+   "Growth: signed % in up/down text colour",
+   "Rows: 44px, hairline dividers, hover wash; expand chevron reveals a detail row",
+   "Footer: page x of y, rows per page, prev/next"
+  ],
+  "data": "[{ account: \"Northwind Labs\", owner: \"A. Rivera\", region: \"EMEA\", plan: \"Business\", status: \"Active\", mrr: 18400, growth: 0.12, seats: 42, lastActive: \"2026-10-21\", history: [12 numbers] }, …]",
+  "interactions": [
+   "Type to search account or owner (debounced)",
+   "Region select and status chips combine as AND filters; counts update",
+   "Click a header to sort (click again to flip); keyboard: headers are buttons",
+   "Chevron expands a row to show plan, seats, last activity and a 12-month MRR sparkline",
+   "Pagination with rows-per-page; filters reset to page 1",
+   "Export CSV downloads exactly the filtered, sorted rows"
+  ],
+  "a11y": [
+   "Real <table> with <th scope=col>, aria-sort on the sorted column",
+   "Sort and expand controls are buttons with labels; expanded state via aria-expanded",
+   "Status pills use icon + word",
+   "Live region announces the result count"
+  ],
+  "tokens": [
+   "--s1",
+   "--good / --warn / --crit",
+   "--grid",
+   "--hover",
+   "--up",
+   "--down"
+  ],
+  "prompt": "Build a full-featured interactive data table in one self-contained HTML file (no libraries). Generate ~64 seeded fictional SaaS accounts with: account name, owner, region (AMER/EMEA/APAC), plan, status (Active, Trial, Past due, Churned), MRR, YoY growth, seats, last active date and 12 months of MRR history. Toolbar: search (account or owner, debounced), region <select>, status filter chips with live counts, a result count and an 'Export CSV' button that downloads the currently filtered and sorted rows. Table: semantic <table> with sortable header buttons (aria-sort, ▲/▼), numeric columns right-aligned with tabular numbers, an account cell with an initials avatar and the owner in muted text, status pills with icon + word on a tinted background, MRR with a thin inline bar scaled to the max, growth as signed % in success/danger text colour, 44px rows with hairline dividers and a hover wash. Each row has a chevron button (aria-expanded) that reveals a detail row with plan, seats, last active and a 12-month MRR sparkline. Footer pagination with rows-per-page (10/25/50) and prev/next; changing filters returns to page 1. Announce result counts in an aria-live region. CSS variables for every colour, light and dark themes.",
+  "num": "16",
+  "slug": "table-interactive",
+  "dir": "components/16-table-interactive"
+ },
+ {
+  "title": "Highlight table (heatmap table)",
+  "category": "Tables",
+  "maxw": 1000,
+  "tags": [
+   "conditional formatting",
+   "matrix",
+   "crosstab",
+   "totals"
+  ],
+  "summary": "A region × month crosstab where every cell is shaded on a sequential ramp, with a switch to scale colour across the whole table, within each row, or within each column, plus marginal total bars.",
+  "use_when": [
+   "Two categorical dimensions and one measure, and people want both exact numbers and the pattern",
+   "Spotting seasonality per region, or which region leads each month",
+   "Replacing a grid of numbers that nobody reads"
+  ],
+  "avoid_when": [
+   "One dimension has more than ~20 members (switch to a heatmap without numbers)",
+   "Signed values (use a diverging ramp version)"
+  ],
+  "anatomy": [
+   "Row headers left, column headers top, both sticky in scroll",
+   "Cells: number centred, tabular figures; fill from the 7-step sequential ramp; text ink switches by fill luminance",
+   "Totals column and row: plain numbers with thin bars, not shaded — they are a different scale",
+   "Scale switch: Whole table / By row / By column",
+   "Crosshair highlight: hovering a cell outlines its row and column headers"
+  ],
+  "data": "{ rows: [\"Northeast\", …], cols: [\"Jan\", …], values: [[…], …] }",
+  "interactions": [
+   "Scale switch re-shades without moving anything",
+   "Hover a cell: tooltip with value, share of row and of column; its row and column headers highlight",
+   "Click a header to sort rows by that month (or columns stay chronological)"
+  ],
+  "a11y": [
+   "Real table with scope attributes",
+   "Every value printed — colour is a reading aid, not the data",
+   "Ink colour picked per cell for contrast"
+  ],
+  "tokens": [
+   "--seq-0 … --seq-6",
+   "--s1",
+   "--grid",
+   "--ink"
+  ],
+  "prompt": "Build a highlight table (heatmap crosstab) in one self-contained HTML file. Rows are 6 regions, columns are 12 months, cells hold seeded sales values printed in tabular figures and shaded from a 7-step single-hue sequential ramp, with white or dark text chosen per cell by luminance. Add a Totals column and Totals row shown as plain numbers with thin inline bars (not shaded, since they're a different scale). A segmented control switches colour scaling between Whole table, By row and By column. Hovering a cell shows a tooltip with value, share of its row and share of its column, and highlights its row and column headers. Clicking a month header sorts the rows by that month (click the Region header to reset). Semantic <table> with scope attributes and a small legend of the ramp. CSS variables for all colours, light and dark themes.",
+  "num": "17",
+  "slug": "table-heatmap",
+  "dir": "components/17-table-heatmap"
+ },
+ {
+  "title": "Leaderboard table with sparklines",
+  "category": "Tables",
+  "tags": [
+   "ranking",
+   "sparkline",
+   "rank change",
+   "share bar",
+   "top N"
+  ],
+  "summary": "A ranked product leaderboard with a 12-week sparkline per row, rank movement arrows, the current value, change vs last week and a share-of-total bar; every column sorts.",
+  "use_when": [
+   "Top-N lists where movement matters: products, pages, campaigns, reps",
+   "Readers ask 'who's up, who's down, and is it a trend or a blip?'",
+   "A compact replacement for a multi-line chart with too many lines"
+  ],
+  "avoid_when": [
+   "Rows don't have a time series",
+   "More than ~25 rows without paging"
+  ],
+  "anatomy": [
+   "Rank number + movement (▲2 / ▼1 / –) since last week, muted",
+   "Name with category in muted text",
+   "Sparkline 96×24: 1.5px line in ink-2, last point dot in accent, min/max not marked",
+   "Value: tabular, right-aligned",
+   "Week-over-week change: signed % in up/down colour",
+   "Share of total: thin bar on a track + % label"
+  ],
+  "data": "[{ name: \"Trail Runner 2\", category: \"Footwear\", weekly: [12 numbers] }, …] — rank and change derived",
+  "interactions": [
+   "Sort by rank, name, units, change or share (headers are buttons)",
+   "Hover a sparkline: week-by-week tooltip",
+   "Hover a row: wash highlight"
+  ],
+  "a11y": [
+   "Semantic table, aria-sort",
+   "Rank movement uses glyph + number",
+   "Sparklines have aria-labels summarising start → end"
+  ],
+  "tokens": [
+   "--s1",
+   "--ink-2",
+   "--track",
+   "--up",
+   "--down"
+  ],
+  "prompt": "Build a ranked leaderboard table with sparklines in one self-contained HTML file. 15 seeded fictional products, each with 12 weeks of unit sales. Columns: rank with movement since last week (▲2 / ▼1 / – in muted text), product name with category in muted text, a 96×24 inline SVG sparkline (1.5px secondary-ink line, last point dot in the accent colour), this week's units (tabular, right-aligned), week-over-week change as signed % in success/danger colour, and share of total as a thin bar on a pale track with a % label. All headers are sort buttons with aria-sort and ▲/▼. Hovering a sparkline shows a tooltip for the hovered week. Rows 40px, hairline dividers, hover wash. CSS variables for every colour, light and dark themes.",
+  "num": "18",
+  "slug": "table-sparkline",
+  "dir": "components/18-table-sparkline"
+ },
+ {
+  "title": "Expandable pivot table",
+  "category": "Tables",
+  "maxw": 960,
+  "tags": [
+   "hierarchy",
+   "tree table",
+   "subtotals",
+   "drill down",
+   "profit and loss"
+  ],
+  "summary": "A three-level tree table (category › sub-category › product) with subtotals, expand/collapse per row or all at once, % of total bars and a profit-margin column that flags losses.",
+  "use_when": [
+   "Data has a natural hierarchy and people drill from summary to detail",
+   "Finance-style reviews where subtotals must be exact",
+   "Replacing a pivot table exported from Excel"
+  ],
+  "avoid_when": [
+   "The hierarchy is deeper than 3–4 levels (use a treemap or a drill-through page)",
+   "Only one level exists"
+  ],
+  "anatomy": [
+   "Indented name column: 20px per level, chevron button for expandable rows, leaf rows without a chevron",
+   "Level-1 rows semibold on a faint tint; deeper levels regular",
+   "Numeric columns right-aligned, tabular: Sales, Profit, Margin, % of total",
+   "Negative profit in danger text with a minus sign; margin < 0 gets a ▼ glyph",
+   "% of total: thin bar scaled to the largest top-level row + number",
+   "Grand total row pinned at the bottom, top border"
+  ],
+  "data": "[{ name: \"Furniture\", children: [{ name: \"Chairs\", children: [{ name: \"Task Chair Pro\", sales: 41200, profit: 6100 }, …] }, …] }, …] — parents are summed",
+  "interactions": [
+   "Click a chevron (or Enter/Space) to expand/collapse that node",
+   "Expand all / Collapse all buttons",
+   "Measure switch for the bar column: % of total sales or % of total profit"
+  ],
+  "a11y": [
+   "role=treegrid with aria-level and aria-expanded on rows",
+   "Chevrons are buttons with labels",
+   "Losses marked with sign and glyph, not only colour"
+  ],
+  "tokens": [
+   "--s1",
+   "--surface-2",
+   "--grid",
+   "--down",
+   "--ink"
+  ],
+  "prompt": "Build an expandable pivot (tree) table in one self-contained HTML file. Seeded data: 3 categories › 3–4 sub-categories each › 3–5 products each, with sales and profit at the leaf level; parents are summed. Columns: indented name (20px per level, chevron button on expandable rows, aria-expanded), Sales, Profit (negative in danger text with a minus sign), Margin (profit ÷ sales, ▼ glyph if negative) and '% of total' as a thin bar plus number. Level-1 rows are semibold on a faint tint; a grand-total row sits at the bottom with a top border. Add Expand all / Collapse all buttons and a segmented control switching the bar column between share of sales and share of profit. Use role=treegrid with aria-level. Tabular, right-aligned numbers. CSS variables for every colour, light and dark themes.",
+  "num": "19",
+  "slug": "table-pivot",
+  "dir": "components/19-table-pivot"
+ },
+ {
+  "title": "Scorecard table vs target",
+  "category": "Tables",
+  "maxw": 1000,
+  "tags": [
+   "balanced scorecard",
+   "diverging cells",
+   "target",
+   "team comparison"
+  ],
+  "summary": "Teams × KPIs scorecard where each cell is tinted on a diverging scale by its distance from target (blue = better, red = worse, grey = on target), with an overall score bar and best-in-column markers.",
+  "use_when": [
+   "Comparing many units (teams, stores, agents) on several KPIs with targets",
+   "Monthly performance reviews where 'who needs help on what?' is the question",
+   "KPIs have different units and directions, so raw colour scales would mislead"
+  ],
+  "avoid_when": [
+   "No targets exist (use a highlight table)",
+   "Readers need trend, not position (add sparklines instead)"
+  ],
+  "anatomy": [
+   "Header row: KPI name, target, and direction hint (↑ better / ↓ better)",
+   "Cells: value centred; fill = diverging tint by normalised gap to target (capped at ±25%), neutral grey within ±2%",
+   "Best value per column gets a 2px ink ring",
+   "Overall score column: mean of capped normalised gaps → 0–100, shown as a bar + number",
+   "Rows sortable by any column"
+  ],
+  "data": "{ kpis: [{ key: \"csat\", name: \"CSAT\", target: 4.5, better: \"up\", fmt: \"0.0\" }, …], rows: [{ team: \"Atlanta\", csat: 4.6, aht: 312, … }, …] }",
+  "interactions": [
+   "Click a column header to sort by it (direction-aware: best first)",
+   "Hover a cell: value, target, gap and whether it beats target",
+   "'Show gaps' toggle swaps values for signed % vs target"
+  ],
+  "a11y": [
+   "Values (or gaps) always printed",
+   "Direction of 'better' written in each header",
+   "Best marker is a ring (shape), not colour"
+  ],
+  "tokens": [
+   "--div-neg / --div-mid / --div-pos",
+   "--ink",
+   "--s1",
+   "--track"
+  ],
+  "prompt": "Build a scorecard table in one self-contained HTML file. Rows are 10 teams; columns are 6 KPIs with different units and directions (e.g. CSAT ↑, average handle time ↓, first-contact resolution ↑, abandonment rate ↓, QA score ↑, cost per contact ↓), each with a target shown in the header together with '↑ better' or '↓ better'. Each cell prints the value and is tinted on a diverging red ↔ grey ↔ blue scale by its normalised gap to target (direction-aware, capped at ±25%, grey within ±2%), with text colour chosen by luminance. Ring the best value in each column with a 2px ink outline. Add an Overall column: average of the capped normalised gaps mapped to 0–100, shown as a bar and number. Clicking any header sorts rows best-first by that column. A toggle swaps values for signed % vs target. Hover tooltips show value, target and gap. CSS variables for all colours, light and dark themes.",
+  "num": "20",
+  "slug": "table-scorecard",
+  "dir": "components/20-table-scorecard"
+ },
+ {
+  "title": "Line chart: this year vs last year vs target",
+  "category": "Charts",
+  "maxw": 960,
+  "tags": [
+   "time series",
+   "crosshair",
+   "date range",
+   "legend toggle",
+   "cumulative"
+  ],
+  "summary": "A time-series line chart with this year, last year and a dashed target, a date-range control (3M / 6M / YTD / 12M), cumulative vs periodic toggle, clickable legend and a shared crosshair tooltip.",
+  "use_when": [
+   "Tracking a measure over time against a prior period and a plan",
+   "The trend's shape matters more than individual values",
+   "Up to 3–4 series on one shared axis"
+  ],
+  "avoid_when": [
+   "Two measures with different units (never dual-axis — use two aligned charts)",
+   "More than ~5 series (use small multiples)"
+  ],
+  "anatomy": [
+   "Filters in one row above the chart: range control left, cumulative toggle right",
+   "Series: current year 2px accent with 10% area wash; last year 1.5px grey; target 1.5px dashed ink",
+   "Legend with line keys, each clickable to hide/show; plus direct end labels when lines don't collide",
+   "Hairline horizontal grid, compact y ticks (0 / 50K / 100K), month or week x labels",
+   "Crosshair: vertical hairline, a dot per visible series with surface ring, tooltip listing all values + variance vs target"
+  ],
+  "data": "{ dates: [\"2026-01-01\", …], cy: [daily values], py: [daily values], target: [daily values] }",
+  "interactions": [
+   "Range control re-slices and re-aggregates (daily ≤ 3M, weekly beyond)",
+   "Cumulative toggle switches running totals on/off — useful against an annual target",
+   "Legend click toggles a series; at least one stays visible",
+   "Hover anywhere in the plot for the crosshair"
+  ],
+  "a11y": [
+   "Legend present (≥ 2 series); target distinguished by dash pattern, not just colour",
+   "Tooltip text includes every value",
+   "'Table' toggle shows the aggregated numbers"
+  ],
+  "tokens": [
+   "--s1",
+   "--de-emph",
+   "--ink",
+   "--grid",
+   "--axis"
+  ],
+  "prompt": "Build an interactive time-series line chart in one self-contained HTML file with inline SVG (no libraries). Three series on ONE y-axis: this year (2px accent line, 10% area wash), last year (1.5px grey) and target (1.5px dashed ink), from seeded daily data through Oct 24. Put filters in one row above the chart: a segmented date-range control (3M / 6M / YTD / 12M — daily points for ≤3 months, weekly sums beyond) and a Cumulative toggle (running totals). Legend with line keys that toggle series on click (never hide the last one) plus direct end labels. Hairline grid, compact y ticks, month labels. Crosshair on hover: vertical hairline, a dot per visible series with a 2px surface ring and a tooltip with every value and this year's variance vs target. Add a Table toggle that swaps the chart for the aggregated numbers. CSS variables for every colour, light and dark themes.",
+  "num": "21",
+  "slug": "line-comparison",
+  "dir": "components/21-line-comparison"
+ },
+ {
+  "title": "Ranked bar chart with highlight",
+  "category": "Charts",
+  "tags": [
+   "horizontal bar",
+   "top N",
+   "other bucket",
+   "average line",
+   "click to select"
+  ],
+  "summary": "Horizontal bars ranked by value with a Top 5 / 10 / All control that folds the rest into 'Other', an average reference line, value labels at the tips and click-to-highlight.",
+  "use_when": [
+   "Comparing a measure across categories with long names",
+   "The ranking itself is the insight (top sellers, worst performers)",
+   "You want one item called out against the rest"
+  ],
+  "avoid_when": [
+   "Categories have a natural order (months, stages) — keep that order and use columns",
+   "Part-to-whole is the point (use a 100% bar or waffle)"
+  ],
+  "anatomy": [
+   "Label column left (right-aligned text), bars from a single baseline, ≤ 24px thick with 4px rounded tips",
+   "Bars in one hue; highlighted bar in the accent, the rest in de-emphasis grey once something is selected",
+   "'Other' row last: a text summary (combined total and average) rather than a bar, so the remainder never flattens the scale",
+   "Value label at each bar tip in secondary ink",
+   "Average: 1px ink vertical line with a small 'Avg' label"
+  ],
+  "data": "[{ name: \"Pacific Northwest\", value: 1840000 }, …]",
+  "interactions": [
+   "Top N control folds the remainder into 'Other'",
+   "Sort: value (desc) or name (A–Z)",
+   "Click a bar to highlight it and show its rank/gap to average in the subtitle; click again to clear",
+   "Hover: tooltip with value, share and rank"
+  ],
+  "a11y": [
+   "Bars are focusable buttons-in-SVG with aria-labels; Enter selects",
+   "Values printed at tips",
+   "Highlight uses colour plus a bold label"
+  ],
+  "tokens": [
+   "--s1",
+   "--de-emph",
+   "--ink",
+   "--ink-2"
+  ],
+  "prompt": "Build a ranked horizontal bar chart in one self-contained HTML file with inline SVG. 18 seeded categories (sales territories). Bars grow from one baseline, max 24px thick with 4px rounded tips and square at the baseline; labels right-aligned in a left column; value labels at the bar tips in secondary ink. Controls: Top 5 / Top 10 / All (fold the remainder into an 'Other' row that always sits last and is shown as text — combined total and average — rather than a bar, so it never flattens the scale) and Sort by value or name. Draw a 1px ink vertical line at the average with a small 'Avg' label. Clicking a bar highlights it in the accent colour and turns the rest de-emphasis grey; the subtitle then states its rank and gap to average; clicking again clears. Bars are keyboard-focusable (Enter selects). Hover tooltips with value, share of total and rank. CSS variables for all colours, light and dark themes.",
+  "num": "22",
+  "slug": "bar-ranked",
+  "dir": "components/22-bar-ranked"
+ },
+ {
+  "title": "Waterfall (bridge) chart",
+  "category": "Charts",
+  "maxw": 960,
+  "tags": [
+   "P&L",
+   "bridge",
+   "variance",
+   "EBITDA",
+   "contributions"
+  ],
+  "summary": "A profit-and-loss bridge from revenue to net income: floating bars for each increase or decrease, solid subtotal bars, connector lines between steps and value labels; switch quarters to watch the bridge rebuild.",
+  "use_when": [
+   "Explaining how a starting value becomes an ending value through additions and subtractions",
+   "P&L walks, budget-to-actual variance, headcount bridges, price-volume-mix",
+   "The audience is finance or leadership"
+  ],
+  "avoid_when": [
+   "Steps aren't additive",
+   "There are more than ~12 steps (group minor ones)"
+  ],
+  "anatomy": [
+   "Columns ≤ 48px with 4px rounding on the free end only",
+   "Increase = diverging positive hue, decrease = diverging negative hue, totals/subtotals = solid ink-2",
+   "1px dashed connectors from each bar's end to the next bar's start",
+   "Value labels above increases and below decreases (signed), totals labelled in ink weight",
+   "Hairline grid and compact y ticks; category labels wrap to two lines"
+  ],
+  "data": "[{ label: \"Revenue\", value: 4.82e6, type: \"total\" }, { label: \"COGS\", value: -1.93e6 }, { label: \"Gross profit\", type: \"subtotal\" }, …]",
+  "interactions": [
+   "Quarter switch animates bars to new heights",
+   "Hover a bar: start, change and end values, plus % of revenue"
+  ],
+  "a11y": [
+   "Every step labelled with a signed value — direction not carried by colour alone",
+   "Legend explains increase / decrease / total",
+   "SVG has an aria-label summarising start and end"
+  ],
+  "tokens": [
+   "--div-pos",
+   "--div-neg",
+   "--ink-2",
+   "--axis",
+   "--grid"
+  ],
+  "prompt": "Build a P&L waterfall (bridge) chart in one self-contained HTML file with inline SVG. Steps: Revenue (total) → COGS → Gross profit (subtotal) → Sales & marketing → R&D → G&A → EBITDA (subtotal) → D&A → Interest → Taxes → Net income (total), with seeded values for four quarters. Draw floating columns (≤48px wide, 4px rounding on the free end only): increases in the diverging positive colour, decreases in the diverging negative colour, totals and subtotals solid in secondary ink, all starting from zero. Connect each bar's end to the next bar's start with a 1px dashed line. Label values above increases, below decreases (signed, compact $), and in ink weight on totals. Category labels under the axis wrap to two lines. Add a legend (Increase / Decrease / Total) and a quarter segmented control that animates bar positions. Hover tooltips show start, change, end and % of revenue. CSS variables for every colour, light and dark themes.",
+  "num": "23",
+  "slug": "waterfall",
+  "dir": "components/23-waterfall"
+ },
+ {
+  "title": "Conversion funnel",
+  "category": "Charts",
+  "tags": [
+   "conversion",
+   "drop-off",
+   "stages",
+   "segments",
+   "ordinal ramp"
+  ],
+  "summary": "A stage-by-stage funnel drawn as aligned horizontal bars on an ordinal blue ramp, with step conversion and drop-off between stages, overall conversion, and a device segment switch.",
+  "use_when": [
+   "A process with ordered stages where people drop out (signup, checkout, hiring, sales pipeline)",
+   "The biggest leak is the insight",
+   "Comparing funnel shape across segments"
+  ],
+  "avoid_when": [
+   "Stages aren't strictly sequential subsets",
+   "Values can increase between stages (use a bar chart or Sankey)"
+  ],
+  "anatomy": [
+   "One row per stage: name + count on the left, bar from a common left baseline, % of first stage at the tip",
+   "Bars on an ordinal ramp (seq step 250 → 700 in light mode) — darker = deeper in the funnel",
+   "Between rows: step conversion '↓ 42% continue' and drop-off count in muted text; the worst step flagged with a ▲ 'Biggest drop' marker",
+   "Header readout: overall conversion first → last"
+  ],
+  "data": "{ stages: [\"Visited\", \"Viewed product\", \"Added to cart\", \"Checkout\", \"Purchased\"], segments: { All: [120000, 64000, 18500, 9100, 6400], Mobile: […], Desktop: […] } }",
+  "interactions": [
+   "Segment switch: All / Mobile / Desktop — bars animate to new widths",
+   "Hover a bar: count, % of start, % of previous stage",
+   "Hover a step connector: drop-off detail"
+  ],
+  "a11y": [
+   "All rates printed as text",
+   "Biggest drop marked with a glyph + words",
+   "Ordinal ramp starts at a step that clears 2:1 against the surface"
+  ],
+  "tokens": [
+   "--seq-1 … --seq-6",
+   "--ink",
+   "--muted"
+  ],
+  "prompt": "Build a conversion funnel in one self-contained HTML file. Five ordered stages (Visited → Viewed product → Added to cart → Checkout → Purchased) with seeded counts for three segments (All, Mobile, Desktop). Each stage is a row: name and count on the left, a horizontal bar from a shared left baseline whose width is the count relative to the first stage, and '% of start' at the bar tip. Colour bars with an ordinal single-hue ramp from a mid-light step (that still clears 2:1 contrast on the surface) to the darkest step, deeper stages darker. Between rows show step conversion ('↓ 48% continue') and the drop-off count in muted text, and flag the worst step with '▲ Biggest drop'. A header readout states overall conversion. A segmented control switches segments and bars animate to new widths with CSS transitions. Hover tooltips. CSS variables for every colour, light and dark themes.",
+  "num": "24",
+  "slug": "funnel",
+  "dir": "components/24-funnel"
+ },
+ {
+  "title": "Calendar heatmap",
+  "category": "Charts",
+  "maxw": 980,
+  "tags": [
+   "contribution graph",
+   "daily activity",
+   "seasonality",
+   "streaks"
+  ],
+  "summary": "A GitHub-style year calendar: one square per day in week columns, shaded on a 5-step sequential scale, with month labels, a Less → More legend, streak and busiest-day stats, and click-to-inspect.",
+  "use_when": [
+   "Daily data where weekday patterns and seasonality both matter (activity, sales, incidents, habits)",
+   "You want a whole year in one compact panel",
+   "Gaps and streaks are interesting"
+  ],
+  "avoid_when": [
+   "Exact values must be compared (use a line or bar chart)",
+   "Data is weekly or monthly"
+  ],
+  "anatomy": [
+   "53 week columns × 7 weekday rows; 2–3px gaps; 2px corner radius",
+   "Mon / Wed / Fri labels on the left, month labels above the first week of each month",
+   "5 bins: zero is the surface tint; then four ramp steps by quantile",
+   "Legend: 'Less' + 5 swatches + 'More'",
+   "Stats strip: total, best day, longest streak, current streak",
+   "Selected day outlined in ink with a detail line below"
+  ],
+  "data": "[{ date: \"2026-01-01\", count: 4 }, …] — one row per day",
+  "interactions": [
+   "Year switch (2025 / 2026)",
+   "Hover a day: date and count",
+   "Click a day: outlines it and shows that day's breakdown below",
+   "Keyboard: arrow keys move the selection by day/week"
+  ],
+  "a11y": [
+   "Each cell has an aria-label with the date and count",
+   "Arrow-key navigation; selection announced",
+   "Binned legend explains the scale"
+  ],
+  "tokens": [
+   "--seq-0 … --seq-6",
+   "--surface-2",
+   "--ink"
+  ],
+  "prompt": "Build a GitHub-style calendar heatmap in one self-contained HTML file with inline SVG. Seeded daily counts for two years with weekday and seasonal patterns plus a few zero days. Layout: 53 week columns × 7 weekday rows (Monday first) of rounded 2px squares with small gaps, Mon/Wed/Fri labels on the left and month labels above the first week of each month. Colour by 5 bins: zero = a surface tint, then 4 sequential ramp steps by quantile. Add a 'Less ▢▢▢▢▢ More' legend, a stats strip (total, best day, longest streak, current streak), a year segmented control, hover tooltips, and click-to-select that outlines the day in ink and shows its detail under the chart; arrow keys move the selection (±1 day, ±7 days). Each cell has an aria-label. Scale cells to the container width. CSS variables for all colours, light and dark themes.",
+  "num": "25",
+  "slug": "calendar-heatmap",
+  "dir": "components/25-calendar-heatmap"
+ },
+ {
+  "title": "Day × hour heatmap with marginals",
+  "category": "Charts",
+  "maxw": 980,
+  "tags": [
+   "punchcard",
+   "time of day",
+   "staffing",
+   "marginal bars"
+  ],
+  "summary": "A 7 × 24 weekday-by-hour heatmap with marginal bar charts on top (by hour) and right (by day), a metric switch, and crosshair highlighting of the hovered row and column.",
+  "use_when": [
+   "Planning staffing, send times or maintenance windows",
+   "You suspect patterns by both time of day and day of week",
+   "Data is aggregated to hour buckets"
+  ],
+  "avoid_when": [
+   "You need trend across dates (this collapses dates)",
+   "Values are sparse (most cells zero) — use a dot plot"
+  ],
+  "anatomy": [
+   "Grid: 24 columns (hours) × 7 rows (Mon–Sun), 2px gaps, 3px radius, sequential ramp",
+   "Hour labels every 3 hours (12a, 3a, 6a…), day labels left",
+   "Top marginal: column bars = total per hour; right marginal: row bars = total per day; both in de-emphasis grey with the hovered bar in accent",
+   "Peak cell outlined in ink with a 'Peak' annotation",
+   "Legend ramp with min/max values"
+  ],
+  "data": "{ metric: \"tickets\", cells: [[24 values for Mon], …7 rows] }",
+  "interactions": [
+   "Metric switch (Tickets / Avg wait) recolours and recomputes marginals",
+   "Hover a cell: value, % of the day, and its row/column marginals light up"
+  ],
+  "a11y": [
+   "aria-label per cell",
+   "Peak called out in text",
+   "Marginals give exact totals via tooltip"
+  ],
+  "tokens": [
+   "--seq-0 … --seq-6",
+   "--de-emph",
+   "--s1",
+   "--ink"
+  ],
+  "prompt": "Build a weekday × hour heatmap with marginal bar charts in one self-contained HTML file using inline SVG. Grid of 7 rows (Mon–Sun) × 24 columns (hours) with 2px gaps and 3px radius, shaded on a sequential single-hue ramp; hour labels every 3 hours (12a, 3a, 6a…) and day labels on the left. Above the grid, a column chart of totals per hour; to the right, a bar chart of totals per day; both in de-emphasis grey. Outline the peak cell in ink with a small 'Peak' label. On hover, show a tooltip (value, share of that day) and light up the matching hour and day marginal bars in the accent colour. A segmented control switches between two metrics (ticket volume = sum marginals; average wait = mean marginals). Include a gradient legend with min and max. Seeded synthetic data with business-hours and weekend patterns. CSS variables for every colour, light and dark themes.",
+  "num": "26",
+  "slug": "punchcard-heatmap",
+  "dir": "components/26-punchcard-heatmap"
+ },
+ {
+  "title": "Donut with interactive legend",
+  "category": "Charts",
+  "tags": [
+   "donut",
+   "part to whole",
+   "legend filter",
+   "centre readout"
+  ],
+  "summary": "A donut chart whose centre shows the total (or the hovered slice), with a legend table that toggles slices on and off and recomputes shares — the polished way to do the pie everyone asks for.",
+  "use_when": [
+   "Stakeholders insist on a pie/donut for 2–6 parts of a whole",
+   "One or two parts dominate and that's the message",
+   "The legend doubles as the precise readout"
+  ],
+  "avoid_when": [
+   "More than 6 parts or similar-sized parts (use a ranked bar)",
+   "Comparing composition across groups (use 100% stacked bars)"
+  ],
+  "anatomy": [
+   "Ring 20px thick with 2px surface gaps between slices; starts at 12 o'clock, largest first, 'Other' last",
+   "Centre: total (or hovered slice value + name) in ink, label in secondary ink",
+   "Legend table to the right: toggle swatch, name, value, share — tabular numbers",
+   "Hidden slices show a hollow swatch and struck-through name; shares recompute over the visible parts"
+  ],
+  "data": "[{ name: \"Organic search\", value: 48200 }, …]",
+  "interactions": [
+   "Hover a slice or legend row: slice pops out 4px, others dim, centre shows that slice",
+   "Click a legend row to hide/show the slice (never hides the last one)",
+   "Keyboard: legend rows are checkbox-like buttons"
+  ],
+  "a11y": [
+   "Legend rows use role=switch with aria-checked",
+   "Every value and share is in the legend text",
+   "Uses categorical slots in fixed order, so colours never shift when slices hide"
+  ],
+  "tokens": [
+   "--s1 … --s6",
+   "--surface",
+   "--ink",
+   "--ink-2"
+  ],
+  "prompt": "Build a donut chart with an interactive legend in one self-contained HTML file using inline SVG. Six seeded traffic sources sorted largest first with 'Other' last, coloured by categorical slots in fixed order (colours never change when slices hide). Ring 20px thick with 2px surface-coloured gaps between slices, starting at 12 o'clock. The centre shows the total visible sessions; hovering a slice or legend row pops that slice out 4px, dims the others and shows the slice's value, name and share in the centre. To the right (stacked below on narrow screens), a legend table with a toggle swatch, name, value and share; clicking a row hides/shows that slice (role=switch, aria-checked, never hide the last visible) and shares recompute over visible parts. CSS variables for all colours, light and dark themes.",
+  "num": "27",
+  "slug": "donut-legend",
+  "dir": "components/27-donut-legend"
+ },
+ {
+  "title": "Slopegraph",
+  "category": "Charts",
+  "tags": [
+   "before and after",
+   "rank change",
+   "two periods",
+   "highlight"
+  ],
+  "summary": "Two vertical axes (before and after) joined by one line per category: biggest riser and faller highlighted by default, everything else grey, hover to spotlight any line, and a Value / Rank switch.",
+  "use_when": [
+   "Exactly two time points (or two conditions) per category",
+   "Both the change and the re-ordering matter",
+   "A cleaner alternative to clustered bars for before/after"
+  ],
+  "avoid_when": [
+   "More than two periods (use a line chart)",
+   "Many categories crossing at similar values (labels collide — use a dumbbell or table)"
+  ],
+  "anatomy": [
+   "Two labelled period axes at left and right",
+   "Lines 1.5px de-emphasis grey; highlighted lines 2.5px in diverging positive (riser) / negative (faller) hues with 8px end dots + surface ring",
+   "Labels at both ends: name + value; labels nudged apart by a minimum spacing with thin leader ticks so they never overlap",
+   "Value mode uses a shared linear scale; Rank mode uses evenly spaced ranks (1 at top)"
+  ],
+  "data": "[{ name: \"Austin\", before: 61.2, after: 74.8 }, …]",
+  "interactions": [
+   "Hover a line or label: it turns ink and comes to front; others fade",
+   "Value / Rank switch",
+   "Click a line to pin the highlight"
+  ],
+  "a11y": [
+   "Every line labelled at both ends with values",
+   "Riser/faller called out in the subtitle in words",
+   "Highlight uses width and dots, not only colour"
+  ],
+  "tokens": [
+   "--div-pos",
+   "--div-neg",
+   "--de-emph",
+   "--ink"
+  ],
+  "prompt": "Build a slopegraph in one self-contained HTML file with inline SVG. 12 seeded cities each with a 2025 and 2026 score. Draw two vertical period axes (left 2025, right 2026) and one line per city; by default all lines are 1.5px de-emphasis grey except the biggest riser (diverging positive colour) and biggest faller (diverging negative colour), drawn 2.5px with 8px end dots that have a 2px surface ring. Label both ends with name and value; resolve label collisions by enforcing a minimum vertical spacing and drawing thin leader ticks from the dot to the moved label. Hovering a line or label turns it ink, brings it to the front and fades the others; clicking pins it. A Value / Rank segmented control switches between a shared linear value scale and evenly spaced ranks. The subtitle names the riser and faller in words. CSS variables for every colour, light and dark themes.",
+  "num": "28",
+  "slug": "slopegraph",
+  "dir": "components/28-slopegraph"
+ },
+ {
+  "title": "Dumbbell (gap) chart",
+  "category": "Charts",
+  "tags": [
+   "gap analysis",
+   "two values",
+   "range",
+   "sorted dot plot"
+  ],
+  "summary": "One row per category with two dots joined by a bar — this year vs target, or group A vs group B — sortable by gap, current value or name, with the gap printed at the end of each row.",
+  "use_when": [
+   "The gap between two values per category is the story (actual vs target, before vs after, men vs women)",
+   "Values don't start at zero, so bars would waste space",
+   "10–25 categories"
+  ],
+  "avoid_when": [
+   "Only one value per category (use a bar or dot plot)",
+   "More than two values per row (use a strip plot)"
+  ],
+  "anatomy": [
+   "Two dots ≥ 8px (series slots 1 and 2) with a 2px surface ring, legend at top",
+   "Connector: 4px rounded bar in a neutral tint between the dots",
+   "Category labels left, gap value right (signed, coloured by whether the gap is good)",
+   "Hairline vertical grid with compact ticks; scale does not need to start at zero"
+  ],
+  "data": "[{ name: \"Engineering\", a: 82, b: 76 }, …] — a = this year, b = target (or group A / B)",
+  "interactions": [
+   "Sort by gap, by this year, or by name",
+   "Hover a row: both values and the gap; the row gets a wash",
+   "Toggle 'Show only misses' to filter to rows below target"
+  ],
+  "a11y": [
+   "Legend present (two series)",
+   "Gap printed as signed text",
+   "Dots differ by colour and the legend; the gap colour follows the up/down text tokens"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--de-emph",
+   "--up",
+   "--down",
+   "--grid"
+  ],
+  "prompt": "Build a dumbbell (gap) chart in one self-contained HTML file using inline SVG. 14 seeded departments, each with an engagement score this year and a target. Each row: department label on the left, two dots (8px, categorical slots 1 and 2, with a 2px surface ring) joined by a 4px rounded neutral connector, and the signed gap on the right in success/danger text colour. Hairline vertical grid with compact ticks; the axis need not start at zero. Legend at top for the two series. Controls: sort by gap / this year / name, and a 'Misses only' toggle that filters to rows below target. Rows animate when sorted. Hover a row for a tooltip and a hover wash. CSS variables for every colour, light and dark themes.",
+  "num": "29",
+  "slug": "dumbbell",
+  "dir": "components/29-dumbbell"
+ },
+ {
+  "title": "Waffle chart (part of 100)",
+  "category": "Charts",
+  "tags": [
+   "unit chart",
+   "percent",
+   "part to whole",
+   "isotype",
+   "storytelling"
+  ],
+  "summary": "A 10 × 10 grid where each square is 1% — 'of every $100 we spend…' — with a dataset switch, a legend that highlights its squares on hover, and largest-remainder rounding so it always totals 100.",
+  "use_when": [
+   "Communicating proportions to a general audience ('3 in 10 customers…')",
+   "Shares between ~2% and ~80% for 2–5 categories",
+   "Editorial or executive summary panels"
+  ],
+  "avoid_when": [
+   "Shares under 1% matter (they vanish)",
+   "Precise comparison between similar shares (use bars)"
+  ],
+  "anatomy": [
+   "10 × 10 squares, 3px gap, 3px radius; filled column-by-column so each category forms a solid block",
+   "Categorical colours in fixed order; squares beyond the data in surface tint (when showing a single share)",
+   "Headline sentence above: the biggest share stated in words",
+   "Legend list: swatch, name, % — hover a row to dim other squares"
+  ],
+  "data": "{ title: \"Of every $100 in operating spend\", parts: [{ name: \"Payroll\", pct: 46.2 }, …] }",
+  "interactions": [
+   "Dataset switch (Spend / Headcount / Customers) re-flows the squares with a quick stagger",
+   "Hover a legend row or a square: that category stays full colour, others dim",
+   "Rounding uses largest remainder so squares always sum to 100"
+  ],
+  "a11y": [
+   "Headline sentence carries the main number in text",
+   "Legend lists every share",
+   "SVG aria-label lists all parts"
+  ],
+  "tokens": [
+   "--s1 … --s5",
+   "--surface-2",
+   "--ink"
+  ],
+  "prompt": "Build a 10×10 waffle chart in one self-contained HTML file with inline SVG, where each square is 1%. Squares have 3px gaps and 3px radius and fill column by column (top to bottom, left to right) so each category forms a contiguous block, coloured by categorical slots in fixed order. Round shares to whole squares with the largest-remainder method so they always total 100. Above the grid, a headline sentence states the largest share in words ('Payroll takes $46 of every $100'). Beside it, a legend list (swatch, name, %) where hovering a row or a square keeps that category in full colour and dims the rest. A segmented control switches between three seeded datasets and the squares recolour with a short staggered transition (skip under prefers-reduced-motion). CSS variables for all colours, light and dark themes.",
+  "num": "30",
+  "slug": "waffle",
+  "dir": "components/30-waffle"
+ },
+ {
+  "title": "Tapered funnel",
+  "category": "Flows & networks",
+  "tags": [
+   "funnel",
+   "conversion",
+   "pipeline",
+   "stages",
+   "tapered"
+  ],
+  "summary": "A true funnel shape: each stage is a slice whose top width is that stage's count and whose curved sides narrow to the next stage, with conversion between stages on the right and a segment switch that morphs the shape.",
+  "use_when": [
+   "Presenting a pipeline or conversion process to an audience that expects the classic funnel silhouette",
+   "Executive or marketing summaries where the shape itself tells 'we lose most people here'",
+   "4–7 ordered stages"
+  ],
+  "avoid_when": [
+   "Precise comparison of stage sizes matters (use the bar funnel: aligned bars read more accurately than tapering widths)",
+   "Stages can grow (the shape implies narrowing)"
+  ],
+  "anatomy": [
+   "Stages stacked top to bottom with a 2px surface gap; each slice's top width ∝ its count, its bottom width ∝ the next stage's count, sides drawn as smooth curves",
+   "The last slice tapers to a short spout of its own width",
+   "Ordinal single-hue ramp from a mid-light step (top) to the darkest (bottom)",
+   "Inside each slice: count (semibold) and % of the first stage, ink chosen by fill luminance",
+   "Left column: stage names; right column: step conversion ('↓ 52%') with the weakest step flagged"
+  ],
+  "data": "{ stages: [\"Leads\", \"Qualified\", \"Demo\", \"Proposal\", \"Won\"], segments: { All: [4200, 2310, 1150, 520, 238], … } }",
+  "interactions": [
+   "Segment switch morphs the funnel to the new counts (400ms ease-out; instant under prefers-reduced-motion)",
+   "Hover a slice: it stays full strength while others dim; tooltip with count, % of start and % of previous stage"
+  ],
+  "a11y": [
+   "Every count and rate is printed as text",
+   "SVG aria-label lists the stages and counts",
+   "Weakest step marked with ▲ and words, not colour"
+  ],
+  "tokens": [
+   "--seq-1 … --seq-6",
+   "--surface",
+   "--ink",
+   "--down"
+  ],
+  "prompt": "Build a true tapered funnel chart in one self-contained HTML file using inline SVG (no libraries). Five ordered sales stages (Leads → Qualified → Demo → Proposal → Won) with seeded counts for three segments. Stack the stages top to bottom with a 2px gap; each slice is centred, its top width proportional to the stage's count and its bottom width proportional to the next stage's count, with the sides drawn as smooth cubic curves so the outline reads as one continuous funnel; the final slice narrows into a short spout. Fill slices with an ordinal single-hue ramp from a mid-light step at the top to the darkest at the bottom. Inside each slice print the count and % of the first stage with text colour chosen by luminance; stage names sit in a left column, and step conversion ('↓ 52% continue') sits in a right column, with the weakest step flagged '▲ Biggest drop'. A segmented control switches segments and morphs the shape with a 400ms tween (instant under prefers-reduced-motion). Hover dims the other slices and shows a tooltip. CSS variables for every colour, light and dark themes.",
+  "num": "31",
+  "slug": "funnel-shape",
+  "dir": "components/31-funnel-shape"
+ },
+ {
+  "title": "Sankey diagram",
+  "category": "Flows & networks",
+  "maxw": 1000,
+  "tags": [
+   "flow",
+   "journey",
+   "draggable",
+   "attribution",
+   "budget"
+  ],
+  "summary": "A three-stage Sankey (traffic source → landing page → outcome) with ribbons sized by volume, coloured by source, hover-to-trace highlighting, click-to-pin and vertically draggable nodes.",
+  "use_when": [
+   "Showing how a quantity splits and recombines across 2–4 stages (traffic to outcomes, budget to spend, energy, patient pathways)",
+   "The biggest flows are the story",
+   "Up to ~20 nodes"
+  ],
+  "avoid_when": [
+   "Flows loop back (cycles) — use a network diagram",
+   "Exact comparison of small flows matters (pair with a table)",
+   "Only one stage of splits (a stacked bar is simpler)"
+  ],
+  "anatomy": [
+   "Nodes: 12px-wide rounded bars in columns, height ∝ throughput, 10px vertical padding",
+   "Ribbons: cubic Bézier bands whose width ∝ flow, ordered to avoid crossings, 35% opacity in the source node's colour",
+   "First-column nodes use categorical slots in fixed order; later nodes are neutral ink-2",
+   "Labels: name + value beside each node (right of nodes, left of the last column)"
+  ],
+  "data": "{ nodes: [{ id: \"organic\", name: \"Organic search\", col: 0 }, …], links: [{ source: \"organic\", target: \"home\", value: 18200 }, …] }",
+  "interactions": [
+   "Hover a node: every ribbon through it highlights (65% opacity), others fade to 8%",
+   "Hover a ribbon: tooltip with source → target, value and its share of the source",
+   "Click a node to pin the highlight; click again or Esc to clear",
+   "Drag a node up or down to untangle; ribbons follow"
+  ],
+  "a11y": [
+   "SVG aria-label summarises the largest flows",
+   "A 'Table' toggle lists every flow with values",
+   "Ribbon colour carries source identity, and every node is labelled"
+  ],
+  "tokens": [
+   "--s1 … --s5",
+   "--ink-2",
+   "--surface"
+  ],
+  "prompt": "Build a draggable Sankey diagram in one self-contained HTML file with inline SVG and no libraries (write the layout yourself). Three columns: 5 traffic sources → 4 landing pages → 3 outcomes (Purchase, Sign-up, Bounce), with seeded link values. Layout: node height ∝ max(inflow, outflow) using one global scale, 10px padding between nodes, 12px-wide rounded node bars, columns evenly spaced. Links are filled Bézier ribbons whose width is the flow value, sorted at each node by the other end's vertical position to minimise crossings, coloured by the first-column source (categorical slots in fixed order; downstream ribbons inherit the colour of the traffic that feeds them, so split second-stage links by source) at 35% opacity. Label every node with name and value (to the right, or to the left for the last column). Hovering a node highlights all ribbons through it (others fade to 8%); hovering a ribbon shows source → target, value and share; clicking a node pins the highlight; nodes can be dragged vertically with pointer events and ribbons follow. Add a Diagram / Table toggle. CSS variables for all colours, light and dark themes.",
+  "num": "32",
+  "slug": "sankey",
+  "dir": "components/32-sankey"
+ },
+ {
+  "title": "Network (node-link) diagram",
+  "category": "Flows & networks",
+  "maxw": 1000,
+  "tags": [
+   "force-directed",
+   "graph",
+   "relationships",
+   "collaboration",
+   "draggable"
+  ],
+  "summary": "A force-directed network of who collaborates with whom: node size = connections, colour = team, link width = interactions; hover to see neighbours, drag nodes, filter by team and search by name.",
+  "use_when": [
+   "Relationships are the data: collaboration, service dependencies, referrals, co-purchases",
+   "Finding hubs, bridges between groups and isolated clusters",
+   "Up to ~80 nodes and a few hundred links"
+  ],
+  "avoid_when": [
+   "Hundreds of nodes (becomes a hairball — aggregate, or use an adjacency matrix)",
+   "Flows have a direction and stages (use a Sankey)"
+  ],
+  "anatomy": [
+   "Nodes: circles, radius ∝ √degree (5–16px), team colour from the first three categorical slots, 2px surface ring",
+   "Links: 1–4px lines ∝ interaction count, axis-grey at 60% opacity",
+   "Labels only for the top hubs by default; every node labelled on hover/focus",
+   "Team legend chips that double as filters; search box highlights a match",
+   "Side panel: selected person, team, degree and their strongest connections"
+  ],
+  "data": "{ nodes: [{ id: \"p01\", name: \"Avery Kim\", team: \"Engineering\" }, …], links: [{ source: \"p01\", target: \"p07\", weight: 12 }, …] }",
+  "interactions": [
+   "Hover a node: it and its neighbours stay full strength, everything else fades; tooltip with degree",
+   "Drag a node to reposition (simulation re-heats briefly)",
+   "Click a node to select it and fill the side panel",
+   "Team chips filter; search jumps to and selects a person",
+   "'Re-layout' re-runs the simulation"
+  ],
+  "a11y": [
+   "Side panel lists the selected node's connections as text",
+   "Search provides a keyboard path to any node",
+   "Team is shown by colour plus legend and panel text; only three categorical slots are used (validated all-pairs)"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--axis",
+   "--surface",
+   "--ink"
+  ],
+  "prompt": "Build an interactive force-directed network diagram in one self-contained HTML file with inline SVG and a hand-written force simulation (no libraries): many-body repulsion, link springs, a weak pull to the centre, collision padding and velocity damping, run with requestAnimationFrame until it cools. Seeded data: ~40 fictional people in 3 teams with ~90 weighted collaboration links, denser within teams and a few cross-team bridges. Node radius ∝ √degree (5–16px), fill = team colour (first three categorical slots), 2px surface ring; links 1–4px ∝ weight in axis grey at 60% opacity. Label only the top 6 hubs by default. Hover highlights a node and its neighbours and fades the rest; drag nodes with pointer events (re-heat the simulation); click selects a node and fills a side panel with name, team, degree and the strongest connections. Team legend chips act as filters, a search box selects a person by name, and a 'Re-layout' button restarts the simulation. CSS variables for all colours, light and dark themes.",
+  "num": "33",
+  "slug": "network",
+  "dir": "components/33-network"
+ },
+ {
+  "title": "Streamgraph",
+  "category": "Charts",
+  "maxw": 1000,
+  "tags": [
+   "stacked area",
+   "wiggle",
+   "composition over time",
+   "100% area",
+   "trends"
+  ],
+  "summary": "Six categories as flowing streams over a year, centred on a wavy baseline, with a Stream / Stacked / 100% offset switch, direct labels on the widest part of each stream and a hover crosshair that reads every layer.",
+  "use_when": [
+   "Showing how the mix of several categories rises and falls over time, where overall shape and rhythm matter more than exact values",
+   "Seasonal or event-driven popularity (genres, topics, product lines)",
+   "Editorial or overview panels"
+  ],
+  "avoid_when": [
+   "Exact values or precise comparison matter (use small multiples or lines)",
+   "More than ~8 categories (fold into 'Other')",
+   "Values can be negative"
+  ],
+  "anatomy": [
+   "Layers in categorical slot order, largest-total stream in the middle (inside-out ordering) to minimise wiggle",
+   "Smooth curves; a 1px surface-coloured stroke between layers acts as the gap",
+   "Offset modes: Stream (silhouette, centred), Stacked (zero baseline with y axis), 100% (expand, with % axis)",
+   "Direct labels at each stream's widest point when the label fits; legend always present",
+   "Month labels on x; hairline crosshair on hover"
+  ],
+  "data": "{ weeks: [\"2026-01-04\", …52], series: [{ name: \"Pop\", values: [52 numbers] }, …6] }",
+  "interactions": [
+   "Offset switch re-shapes the layers",
+   "Hover: crosshair at the nearest week, hovered layer stays full strength, tooltip lists every layer's value and share (hovered first)",
+   "Click a legend item to isolate that stream; click again to restore"
+  ],
+  "a11y": [
+   "Legend present plus direct labels",
+   "Tooltip lists every value as text",
+   "Isolating a stream gives a single, readable shape"
+  ],
+  "tokens": [
+   "--s1 … --s6",
+   "--surface",
+   "--grid",
+   "--axis"
+  ],
+  "prompt": "Build a streamgraph in one self-contained HTML file with inline SVG and no libraries. Seeded weekly listening hours for 6 music genres over 52 weeks, each with its own seasonal peak. Order layers inside-out (largest total in the middle), colour with categorical slots 1–6 in fixed order, draw smooth curves (cubic interpolation) and separate layers with a 1px surface-coloured stroke. Offer three offsets in a segmented control: Stream (silhouette: centred on zero), Stacked (zero baseline with a y axis) and 100% (normalised with a percent axis). Put a direct label at each stream's widest point when it fits, plus a clickable legend that isolates one stream. Month labels on x. Hover shows a hairline crosshair at the nearest week, keeps the hovered layer at full opacity while dimming the rest, and a tooltip lists every genre's value and share for that week. CSS variables for all colours, light and dark themes.",
+  "num": "34",
+  "slug": "streamgraph",
+  "dir": "components/34-streamgraph"
+ },
+ {
+  "title": "Toast notifications",
+  "category": "UI patterns",
+  "maxw": 960,
+  "tags": [
+   "toast",
+   "snackbar",
+   "alert",
+   "notification",
+   "status",
+   "undo"
+  ],
+  "summary": "Card-style toasts with a 4px status edge, a filled status icon, a bold title, a one-line message and a close button, in four variants, plus a live stack with position control, auto-dismiss progress, pause on hover and an Undo action.",
+  "use_when": [
+   "Confirming a background action finished (export ready, filters saved, data refreshed)",
+   "Short, non-blocking warnings and errors that don't need a decision",
+   "Offering a quick Undo after a destructive action"
+  ],
+  "avoid_when": [
+   "The message needs a decision or blocks the task (use a dialog)",
+   "Persistent state (a data source is offline) — use an inline banner",
+   "Long messages or more than one action"
+  ],
+  "anatomy": [
+   "Card: surface background, 8px radius, soft shadow, 4px left edge in the status colour",
+   "Icon: 22px filled circle in the status colour with a white glyph (✓ i ! ✕) — icon and colour together, never colour alone",
+   "Title (semibold 14px) above a one-line message in secondary ink",
+   "Close ×: 28px hit area, muted until hover",
+   "Optional action button (Undo) right-aligned before the close",
+   "Auto-dismiss bar: 2px progress line along the bottom in the status colour"
+  ],
+  "data": "toast({ type: \"success\" | \"info\" | \"warning\" | \"error\", title: \"Export ready\", message: \"sales_q3.csv has been generated.\", action?: { label: \"Undo\", onClick }, duration?: 5000 })",
+  "interactions": [
+   "Trigger buttons fire each variant; up to 4 toasts stack, the oldest leaves first",
+   "Position control: top-right, bottom-right, top-centre, bottom-centre",
+   "Auto-dismiss after 5s (errors stay until closed); hovering or focusing the stack pauses every timer",
+   "Close with ×, Esc closes the newest, Undo runs its action and dismisses",
+   "Enter and exit animate (slide + fade, 180ms); instant under prefers-reduced-motion"
+  ],
+  "a11y": [
+   "Success/info/warning go to a polite live region (role=status); errors to an assertive one (role=alert)",
+   "Toasts never steal focus; the close button has an aria-label",
+   "Errors don't auto-dismiss, so nobody misses them",
+   "Status colours are the reserved status set and always paired with an icon and a title"
+  ],
+  "tokens": [
+   "--good",
+   "--s1",
+   "--warn",
+   "--crit",
+   "--surface",
+   "--ink",
+   "--ink-2"
+  ],
+  "prompt": "Build a toast notification system in one self-contained HTML file (no libraries). Toast design: a white surface card with 8px radius, a soft shadow and a 4px left edge in the status colour; a 22px filled circular icon in the status colour with a white glyph (✓ success, i info, ! warning, ✕ error); a semibold title and a one-line secondary-ink message; a muted × close button (28px hit area) on the right; an optional action button such as Undo; and a 2px auto-dismiss progress line along the bottom. Show the four variants statically in a 'Designs' panel, and provide a live demo: buttons that fire each variant, a position control (top-right, bottom-right, top-centre, bottom-centre), a stack of at most 4 (oldest leaves first), 5-second auto-dismiss (errors persist), pause all timers while the stack is hovered or focused, Esc closes the newest, slide-and-fade enter/exit (instant under prefers-reduced-motion). Announce success/info/warning in a polite role=status region and errors in a role=alert region; never move focus. Expose a toast({type,title,message,action,duration}) function. CSS variables for every colour, light and dark themes.",
+  "num": "35",
+  "slug": "toast-notices",
+  "dir": "components/35-toast-notices"
+ },
+ {
+  "title": "Slide-out dashboard menu",
+  "category": "UI patterns",
+  "maxw": 1040,
+  "tags": [
+   "sidebar",
+   "navigation",
+   "icon rail",
+   "drawer",
+   "filters",
+   "collapsible"
+  ],
+  "summary": "A dashboard sidebar that collapses to an icon rail and slides out to a full menu: workspace monogram, page links with an active accent bar, a collapsible Reports group, a filters section that drives the page, and an off-canvas drawer with a scrim on narrow screens.",
+  "use_when": [
+   "Multi-page dashboards that need persistent navigation plus a home for global filters",
+   "Users switch between 'focus on the charts' (rail) and 'find my way' (expanded)",
+   "The same dashboard must work on desktop and phone"
+  ],
+  "avoid_when": [
+   "A single-page dashboard with two or three filters (put them in one row above the charts)",
+   "Fewer than three destinations (use tabs across the top)"
+  ],
+  "anatomy": [
+   "Header: monogram logo button + workspace name; collapse toggle (⌘/Ctrl + B); in rail mode only the logo shows, centred, and clicking it expands the sidebar",
+   "Nav items: 20px icon + label, 40px rows; active item gets a 3px accent bar on the left and a tinted pill background",
+   "Collapsible group (Reports) with a chevron and indented children",
+   "Filters section: a period segmented control and region checkboxes with counts, plus a one-line plain-English summary of what's applied",
+   "Footer: user avatar + name and a help link",
+   "Rail mode: 64px wide, icons only, labels in tooltips; expanded: 248px; drawer (narrow screens): slides over content with a 40% scrim",
+   "Two skins from the library: Neutral (hairline, shadcn-like) and Navy (dark rail, GA4/Data Forge-like)"
+  ],
+  "data": "{ workspace: \"Northstar Retail\", pages: [{ id: \"overview\", label: \"Overview\", icon: \"grid\" }, …], groups: [{ label: \"Reports\", items: […] }], filters: { period: [\"7D\",\"30D\",\"QTD\",\"YTD\"], regions: [{ name: \"West\", count: 12 }, …] } }",
+  "interactions": [
+   "Collapse/expand with the toggle button or Ctrl/⌘ + B; clicking the logo re-expands a collapsed rail; the choice is remembered per viewer",
+   "Collapse style switch: Collapse to rail (64px icons) or Hide completely (0px; a hamburger in the top bar brings it back, also on desktop)",
+   "Hover a rail icon: tooltip with the page name",
+   "Click a page: active state moves and the content header updates",
+   "Reports group expands/collapses (aria-expanded)",
+   "Filters update the page summary immediately; Reset clears them",
+   "Narrow screens: hamburger opens a drawer; Esc, scrim click or choosing a page closes it; focus is trapped inside while open and returns to the hamburger"
+  ],
+  "a11y": [
+   "<nav aria-label> landmark; active link has aria-current=page",
+   "Toggle buttons expose aria-expanded and aria-controls",
+   "Drawer is a modal dialog while open (focus trap, Esc to close, focus restored)",
+   "Rail icons keep accessible names even when labels are hidden",
+   "Visible focus rings; respects prefers-reduced-motion"
+  ],
+  "tokens": [
+   "--s1",
+   "--surface",
+   "--surface-2",
+   "--ink",
+   "--ink-2",
+   "--grid",
+   "--hover"
+  ],
+  "prompt": "Build a responsive slide-out dashboard sidebar in one self-contained HTML file (no libraries), shown inside a mock dashboard frame. Sidebar contents: a header with a monogram tile, workspace name and a collapse toggle (also Ctrl/⌘+B); a nav list of pages with inline SVG icons (Overview, Sales, Customers, Inventory) where the active item has a 3px accent bar on the left, a tinted pill background and aria-current=page; a collapsible 'Reports' group with a chevron and indented children; a Filters section with a period segmented control (7D/30D/QTD/YTD), region checkboxes with counts and a Reset link; and a footer with a user avatar and name. Modes: expanded (248px) and a collapsed state that is either an icon rail (64px, labels hidden but kept as accessible names and shown as hover tooltips, the monogram logo centred and clickable to expand again) or hidden completely (0px wide and inert, with a hamburger in the top bar to bring it back) — chosen with a 'Collapse to rail / Hide completely' switch, animated with a width transition, with the choice remembered in localStorage. Below 720px the sidebar becomes an off-canvas drawer opened by a hamburger, sliding over the content with a 40% scrim; Esc, scrim click or picking a page closes it, focus is trapped while open and returned to the hamburger. Selecting a page or changing filters updates the content header and a plain-English summary ('Sales · last 30 days · West, South'). Offer two skins via a switch: Neutral (light surface, hairline border) and Navy (dark navy rail with white text). CSS variables for all colours, light and dark themes, prefers-reduced-motion respected.",
+  "num": "36",
+  "slug": "slideout-menu",
+  "dir": "components/36-slideout-menu"
+ },
+ {
+  "title": "Bump chart",
+  "category": "Charts",
+  "maxw": 1000,
+  "tags": [
+   "ranking",
+   "rank over time",
+   "leaderboard history",
+   "highlight"
+  ],
+  "summary": "Rank over time for ten apps across twelve weeks: smooth lines between rank positions, everything grey except up to three picked apps in colour with rank numbers at every point, and labels at both ends.",
+  "use_when": [
+   "The order matters more than the values (charts positions, league tables, market share rank)",
+   "You want to show climbers, fallers and swaps across many periods",
+   "5–15 entities"
+  ],
+  "avoid_when": [
+   "The gaps between values matter (a #1 that leads by 40% looks the same as one that leads by 1%) — use a line chart",
+   "Only two periods (use a slopegraph)"
+  ],
+  "anatomy": [
+   "y = rank (1 at the top), evenly spaced; x = periods",
+   "Lines: smooth S-curves with flat tangents at each period, 2px de-emphasis grey; selected lines 3px in categorical slots 1–3",
+   "Points: 4px grey dots; selected lines get 20px circles with the rank number inside",
+   "Labels at the start (left) and end (right): rank and name; selected labels in ink weight",
+   "Legend chips for the current selection with a clear button"
+  ],
+  "data": "{ periods: [\"W1\", …12], series: [{ name: \"Lumen Notes\", ranks: [3, 2, 2, 1, …] }, …10] }",
+  "interactions": [
+   "Hover a line or label: it darkens and a tooltip summarises best, worst and net change",
+   "Click a line or label to add or remove it from the selection (max 3; the oldest drops off)",
+   "Selection keeps its colour while selected — colour follows the app, never its rank"
+  ],
+  "a11y": [
+   "Rank numbers printed inside selected points",
+   "Labels at both ends name every line",
+   "SVG aria-label summarises the biggest climber and faller"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--de-emph",
+   "--ink",
+   "--surface"
+  ],
+  "prompt": "Build an interactive bump chart in one self-contained HTML file with inline SVG and no libraries. Seeded weekly rankings for 10 fictional apps over 12 weeks (derive ranks from noisy scores so lines cross). y is rank with 1 at the top, evenly spaced; x is weeks. Draw each app as a smooth line using cubic curves with horizontal tangents at every week; unselected lines are 2px de-emphasis grey with 4px dots, selected lines (up to 3) are 3px in categorical slots 1–3 with 20px circles that show the rank number in white. Label every line at the left (start rank + name) and right (end rank + name). Hover darkens a line and shows best rank, worst rank and net change; clicking a line or label toggles it in the selection (max 3, oldest drops off), and colours stay attached to the app while selected. Show the selection as legend chips with a Clear button. Default selection: the biggest climber, the biggest faller and the final #1. CSS variables for every colour, light and dark themes.",
+  "num": "37",
+  "slug": "bump-chart",
+  "dir": "components/37-bump-chart"
+ },
+ {
+  "title": "Beeswarm",
+  "category": "Charts",
+  "maxw": 1000,
+  "tags": [
+   "distribution",
+   "dot plot",
+   "individuals",
+   "salary bands",
+   "jitter-free"
+  ],
+  "summary": "Every employee as a dot along a salary axis, swarmed so no dot overlaps, one row per department with a median tick, coloured by level, with level filters and an All-together view.",
+  "use_when": [
+   "You want the distribution and the individuals at once (salaries, response times, deal sizes, scores)",
+   "Comparing distributions across a few groups",
+   "Up to a few hundred points per row"
+  ],
+  "avoid_when": [
+   "Thousands of points (use a histogram or violin)",
+   "Only the summary matters (a box plot or bar of medians is faster to read)"
+  ],
+  "anatomy": [
+   "x = value on a shared linear axis with compact ticks and hairline grid",
+   "One swarm per group; dots (r = 4) are placed outward from the row's centre line so none overlap",
+   "Colour = level (categorical slots 1–3, validated all-pairs) with a legend",
+   "Median: a 2px ink tick across each swarm with its value",
+   "Group labels with counts on the left"
+  ],
+  "data": "[{ name: \"Employee 104\", department: \"Engineering\", level: \"Manager\", salary: 148000 }, …]",
+  "interactions": [
+   "Layout switch: By department / All together (re-swarms)",
+   "Level chips filter (dim) levels",
+   "Hover a dot: person, department, level, salary and percentile within the department"
+  ],
+  "a11y": [
+   "Medians printed as text",
+   "Level shown by colour plus legend and tooltip; dimming instead of removal keeps the shape",
+   "SVG aria-label gives each department's median"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--ink",
+   "--grid",
+   "--surface"
+  ],
+  "prompt": "Build a beeswarm chart in one self-contained HTML file with inline SVG and no libraries. Seeded data: ~260 fictional employees in 5 departments and 3 levels (Individual contributor, Manager, Director) with salaries that differ by department and level. Shared x axis for salary with compact ticks and a hairline grid. One row per department: place each dot (radius 4, 1px surface ring) on the x position of its value, then swarm it vertically by trying offsets 0, +d, −d, +2d, … until it doesn't overlap any already-placed dot (process dots sorted by value). Colour by level using the first three categorical slots, with a legend whose chips dim a level when toggled. Draw each department's median as a 2px ink tick with a label, and department names with counts on the left. A segmented control switches between By department and All together. Hover tooltips show name, department, level, salary and percentile within the department. CSS variables for every colour, light and dark themes.",
+  "num": "38",
+  "slug": "beeswarm",
+  "dir": "components/38-beeswarm"
+ },
+ {
+  "title": "Chord diagram",
+  "category": "Flows & networks",
+  "maxw": 960,
+  "tags": [
+   "flows between groups",
+   "switching",
+   "migration",
+   "matrix",
+   "net gain"
+  ],
+  "summary": "Customer switching between five brands drawn as a chord diagram: arc length = customers lost, ribbon ends sized by flow in each direction and coloured by the brand that wins the exchange, with net gain/loss on hover and a matrix view.",
+  "use_when": [
+   "Flows between members of the same set go both ways (brand switching, migration between regions, transfers between teams)",
+   "Net winners and losers are the story",
+   "4–8 groups"
+  ],
+  "avoid_when": [
+   "Flows go through stages (use a Sankey)",
+   "More than ~8 groups or many tiny flows (use a heatmap matrix)",
+   "Exact comparison of flows (pair with the matrix view)"
+  ],
+  "anatomy": [
+   "Outer arcs: one per group, 14px thick, length ∝ customers that left the group, 0.04 rad padding, categorical slots in fixed order",
+   "Ribbons: each pair drawn once; each end's width ∝ the flow leaving that side; coloured by the side that gained more, at 65% opacity",
+   "Labels outside each arc with the group name and its net change (signed)",
+   "Matrix view: from × to table with row and column totals"
+  ],
+  "data": "{ groups: [\"Aurora\", \"Bramble\", …], matrix: [[0, 420, 180, …], …] } — matrix[i][j] = customers who moved from i to j",
+  "interactions": [
+   "Hover an arc: its ribbons stay, the rest fade; tooltip with lost, gained and net",
+   "Hover a ribbon: 'A → B 420 · B → A 180 · net +240 to A'",
+   "Click an arc to pin the highlight",
+   "Diagram / Matrix toggle"
+  ],
+  "a11y": [
+   "Net change written in every label",
+   "Matrix view carries every number",
+   "Ribbon colour is explained in the subtitle and tooltip"
+  ],
+  "tokens": [
+   "--s1 … --s5",
+   "--surface",
+   "--ink",
+   "--up",
+   "--down"
+  ],
+  "prompt": "Build a chord diagram in one self-contained HTML file with inline SVG and no libraries (compute the layout yourself). Seeded 5×5 brand-switching matrix where matrix[i][j] is customers who moved from brand i to brand j (diagonal zero). Lay out one outer arc per brand around a circle, arc length proportional to the row total (customers lost), with 0.04 radian padding, 14px thick, coloured by categorical slots 1–5 in fixed order. Inside each arc, sub-divide by destination; draw each pair once as a ribbon from the i→j sub-arc to the j→i sub-arc with quadratic curves through the centre, coloured by the brand that gained more from the exchange, at 65% opacity. Label each arc outside the circle with the brand name and its signed net change. Hovering an arc keeps its ribbons and fades others (tooltip: lost, gained, net); hovering a ribbon shows both directions and the net; clicking an arc pins it. Add a Diagram / Matrix toggle that shows the from × to table with totals. CSS variables for every colour, light and dark themes.",
+  "num": "39",
+  "slug": "chord-diagram",
+  "dir": "components/39-chord-diagram"
+ },
+ {
+  "title": "Radar chart",
+  "category": "Charts",
+  "maxw": 960,
+  "tags": [
+   "spider chart",
+   "profile comparison",
+   "multivariate",
+   "benchmark"
+  ],
+  "summary": "Product profiles across seven scored attributes on a shared 0–100 scale: up to three products as outlined polygons with light fills, an industry benchmark as a dashed ink outline, toggleable legend and per-vertex tooltips, plus a table view.",
+  "use_when": [
+   "Comparing the shape of 2–3 profiles across 5–8 attributes on the same scale (product reviews, skills, vendor scorecards)",
+   "Showing strengths and gaps at a glance",
+   "The audience is used to spider charts"
+  ],
+  "avoid_when": [
+   "Attributes have different units or scales (normalise first or use bullet charts)",
+   "Precise comparison per attribute (use grouped bars or a dot plot — area exaggerates differences)",
+   "More than three series (shapes become unreadable)"
+  ],
+  "anatomy": [
+   "Spokes: one per attribute, axis-grey; rings every 20 points in hairline grid with small value labels on the first spoke",
+   "Series polygons: 2px outline in categorical slots 1–3, 12% fill, 8px vertex dots with surface rings",
+   "Benchmark: 1.5px dashed ink outline, no fill",
+   "Attribute labels outside the rim, anchored by side",
+   "Legend with toggles; a single hover highlights one series and fades the others"
+  ],
+  "data": "{ axes: [\"Ease of use\", \"Speed\", …7], series: [{ name: \"Product A\", values: [82, 64, …] }, …3], benchmark: [70, 70, …] }",
+  "interactions": [
+   "Click legend items to show/hide a series (at least one stays)",
+   "Hover a polygon or legend item to bring that series forward",
+   "Hover a vertex: attribute, value and difference from benchmark",
+   "Chart / Table toggle"
+  ],
+  "a11y": [
+   "Legend present (≥ 2 series); benchmark distinguished by dash, not colour",
+   "Table view lists every value",
+   "Uses only the three categorical slots validated for overlapping shapes"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--ink",
+   "--grid",
+   "--axis",
+   "--surface"
+  ],
+  "prompt": "Build an interactive radar (spider) chart in one self-contained HTML file with inline SVG and no libraries. Seven attributes scored 0–100 for three fictional products plus an industry benchmark. Draw spokes in axis grey, concentric polygon rings every 20 points in hairline grid with small value labels along the first spoke, and attribute labels outside the rim anchored left/right/middle by angle. Each product is a polygon with a 2px outline in categorical slots 1–3, a 12% fill and 8px vertex dots with a 2px surface ring; the benchmark is a 1.5px dashed ink outline with no fill. Legend items toggle series (never hide the last) and hovering a legend item or polygon brings it to the front and fades the others. Vertex hover shows the attribute, value and difference from benchmark. Add a Chart / Table toggle. CSS variables for all colours, light and dark themes.",
+  "num": "40",
+  "slug": "radar",
+  "dir": "components/40-radar"
+ },
+ {
+  "title": "Collapsible tree diagram",
+  "category": "Hierarchies",
+  "maxw": 1040,
+  "tags": [
+   "org chart",
+   "hierarchy",
+   "dendrogram",
+   "tidy tree",
+   "drill down"
+  ],
+  "summary": "A left-to-right tidy tree of an organisation (company › departments › teams › squads): node size = headcount, branches coloured by department, click any node to expand or collapse it, with expand-all, collapse-all and a search that opens the path to a match.",
+  "use_when": [
+   "Showing structure and size of a hierarchy together (org charts, product taxonomies, account hierarchies, decision trees)",
+   "Readers explore by drilling into one branch",
+   "Up to ~200 nodes with a few expanded at a time"
+  ],
+  "avoid_when": [
+   "Part-to-whole proportion is the point (use a treemap)",
+   "The structure is a network with cross-links (use a node-link diagram)"
+  ],
+  "anatomy": [
+   "Columns by depth, rows by visible leaves; parents centred on their children",
+   "Links: smooth horizontal S-curves from parent to child, 1.5px in the branch colour at 45% opacity",
+   "Nodes: circles with radius ∝ √headcount; filled when collapsed (has hidden children), ring when expanded, small dot for leaves",
+   "Labels to the right of each node: name and headcount; the root and departments in ink weight",
+   "Department colours: categorical slots 1–5, inherited down the branch"
+  ],
+  "data": "{ name: \"Northstar Retail\", children: [{ name: \"Engineering\", children: [{ name: \"Platform\", size: 42 }, …] }, …] } — internal sizes are summed",
+  "interactions": [
+   "Click (or Enter) a node with children to expand/collapse it",
+   "Expand all / Collapse to departments buttons",
+   "Search: type a team name to expand the path and outline the match",
+   "Hover: tooltip with headcount, share of the parent and of the company"
+  ],
+  "a11y": [
+   "role=tree with treeitem nodes, aria-level and aria-expanded",
+   "Every node is focusable and togglable with Enter/Space",
+   "Headcount printed beside every node"
+  ],
+  "tokens": [
+   "--s1 … --s5",
+   "--ink",
+   "--ink-2",
+   "--surface"
+  ],
+  "prompt": "Build a collapsible tidy tree in one self-contained HTML file with inline SVG and no libraries. Seeded org data: company → 5 departments → 3–5 teams → 2–4 squads with headcounts at the leaves (parents summed). Layout left to right: x by depth, y by visible-leaf order with 26px rows, each parent centred on its visible children; the SVG height follows the number of visible leaves. Links are horizontal S-curves (cubic Béziers) in the branch's department colour at 45% opacity; departments take categorical slots 1–5 and children inherit them. Node circles have radius ∝ √headcount, filled when collapsed with hidden children, a ring when expanded, and a small dot for leaves; labels to the right show name and headcount. Clicking a node or pressing Enter toggles it; add Expand all and Collapse buttons and a search box that expands the path to a matching team and outlines it. Use role=tree / treeitem with aria-level and aria-expanded. Tooltips show headcount and shares. CSS variables for every colour, light and dark themes.",
+  "num": "41",
+  "slug": "tree-diagram",
+  "dir": "components/41-tree-diagram"
+ },
+ {
+  "title": "Voronoi treemap",
+  "category": "Hierarchies",
+  "maxw": 960,
+  "tags": [
+   "treemap",
+   "weighted voronoi",
+   "power diagram",
+   "part to whole",
+   "hierarchy",
+   "zoom"
+  ],
+  "summary": "A two-level hierarchy (category › product line) packed into a circle as organic Voronoi cells whose areas match their values; click a category to zoom in and re-pack its lines to fill the circle.",
+  "use_when": [
+   "Showing part-to-whole for a two-level hierarchy with a memorable, organic look (budgets, revenue mix, market share)",
+   "Editorial or hero panels where a rectangular treemap feels too rigid",
+   "Up to ~40 leaf cells"
+  ],
+  "avoid_when": [
+   "Precise comparison of similar values (areas of irregular shapes are hard to compare — use bars)",
+   "Deep hierarchies (beyond two levels, use a tree diagram or a zoomable rectangular treemap)",
+   "Data that updates often (the layout is iterative and positions move)"
+  ],
+  "anatomy": [
+   "Boundary: a circle; top-level cells are a weighted Voronoi (power) diagram whose areas converge to each category's share",
+   "Second level: each category cell is subdivided the same way for its product lines",
+   "Category colours: categorical slots 1–5; lines are tints of their category's hue",
+   "Borders: 4px surface lines between categories, 1.5px between lines",
+   "Labels: category name + share at each category's centroid (overview); line name + value inside cells large enough (zoomed)",
+   "Side list: categories with value and share, doubling as zoom buttons"
+  ],
+  "data": "{ name: \"Revenue\", children: [{ name: \"Electronics\", children: [{ name: \"Phones\", value: 32 }, …] }, …] }",
+  "interactions": [
+   "Click a category (cell or side list) to zoom in; Back or Esc to return",
+   "Hover a cell: tooltip with value, share of category and of total",
+   "Layout is computed once per view (deterministic seed) and reused on resize"
+  ],
+  "a11y": [
+   "Side list gives every category value and share as text and acts as keyboard-accessible zoom buttons",
+   "Zoomed view labels every line large enough to hold text; the rest are in tooltips and the list",
+   "SVG aria-label lists the categories with shares"
+  ],
+  "tokens": [
+   "--s1 … --s5",
+   "--surface",
+   "--ink"
+  ],
+  "prompt": "Build a two-level Voronoi treemap in one self-contained HTML file with inline SVG and no libraries. Implement a weighted Voronoi (power diagram) layout yourself: each cell is the boundary polygon clipped by the half-planes 2(pj−pi)·x ≤ |pj|²−|pi|²−wj+wi for every other site j (Sutherland–Hodgman clipping). Iterate ~150 times: compute cells, move each site to its cell centroid, scale its weight by target area ÷ current area, cap each weight at the squared distance to its nearest neighbour site, and reset any empty cell. Seed sites deterministically inside the boundary. Use a circle (72-gon) as the top boundary for 5 categories, then subdivide each category cell for its 3–5 product lines. Colour categories with categorical slots 1–5 and lines as lighter tints of their category; separate categories with 4px surface-coloured borders and lines with 1.5px borders. Overview labels show category name and share at each centroid with a surface halo. Clicking a category (or its entry in a side list) zooms: re-pack its lines to fill the whole circle with name and value labels; Back or Esc returns. Hover tooltips show value and shares. Compute layouts in a fixed 500×500 space and scale via viewBox so resizing doesn't re-run them. CSS variables for every colour, light and dark themes.",
+  "num": "42",
+  "slug": "voronoi-treemap",
+  "dir": "components/42-voronoi-treemap"
+ },
+ {
+  "title": "Area bump chart",
+  "category": "Charts",
+  "maxw": 1040,
+  "tags": [
+   "ranked stream",
+   "rank and size",
+   "market share",
+   "ribbons"
+  ],
+  "summary": "A bump chart whose lines are ribbons: at each quarter the services are stacked in rank order, ribbon thickness is their share, and smooth crossovers show overtakes, with direct labels and hover focus.",
+  "use_when": [
+   "Both rank and size matter over time (market share, watch time, votes)",
+   "Overtakes are the story but you don't want to hide how big the gaps are",
+   "5–8 series over 6–20 periods"
+  ],
+  "avoid_when": [
+   "Only rank matters (a plain bump chart is cleaner)",
+   "Exact values must be compared (use lines or small multiples)",
+   "Many series with similar sizes (ribbons become a tangle)"
+  ],
+  "anatomy": [
+   "At each period, series stack top to bottom by rank with a 6px gap; thickness ∝ value",
+   "Between periods, each ribbon's edges follow cubic curves with horizontal tangents, so swaps read as crossovers",
+   "Categorical slots in fixed order per series; 1px surface stroke separates overlapping ribbons",
+   "Direct labels at the right edge (name + share) and left edge (name), placed in each ribbon's middle",
+   "Period labels along the bottom; hover crosshair"
+  ],
+  "data": "{ periods: [\"Q1 '24\", …], series: [{ name: \"Streamly\", values: [ …share per period ] }, …] }",
+  "interactions": [
+   "Hover a ribbon: it stays full strength, others fade to 20%; tooltip with rank and share at the hovered period",
+   "Click a ribbon to pin the focus; click again to clear",
+   "Metric switch: Share of watch time / Hours"
+  ],
+  "a11y": [
+   "Every ribbon is labelled at both ends, so colour is not the only identifier",
+   "Tooltip lists rank and value as text",
+   "SVG aria-label names the current leader and the biggest climber"
+  ],
+  "tokens": [
+   "--s1 … --s6",
+   "--surface",
+   "--ink",
+   "--grid"
+  ],
+  "prompt": "Build an area bump chart in one self-contained HTML file with inline SVG and no libraries. Seeded quarterly data for 6 fictional streaming services over 10 quarters (share of watch time, with a couple of overtakes). At each quarter, sort services by value and stack them top to bottom with a 6px gap so each ribbon's thickness is proportional to its value and its vertical position is its rank. Between quarters, draw each ribbon's top and bottom edges as cubic Bézier curves with horizontal tangents so rank swaps become smooth crossovers; fill with categorical slots 1–6 in fixed per-service order and a 1px surface-coloured stroke. Label every ribbon at the right edge (name + latest share) and at the left edge (name), centred in the ribbon. Hovering a ribbon fades the others to 20% and shows a tooltip with its rank and value at the hovered quarter; clicking pins the focus. Add a metric switch between share and absolute hours. CSS variables for every colour, light and dark themes.",
+  "num": "43",
+  "slug": "area-bump",
+  "dir": "components/43-area-bump"
+ },
+ {
+  "title": "Polar area (Nightingale rose)",
+  "category": "Charts",
+  "maxw": 960,
+  "tags": [
+   "coxcomb",
+   "rose chart",
+   "seasonality",
+   "cyclical",
+   "stacked"
+  ],
+  "summary": "Twelve monthly wedges whose area (not radius) is proportional to value, stacked by cause like Nightingale's rose, with a stacked / single-cause switch, square-root rings and hover readouts.",
+  "use_when": [
+   "Cyclical data where the circle itself means something (months, hours, compass directions)",
+   "Showing seasonality in a striking, editorial way",
+   "2–3 stacked components"
+  ],
+  "avoid_when": [
+   "Precise comparison between non-adjacent wedges (use a bar chart)",
+   "Linear time without a cycle",
+   "More than three stacked components (outer layers get distorted)"
+  ],
+  "anatomy": [
+   "12 equal-angle wedges starting at 12 o'clock with 1.5px surface gaps",
+   "Radius = √(cumulative value) so each layer's area is proportional to its value (never linear radius — that squares the differences)",
+   "Stacked layers in categorical slots 1–3, innermost first; legend above",
+   "Reference rings at round values on the square-root scale, labelled along the top spoke",
+   "Month labels outside the rim"
+  ],
+  "data": "[{ month: \"Jan\", causes: { Preventable: 42, Wounds: 12, Other: 8 } }, …12]",
+  "interactions": [
+   "Switch: All causes (stacked) or one cause at a time",
+   "Hover a wedge: month, cause, value and share of that month",
+   "Hover a legend item to highlight that layer"
+  ],
+  "a11y": [
+   "Legend present; values in tooltips and in a Table view",
+   "Area-true scaling noted in the subtitle",
+   "Only the three categorical slots validated for all-pairs use"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--grid",
+   "--surface",
+   "--ink"
+  ],
+  "prompt": "Build a polar area (Nightingale rose / coxcomb) chart in one self-contained HTML file with inline SVG and no libraries. Twelve monthly wedges of equal angle starting at 12 o'clock with 1.5px surface-coloured gaps, each stacked from three seeded components (e.g. incident causes). Make AREA proportional to value: the outer radius of each stacked layer is r = R × √(cumulative value ÷ max monthly total). Fill layers with categorical slots 1–3, innermost first. Draw reference rings at round values on the same square-root scale with labels on the top spoke, and month labels outside the rim. A segmented control switches between All causes (stacked) and each single cause (rescaled to its own max). Hovering a wedge shows month, cause, value and share of the month; hovering a legend item highlights that layer. Include a Table toggle. CSS variables for every colour, light and dark themes.",
+  "num": "44",
+  "slug": "polar-area",
+  "dir": "components/44-polar-area"
+ },
+ {
+  "title": "Radial Sankey",
+  "category": "Flows & networks",
+  "maxw": 1000,
+  "tags": [
+   "sunburst flow",
+   "budget allocation",
+   "hierarchy flow",
+   "circular sankey"
+  ],
+  "summary": "A budget flowing outward from a centre total through departments to programmes: concentric rings of arcs with curved bands fanning between them, coloured by department, with hover tracing and a list view.",
+  "use_when": [
+   "A total splits into categories and then sub-categories and you want the split to feel like a flow (budgets, revenue allocation, headcount plans)",
+   "Hero or summary panels where a sunburst feels too static",
+   "2 levels, up to ~30 outer items"
+  ],
+  "avoid_when": [
+   "Flows recombine or cross between branches (use a regular Sankey)",
+   "Precise value comparison (pair with the list view or bars)",
+   "Deep hierarchies (beyond two levels the outer ring gets crowded)"
+  ],
+  "anatomy": [
+   "Centre: total value and label",
+   "Ring 1: department arcs (angle ∝ value), 14px thick, categorical slots 1–5",
+   "Ring 2: programme arcs spread with extra padding so the bands fan out, 14px thick, tints of the department hue",
+   "Bands: curved ribbons from each department's arc segment to each programme's arc, 45% opacity",
+   "Labels: department names along ring 1 (outside when they fit), programme names radially outside ring 2"
+  ],
+  "data": "{ total: \"FY2027 budget\", children: [{ name: \"Engineering\", children: [{ name: \"Platform\", value: 18.4 }, …] }, …] }",
+  "interactions": [
+   "Hover a department or programme: its branch stays, the rest fade; tooltip with value and shares",
+   "Click a department to pin its branch",
+   "Chart / List toggle"
+  ],
+  "a11y": [
+   "List view gives every value with its department",
+   "Centre total in text; tooltips state shares",
+   "Department labels name every colour"
+  ],
+  "tokens": [
+   "--s1 … --s5",
+   "--surface",
+   "--ink",
+   "--ink-2"
+  ],
+  "prompt": "Build a radial Sankey in one self-contained HTML file with inline SVG and no libraries. Seeded two-level budget: 5 departments, each with 3–5 programmes. In the centre, print the total. Ring 1 (inner) holds department arcs whose angles are proportional to value, 14px thick, in categorical slots 1–5 with small angular padding. Ring 2 (outer, at a larger radius) holds programme arcs, also proportional to value but with larger padding so they fan out, coloured as lighter tints of their department. Connect each programme to its department's arc segment with a curved band: start at the department ring's outer edge across the programme's share of that arc, end at the programme arc's inner edge, using cubic curves through a mid radius, at 45% opacity. Label departments near ring 1 and programmes radially outside ring 2, rotated to read outward and flipped on the left half. Hover highlights a whole branch and shows a tooltip; clicking a department pins it. Add a Chart / List toggle. CSS variables for every colour, light and dark themes.",
+  "num": "45",
+  "slug": "radial-sankey",
+  "dir": "components/45-radial-sankey"
+ },
+ {
+  "title": "Ternary plot",
+  "category": "Charts",
+  "maxw": 1000,
+  "tags": [
+   "three-part composition",
+   "simplex",
+   "channel mix",
+   "barycentric",
+   "change arrows"
+  ],
+  "summary": "Each store's sales mix across three channels (online, in-store, wholesale) as a point in a triangle, sized by revenue and coloured by format, with guide lines to the three axes on hover and arrows showing how the mix moved since last year.",
+  "use_when": [
+   "Every item is a mix of exactly three parts that sum to 100% (channel mix, soil texture, time allocation, vote shares)",
+   "Clusters and drift in composition are the story",
+   "10–200 items"
+  ],
+  "avoid_when": [
+   "More or fewer than three parts",
+   "Readers are unfamiliar with the form and there's no room to explain it (use 100% stacked bars)",
+   "Absolute amounts matter more than proportions"
+  ],
+  "anatomy": [
+   "Equilateral triangle; each corner is 100% of one part, the opposite edge is 0%",
+   "Grid lines every 20% parallel to each edge, ticks labelled on one edge per axis, in hairline grid",
+   "Points: circles sized by revenue (√), coloured by store format (categorical slots 1–3), 2px surface ring",
+   "Hover: dashed guide lines from the point to all three axes with the three percentages",
+   "Change mode: thin arrows from last year's mix to this year's"
+  ],
+  "data": "[{ store: \"Store 12\", format: \"Urban\", revenue: 4.2e6, mix: { online: .38, inStore: .52, wholesale: .10 }, mixLastYear: { … } }, …]",
+  "interactions": [
+   "Toggle: This year / Change since last year (arrows)",
+   "Format chips dim other formats",
+   "Hover a point: guides to each axis and a tooltip with the three shares and revenue"
+  ],
+  "a11y": [
+   "Corner labels and an axis explainer in the subtitle",
+   "Tooltip states all three percentages in words",
+   "Only three categorical slots, validated all-pairs"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--grid",
+   "--axis",
+   "--ink",
+   "--surface"
+  ],
+  "prompt": "Build an interactive ternary plot in one self-contained HTML file with inline SVG and no libraries. Seeded data: 36 fictional stores in 3 formats (Urban, Suburban, Outlet), each with revenue and a sales mix across Online / In-store / Wholesale for this year and last year (each mix sums to 1). Draw an equilateral triangle with Online at the top, In-store bottom-left and Wholesale bottom-right; add grid lines every 20% parallel to each edge in hairline grid with tick labels along one edge per axis and corner labels. Convert each mix to x,y with barycentric coordinates. Points are circles sized by √revenue, coloured by format (categorical slots 1–3) with a 2px surface ring. Hovering a point draws dashed guide lines from it to each axis and shows a tooltip with the three shares and revenue. A toggle switches to 'Change since last year', drawing thin arrows from last year's position to this year's. Format chips dim other formats. CSS variables for every colour, light and dark themes.",
+  "num": "46",
+  "slug": "ternary-plot",
+  "dir": "components/46-ternary-plot"
+ },
+ {
+  "title": "Tournament bracket",
+  "category": "Flows & networks",
+  "maxw": 1100,
+  "tags": [
+   "single elimination",
+   "knockout",
+   "playoffs",
+   "path highlight",
+   "competition"
+  ],
+  "summary": "A 16-team single-elimination bracket in four rounds plus a champion card: match boxes with seeds and scores, winners in bold, elbow connectors, hover any team to light up its path, and a round filter for narrow screens.",
+  "use_when": [
+   "Knockout competitions, playoffs, internal contests, sales leaderboards run as brackets",
+   "Showing how a winner got there, round by round",
+   "8, 16 or 32 entrants"
+  ],
+  "avoid_when": [
+   "Round-robin or league formats (use a table or bump chart)",
+   "More than 32 entrants on one screen (split into regions)"
+  ],
+  "anatomy": [
+   "Columns per round with headers (Round of 16 → Quarterfinals → Semifinals → Final)",
+   "Match box: two 26px rows, each with seed (muted), team name and score; winner semibold with ink score, loser in secondary ink",
+   "Elbow connectors from each pair of matches to the next round, hairline axis colour",
+   "Champion card at the end with a trophy glyph",
+   "Path highlight: the hovered team's rows tint with the accent and their connectors turn accent"
+  ],
+  "data": "{ teams: [{ seed: 1, name: \"Harbor Hawks\" }, …16], results: [[{ a: 0, b: 15, sa: 3, sb: 1 }, …8], …per round] }",
+  "interactions": [
+   "Hover or focus a team: its whole path highlights across rounds",
+   "Click a team to pin the highlight",
+   "Round filter: All rounds / From quarterfinals (for narrow screens)",
+   "'Simulate new tournament' re-seeds results"
+  ],
+  "a11y": [
+   "Each match is a list item with an aria-label stating both teams, scores and the winner",
+   "Path highlight uses tint and border, not colour alone",
+   "Round headers are headings"
+  ],
+  "tokens": [
+   "--s1",
+   "--axis",
+   "--surface",
+   "--surface-2",
+   "--ink",
+   "--ink-2"
+  ],
+  "prompt": "Build a 16-team single-elimination tournament bracket in one self-contained HTML file. Seeded fictional teams with seeds 1–16 paired 1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15; simulate seeded results with scores (higher seeds favoured but upsets possible). Lay out columns for Round of 16, Quarterfinals, Semifinals and Final, with each match box vertically centred between its two feeder matches, plus a champion card. Match boxes have two 26px rows with seed (muted), team name and score; the winner is semibold. Draw elbow connectors in a hairline axis colour with inline SVG behind the boxes. Hovering or focusing a team highlights its entire path (accent-tinted rows and accent connectors); clicking pins it. Add a round filter (All / From quarterfinals) and a 'Simulate new tournament' button. Each match carries an aria-label with both teams, scores and winner. CSS variables for every colour, light and dark themes.",
+  "num": "47",
+  "slug": "tournament-bracket",
+  "dir": "components/47-tournament-bracket"
+ },
+ {
+  "title": "Globe with flight paths",
+  "category": "Maps",
+  "maxw": 1000,
+  "tags": [
+   "orthographic",
+   "great circle",
+   "routes",
+   "3D globe",
+   "draggable",
+   "canvas"
+  ],
+  "summary": "A dotted orthographic globe with great-circle routes arcing out of a hub: route width = passengers, animated travellers along each path, drag to spin, auto-rotate, and a ranked route list that flies the globe to any destination.",
+  "use_when": [
+   "Origin–destination data across continents (flights, shipping lanes, data-centre traffic, customer reach)",
+   "Hero panels where a world view should feel alive",
+   "Up to ~30 routes from a few hubs"
+  ],
+  "avoid_when": [
+   "Comparing values precisely (pair with the route list or a bar chart)",
+   "Regional data where a flat map shows more at once",
+   "Low-power or print contexts (use a static flat map with arcs)"
+  ],
+  "anatomy": [
+   "Orthographic projection on canvas; sphere in a surface tint with an axis-grey rim and a faint 30° graticule",
+   "Land as a dot matrix (every ~2.4°), dots fade towards the limb for depth",
+   "Routes: great-circle arcs lifted above the surface in the middle, width 1–3.5px ∝ passengers, accent colour; hidden where they pass behind the globe",
+   "Moving travellers: small dots running along each route (off under prefers-reduced-motion)",
+   "Hub: ink dot with a surface ring and label; destinations: accent dots",
+   "Side list: routes ranked by passengers with bars; selecting one flies the globe to it"
+  ],
+  "data": "{ hub: { name: \"Chicago\", lat: 41.98, lon: -87.9 }, routes: [{ to: \"London\", lat: 51.47, lon: -0.45, passengers: 412000 }, …] }",
+  "interactions": [
+   "Drag to rotate (pointer events, works with touch)",
+   "Auto-rotate toggle (off by default under prefers-reduced-motion)",
+   "Hover a route: it turns to the second accent and a tooltip shows destination, passengers and distance",
+   "Click a route in the list (or Enter) to fly the globe to it and highlight it"
+  ],
+  "a11y": [
+   "The route list carries every value as text and is keyboard operable",
+   "Canvas has a role=img label summarising the hub and top routes",
+   "Motion respects prefers-reduced-motion"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--surface-2",
+   "--axis",
+   "--ink",
+   "--ink-2",
+   "--grid"
+  ],
+  "prompt": "Build an interactive globe with flight paths in one self-contained HTML file using a <canvas> and no libraries. Use an orthographic projection with rotation (λ0, φ0): rotate each unit vector about the z axis by −λ0, tilt about the y axis by φ0, draw points with x > 0 (facing the viewer). Draw the sphere in a surface tint with an axis-grey rim and a faint 30° graticule, and land as a dot matrix generated by testing a ~2.4° lat/lon grid against simplified continent polygons (point-in-polygon), fading dots toward the limb. From one hub (Chicago) draw great-circle routes to ~16 world cities using slerp between unit vectors, lifted above the surface by up to 12% in the middle (a lifted point is visible if it faces the viewer or projects outside the disc), width ∝ passengers, in the accent colour, with small dots travelling along each route (disabled under prefers-reduced-motion). Support drag-to-rotate with pointer events, an auto-rotate toggle, hover hit-testing on routes (nearest projected segment within 6px → highlight in a second accent and tooltip with passengers and great-circle distance), and a ranked route list with bars where selecting a route tweens the rotation to centre it. Handle devicePixelRatio. CSS variables for every colour (read at render), light and dark themes.",
+  "num": "48",
+  "slug": "globe-path",
+  "dir": "components/48-globe-path"
+ },
+ {
+  "title": "Line chart",
+  "category": "Basic charts",
+  "maxw": 960,
+  "tags": [
+   "line",
+   "multi-series",
+   "time series",
+   "crosshair",
+   "markers"
+  ],
+  "summary": "The everyday multi-series line chart: three channels over twelve months with straight segments, a toggleable legend, optional point markers, direct end labels and a shared crosshair tooltip.",
+  "use_when": [
+   "Showing change over continuous time for 1–5 series on one scale",
+   "Comparing trends and crossovers between a few categories",
+   "The default answer to 'how did X move over time?'"
+  ],
+  "avoid_when": [
+   "Categories without an order (use bars)",
+   "Two measures with different units (never dual-axis — use two aligned charts)",
+   "More than ~5 series (use small multiples or highlight one)"
+  ],
+  "anatomy": [
+   "Series lines 2px, round joins, categorical slots in fixed order",
+   "Optional markers: 8px dots with a 2px surface ring",
+   "Hairline horizontal grid, compact y ticks starting at zero, month labels on x",
+   "Legend with line keys that toggle series; direct end labels when lines don't collide",
+   "Crosshair: hairline + a dot per series + tooltip with every value"
+  ],
+  "data": "{ labels: [\"Jan\", …12], series: [{ name: \"Online\", values: [12 numbers] }, …] }",
+  "interactions": [
+   "Click a legend item to hide/show a series (one always stays)",
+   "Markers on/off",
+   "Y axis: from zero / fit to data",
+   "Hover anywhere for the crosshair tooltip"
+  ],
+  "a11y": [
+   "Legend present for ≥ 2 series plus direct labels",
+   "Tooltip text lists every value",
+   "SVG aria-label summarises the latest values"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--grid",
+   "--axis",
+   "--surface"
+  ],
+  "prompt": "Build a multi-series line chart in one self-contained HTML file with inline SVG and no libraries. Three seeded series (Online, Retail, Wholesale revenue) over 12 months. Lines are 2px with round joins in categorical slots 1–3; optional 8px point markers with a 2px surface ring (segmented toggle). Hairline horizontal gridlines, compact y ticks ($0, $50K, $100K) and month labels; a second toggle switches the y axis between starting at zero and fitting the data (with padding). A legend with line keys toggles series (never hiding the last one), and direct end labels sit at the right of each line unless they would collide. Hover shows a crosshair: a vertical hairline, a dot per visible series and a tooltip listing every value. CSS variables for every colour, light and dark themes.",
+  "num": "49",
+  "slug": "line-chart",
+  "dir": "components/49-line-chart"
+ },
+ {
+  "title": "Curved line chart",
+  "category": "Basic charts",
+  "maxw": 960,
+  "tags": [
+   "smooth line",
+   "monotone",
+   "spline",
+   "step",
+   "moving average"
+  ],
+  "summary": "Daily sessions as faint raw points with a smoothed 7-day average on top, and a curve switch between monotone (no overshoot), natural spline and step interpolation, so you can see how each curve treats the same data.",
+  "use_when": [
+   "The trend matters more than each point and a gentle curve reads calmer than zig-zags",
+   "Noisy daily data where a rolling average tells the story",
+   "Step curves for values that change at moments (prices, plan tiers, headcount)"
+  ],
+  "avoid_when": [
+   "Few points (curves imply data between them that doesn't exist)",
+   "Exact values at each point matter more than the shape",
+   "Natural splines on data near zero or bounded values (they overshoot)"
+  ],
+  "anatomy": [
+   "Raw daily values: 1.5px line in de-emphasis grey with no markers",
+   "7-day average: 2.5px accent curve",
+   "Curve options: Monotone (Fritsch–Carlson; never overshoots the data), Natural (Catmull–Rom style; may overshoot), Step (holds each value until the next)",
+   "Weekend bands as faint tints behind the plot",
+   "Legend for both series; crosshair tooltip with raw and average"
+  ],
+  "data": "{ days: [\"2026-08-26\", …60], sessions: [60 numbers] } — the average is computed on the page",
+  "interactions": [
+   "Curve switch: Monotone / Natural / Step",
+   "Show raw data on/off",
+   "Hover: crosshair with the day, raw sessions and the 7-day average"
+  ],
+  "a11y": [
+   "Legend for both series; the average is also in the tooltip",
+   "Weekend bands are context only, not data",
+   "SVG aria-label states the latest average"
+  ],
+  "tokens": [
+   "--s1",
+   "--de-emph",
+   "--surface-2",
+   "--grid",
+   "--axis"
+  ],
+  "prompt": "Build a curved line chart in one self-contained HTML file with inline SVG and no libraries. Seeded daily website sessions for 60 days with weekly seasonality (weekend dips) and noise. Draw the raw daily series as a 1.5px de-emphasis grey line and a 7-day rolling average as a 2.5px accent curve. Add a curve-type segmented control: Monotone (implement Fritsch–Carlson monotone cubic interpolation so the curve never overshoots), Natural (Catmull–Rom style cubic through the points) and Step (step-after). Shade weekends with faint bands, use hairline gridlines, compact y ticks and week labels on x. A toggle shows/hides the raw series. Legend for both series; hover crosshair tooltip with the date, raw value and average. CSS variables for every colour, light and dark themes.",
+  "num": "50",
+  "slug": "curved-line",
+  "dir": "components/50-curved-line"
+ },
+ {
+  "title": "Area chart",
+  "category": "Basic charts",
+  "maxw": 960,
+  "tags": [
+   "area",
+   "volume over time",
+   "target line",
+   "date range",
+   "gradient"
+  ],
+  "summary": "A single-series area chart for a volume measure: accent line over a soft fill anchored at zero, a dashed target line with a label, a date-range switch, and a crosshair that reports the value and the gap to target.",
+  "use_when": [
+   "One cumulative or volume-like measure over time where the filled mass helps (revenue, users, storage)",
+   "You want a hero trend with more presence than a bare line",
+   "Comparing against a single reference value"
+  ],
+  "avoid_when": [
+   "Several overlapping series (fills hide each other — use lines or a stacked area)",
+   "Values can be negative or the axis can't start at zero (an area implies a zero baseline)"
+  ],
+  "anatomy": [
+   "2px accent line with a fill from the line down to zero; fill is a vertical gradient from 22% to 2% opacity",
+   "Always a zero baseline in axis grey",
+   "Target: 1.5px dashed ink line with a right-aligned label",
+   "Hairline grid, compact y ticks, adaptive x labels",
+   "End dot with a surface ring and the latest value labelled"
+  ],
+  "data": "{ dates: [\"2026-01-01\", …], values: [daily numbers], target: 52000 }",
+  "interactions": [
+   "Range switch: 1M / 3M / 6M / YTD",
+   "Hover: crosshair, value and difference from target"
+  ],
+  "a11y": [
+   "Single series, so the title names it (no legend box needed)",
+   "Latest value and target printed as text",
+   "SVG aria-label states the latest value vs target"
+  ],
+  "tokens": [
+   "--s1",
+   "--ink",
+   "--grid",
+   "--axis",
+   "--surface"
+  ],
+  "prompt": "Build a single-series area chart in one self-contained HTML file with inline SVG and no libraries. Seeded daily active users from January to Oct 24 with growth and weekly dips. Draw a 2px accent line and fill the area from the line to a zero baseline with a vertical linearGradient from about 22% to 2% opacity of the accent. Add a dashed 1.5px ink target line with a right-aligned 'Target 52K' label, hairline gridlines, compact y ticks and adaptive date labels. Mark the last point with an 8px dot and a surface ring and label its value. A segmented control switches the range (1M / 3M / 6M / YTD). Hover shows a crosshair with the date, value and difference from target. The axis always starts at zero. CSS variables for every colour, light and dark themes.",
+  "num": "51",
+  "slug": "area-chart",
+  "dir": "components/51-area-chart"
+ },
+ {
+  "title": "Stacked area chart",
+  "category": "Basic charts",
+  "maxw": 960,
+  "tags": [
+   "stacked area",
+   "100% area",
+   "composition over time",
+   "part to whole"
+  ],
+  "summary": "Four product lines stacked over twelve months with a Stacked / 100% switch, straight or smooth edges, a legend that toggles layers, and a crosshair tooltip with every layer, its share and the total.",
+  "use_when": [
+   "The total over time and its make-up both matter",
+   "100% mode: how the mix shifts, regardless of total",
+   "2–5 layers"
+  ],
+  "avoid_when": [
+   "Comparing the trend of a middle layer precisely (its baseline wobbles — use lines or small multiples)",
+   "Negative values",
+   "More than ~5 layers (fold into 'Other')"
+  ],
+  "anatomy": [
+   "Layers stacked bottom-up in categorical slot order; 1px surface-coloured stroke separates layers",
+   "Fills at 85% opacity so the separating strokes read",
+   "Stacked: y axis in units from zero; 100%: y axis 0–100%",
+   "Legend toggles layers (colours never shift when a layer hides)",
+   "Crosshair: hairline + tooltip listing layers top-down with value, share and the total"
+  ],
+  "data": "{ labels: [\"Jan\", …12], series: [{ name: \"Subscriptions\", values: [12 numbers] }, …] }",
+  "interactions": [
+   "Mode: Stacked / 100%",
+   "Edges: Straight / Smooth",
+   "Click legend items to hide/show layers (one always stays)",
+   "Hover for the crosshair tooltip"
+  ],
+  "a11y": [
+   "Legend present; tooltip lists every value and share",
+   "Colour follows the layer, never its position",
+   "SVG aria-label summarises the latest mix"
+  ],
+  "tokens": [
+   "--s1 … --s4",
+   "--surface",
+   "--grid",
+   "--axis"
+  ],
+  "prompt": "Build a stacked area chart in one self-contained HTML file with inline SVG and no libraries. Four seeded revenue streams (Subscriptions, Services, Hardware, Marketplace) over 12 months. Stack layers bottom-up in categorical slot order (1–4) at 85% opacity with a 1px surface-coloured stroke between them. Add segmented controls for Stacked vs 100% (normalise each month) and Straight vs Smooth edges (cubic interpolation of both the top and bottom of each layer). The y axis starts at zero with compact ticks (or 0–100% in 100% mode), hairline gridlines and month labels. A legend toggles layers on and off without recolouring the rest (never hide the last). Hover shows a crosshair and a tooltip listing layers top-down with value and share plus the month total. CSS variables for every colour, light and dark themes.",
+  "num": "52",
+  "slug": "stacked-area",
+  "dir": "components/52-stacked-area"
+ },
+ {
+  "title": "Vertical bar (column) chart",
+  "category": "Basic charts",
+  "maxw": 960,
+  "tags": [
+   "column",
+   "bar",
+   "negative values",
+   "target line",
+   "highlight"
+  ],
+  "summary": "Monthly profit as columns that grow up from zero for gains and down for losses, with rounded data ends, an optional target line, best/worst highlighting and value labels on demand.",
+  "use_when": [
+   "Comparing a measure across ordered categories, especially time periods (months, quarters)",
+   "Values can be negative and the sign matters",
+   "Up to ~24 columns"
+  ],
+  "avoid_when": [
+   "Long category names (use horizontal bars)",
+   "Continuous time with many points (use a line)",
+   "Part-to-whole (use stacked bars or a waffle)"
+  ],
+  "anatomy": [
+   "Columns ≤ 24px wide, single hue; 4px rounded data end, square at the zero baseline",
+   "Negative columns grow downward in the diverging negative hue; the zero line is axis grey and heavier than the grid",
+   "Highlight mode: best and worst months keep their colour and get labels, the rest go de-emphasis grey",
+   "Optional target: 1.5px dashed ink line with label",
+   "Value labels: off, all (on the cap), or highlights only"
+  ],
+  "data": "{ labels: [\"Jan\", …12], values: [41200, -8300, …] }",
+  "interactions": [
+   "Labels: None / All / Best & worst",
+   "Target line on/off",
+   "Hover a column: value and change vs previous month"
+  ],
+  "a11y": [
+   "Single series — the title names it",
+   "Negative values carry a minus sign in labels and tooltips, not just colour",
+   "SVG aria-label names the best and worst months"
+  ],
+  "tokens": [
+   "--s1",
+   "--div-neg",
+   "--de-emph",
+   "--axis",
+   "--grid",
+   "--ink"
+  ],
+  "prompt": "Build a column (vertical bar) chart in one self-contained HTML file with inline SVG and no libraries. Seeded monthly profit for 12 months including two loss months. Columns are at most 24px wide in the accent colour with a 4px rounded data end and a square end at the zero baseline; negative columns grow downward in the diverging negative colour. The zero line is a heavier axis-grey line; other gridlines are hairline. Controls: value labels None / All / Best & worst (in the last mode, the best and worst months keep their colour and get labels while others turn de-emphasis grey), and a Target line toggle (dashed ink line with a label). Hover tooltips show the value and the change vs the previous month. Labels sit on the column cap (above positives, below negatives). CSS variables for every colour, light and dark themes.",
+  "num": "53",
+  "slug": "column-chart",
+  "dir": "components/53-column-chart"
+ },
+ {
+  "title": "Horizontal bar chart",
+  "category": "Basic charts",
+  "maxw": 960,
+  "tags": [
+   "bar",
+   "ranking",
+   "long labels",
+   "prior period marker",
+   "sort"
+  ],
+  "summary": "Product categories as horizontal bars with readable long labels, sorting by value or name, value labels at the tips, and an optional last-year tick on each bar for a quiet comparison.",
+  "use_when": [
+   "Comparing a measure across unordered categories, especially with long names",
+   "Ranking is useful but you also want an alphabetical lookup",
+   "Adding a light prior-period comparison without a second bar"
+  ],
+  "avoid_when": [
+   "Time on the category axis (use columns or a line)",
+   "More than ~25 categories (show the top N and fold the rest)"
+  ],
+  "anatomy": [
+   "Bars ≤ 24px thick (here 18px) from a single left baseline, 4px rounded data end",
+   "Category labels right-aligned in a left column, sized to the longest label",
+   "Value labels at the bar tips in secondary ink",
+   "Last year: a 2px ink tick across each bar, explained in the legend",
+   "Hairline vertical grid with compact ticks at the bottom"
+  ],
+  "data": "[{ category: \"Kitchen & dining\", value: 412000, lastYear: 368000 }, …]",
+  "interactions": [
+   "Sort: Value / A–Z",
+   "Last-year ticks on/off",
+   "Hover a row: value, last year and change"
+  ],
+  "a11y": [
+   "Rows are labelled text, values printed at tips",
+   "Tick meaning stated in the legend and tooltip",
+   "SVG aria-label lists the top three"
+  ],
+  "tokens": [
+   "--s1",
+   "--ink",
+   "--ink-2",
+   "--grid",
+   "--axis"
+  ],
+  "prompt": "Build a horizontal bar chart in one self-contained HTML file with inline SVG and no libraries. 10 seeded product categories with long names, each with this year's sales and last year's. Bars are 18px thick from a single left baseline with a 4px rounded data end, in the accent colour; category labels are right-aligned in a left column sized to the longest label; value labels sit at the bar tips in secondary ink; hairline vertical gridlines with compact tick labels along the bottom. Add a Sort control (Value / A–Z) and a 'Last year' toggle that draws a 2px ink tick across each bar at last year's value, with a small legend explaining bar vs tick. Hover a row for value, last year and % change. CSS variables for every colour, light and dark themes.",
+  "num": "54",
+  "slug": "horizontal-bar",
+  "dir": "components/54-horizontal-bar"
+ },
+ {
+  "title": "Grouped bar chart",
+  "category": "Basic charts",
+  "maxw": 960,
+  "tags": [
+   "clustered bar",
+   "side by side",
+   "comparison",
+   "orientation"
+  ],
+  "summary": "Quarterly revenue for three channels as side-by-side bars within each quarter, switchable between vertical and horizontal, with legend toggles, optional value labels and per-group hover.",
+  "use_when": [
+   "Comparing 2–4 series within each category and across categories at the same time",
+   "Exact values per series matter (unlike stacked bars, every bar shares the zero baseline)",
+   "Few categories (≤ 8)"
+  ],
+  "avoid_when": [
+   "More than 4 series per group (use small multiples or a dot plot)",
+   "The total per group is the main message (use stacked bars)",
+   "Continuous time with many points (use lines)"
+  ],
+  "anatomy": [
+   "Groups evenly spaced; bars inside a group touch with a 2px surface gap",
+   "Each bar ≤ 24px thick, 4px rounded data end, square at the baseline",
+   "Categorical slots in fixed order; legend toggles series without recolouring",
+   "Hairline grid on the value axis, compact ticks",
+   "Optional value labels at bar ends"
+  ],
+  "data": "{ labels: [\"Q1\", \"Q2\", \"Q3\", \"Q4\"], series: [{ name: \"Online\", values: [4 numbers] }, …3] }",
+  "interactions": [
+   "Orientation: Vertical / Horizontal",
+   "Labels on/off",
+   "Legend click hides/shows a series (one always stays)",
+   "Hover a group: tooltip with every series and the group total"
+  ],
+  "a11y": [
+   "Legend present (≥ 2 series)",
+   "Tooltip lists every value",
+   "SVG aria-label summarises the largest bar"
+  ],
+  "tokens": [
+   "--s1",
+   "--s2",
+   "--s3",
+   "--grid",
+   "--axis",
+   "--surface"
+  ],
+  "prompt": "Build a grouped (clustered) bar chart in one self-contained HTML file with inline SVG and no libraries. Seeded quarterly revenue (Q1–Q4) for three channels (Online, Retail, Wholesale). Within each quarter, draw the channels' bars side by side with a 2px gap, each bar at most 24px thick with a 4px rounded data end and a square baseline end, in categorical slots 1–3. Add an orientation segmented control (Vertical / Horizontal) that redraws the same data with category labels on the appropriate axis, a Labels on/off toggle that prints values at bar ends, and a legend that hides/shows series without recolouring (never hide the last). Hairline gridlines and compact ticks on the value axis. Hovering a group shows a tooltip with each series and the group total. CSS variables for every colour, light and dark themes.",
+  "num": "55",
+  "slug": "grouped-bar",
+  "dir": "components/55-grouped-bar"
+ },
+ {
+  "title": "Stacked bar chart",
+  "category": "Basic charts",
+  "maxw": 960,
+  "tags": [
+   "stacked bar",
+   "100% bar",
+   "composition",
+   "orientation",
+   "totals"
+  ],
+  "summary": "Monthly support tickets stacked by channel, switchable between vertical and horizontal and between absolute and 100%, with 2px surface gaps between segments, totals on top, inside labels where they fit, and per-segment hover.",
+  "use_when": [
+   "The total per category and its composition both matter (absolute)",
+   "Comparing mix across categories (100%)",
+   "2–5 segments per bar"
+  ],
+  "avoid_when": [
+   "Comparing a middle segment across bars precisely (its baseline moves — use grouped bars or small multiples)",
+   "More than ~5 segments (fold into 'Other')",
+   "Negative values"
+  ],
+  "anatomy": [
+   "Bars ≤ 24px thick (wider allowed for few bars), segments in categorical slot order from the baseline out",
+   "2px surface gap between segments; 4px rounding on the outermost segment's data end only",
+   "Totals at the bar ends in absolute mode; segment labels inside only when they fit with padding (ink chosen by fill luminance)",
+   "Hairline grid on the value axis; 0–100% axis in 100% mode",
+   "Legend toggles segments without recolouring"
+  ],
+  "data": "{ labels: [\"Jan\", …], series: [{ name: \"Email\", values: [ … ] }, …4] }",
+  "interactions": [
+   "Orientation: Vertical / Horizontal",
+   "Mode: Stacked / 100%",
+   "Legend click hides/shows a segment (one always stays)",
+   "Hover a segment: value, share of its bar and the bar total"
+  ],
+  "a11y": [
+   "Legend present; inside labels only where they fit, everything else in tooltips",
+   "Colour follows the series, never its position",
+   "SVG aria-label states the busiest month"
+  ],
+  "tokens": [
+   "--s1 … --s4",
+   "--surface",
+   "--grid",
+   "--axis",
+   "--ink"
+  ],
+  "prompt": "Build a stacked bar chart in one self-contained HTML file with inline SVG and no libraries. Seeded monthly support tickets for 8 months split by four channels (Email, Chat, Phone, Self-serve). Stack segments from the baseline outward in categorical slots 1–4 with a 2px surface-coloured gap between segments, rounding only the outer data end of the last visible segment by 4px. Controls: Orientation (Vertical / Horizontal), Mode (Stacked / 100% — normalise each bar to its total, axis 0–100%), and a legend that hides/shows segments without recolouring (never hide the last). In stacked mode print each bar's total at its end; print a segment's value inside it only if the text fits with padding (pick white or dark text by fill luminance), otherwise leave it to the tooltip. Hairline gridlines and compact ticks on the value axis. Hover a segment for value, share of the bar and the total. CSS variables for every colour, light and dark themes.",
+  "num": "56",
+  "slug": "stacked-bar",
+  "dir": "components/56-stacked-bar"
+ },
+ {
+  "title": "Speedometer gauge (configurable)",
+  "category": "Gauges",
+  "maxw": 1000,
+  "tags": [
+   "speedometer",
+   "banded gauge",
+   "segmented gauge",
+   "tapered needle",
+   "target"
+  ],
+  "summary": "A bold speedometer: a thick arc that sweeps 180–270°, three gauge styles (banded zones, progress fill, lit segments), a tapered needle with a round hub, an optional target notch and the value set large in the gauge's opening.",
+  "use_when": [
+   "One headline KPI against a range or target, where the dial itself is the hero of the panel",
+   "Executive summaries and wallboards that need an at-a-glance 'how close are we?'",
+   "Ranges with meaningful zones (poor / fair / good)"
+  ],
+  "avoid_when": [
+   "Comparing several metrics precisely (use bullet charts)",
+   "The trend matters more than the current value (use a KPI card with sparkline)",
+   "Small spaces — the thick arc needs ~220px to read"
+  ],
+  "anatomy": [
+   "Arc: thick annular band (inner radius ≈ 56% of outer), sweep 180° / 240° / 270°, opening at the bottom",
+   "Banded style: three zones in an ordinal single-hue ramp (light → dark), no gaps between zones",
+   "Progress style: pale track of the same hue with the accent filled from the start to the value",
+   "Segmented style: 12 segments with small gaps; segments up to the value light up along the ramp, the rest stay track-coloured",
+   "Needle: tapered triangle from the hub to the inner edge of the band, ink colour, with a round hub; or a thin line; or none",
+   "Target: an ink notch across the band with a small label outside the arc",
+   "Value: 44px bold in the opening (or under the hub for 180°) with a caption in secondary ink; min and max at the arc ends"
+  ],
+  "data": "{ value: 71.6, min: 0, max: 100, target: 80, bands: [50, 80], label: \"Progress to target\", format: \"%\" }",
+  "interactions": [
+   "Style: Banded / Progress / Segmented",
+   "Sweep: 180° / 240° / 270°",
+   "Needle: Tapered / Line / None",
+   "Target on/off",
+   "Value slider animates the needle and fill (400ms ease-out; instant under prefers-reduced-motion)",
+   "Hover: value, target gap and which zone the value is in"
+  ],
+  "a11y": [
+   "role=meter with aria-valuemin / max / now and a text label",
+   "The value and zone are printed, never implied by colour alone",
+   "The slider is a labelled native range input",
+   "Motion respects prefers-reduced-motion"
+  ],
+  "tokens": [
+   "--seq-0 … --seq-6",
+   "--track",
+   "--s1",
+   "--ink",
+   "--ink-2",
+   "--surface"
+  ],
+  "prompt": "Build a configurable speedometer gauge in one self-contained HTML file with inline SVG and no libraries, in a bold modern style: a thick annular arc (inner radius about 56% of the outer) with its opening at the bottom, a tapered triangular needle in the ink colour running from just behind a round hub to the inner edge of the band, and the value set large and bold in the opening with a caption under it. Add controls for: Style — Banded (three zones split at two thresholds, filled with an ordinal single-hue ramp from light to dark, no gaps), Progress (pale track of the same hue, accent fill from the start to the value) and Segmented (12 segments with small gaps that light up along the ramp up to the value); Sweep — 180°, 240° or 270° (for 180° put the value under the hub and shrink the SVG height to fit); Needle — Tapered, Line or None; and a Target toggle that draws an ink notch across the band with a small label outside the arc. A labelled range slider sets the value and animates the needle and fill over 400ms with ease-out (instant under prefers-reduced-motion). Print min and max at the arc ends. Give the gauge role=meter with aria values. Hover shows the value, the gap to target and the zone name. CSS variables for every colour, light and dark themes.",
+  "num": "57",
+  "slug": "gauge-banded",
+  "dir": "components/57-gauge-banded"
+ },
+ {
+  "title": "Donut chart (optional labels)",
+  "category": "Basic charts",
+  "maxw": 820,
+  "tags": [
+   "donut",
+   "part to whole",
+   "direct labels",
+   "no legend",
+   "leader lines",
+   "minimal"
+  ],
+  "summary": "A clean donut with no legend and the total in the centre. Labels are off by default for a minimal ring with a hover readout; switch them on to name every slice directly with its share, joined by a short leader line.",
+  "use_when": [
+   "Showing how a total splits into 2–6 parts at a glance",
+   "Space for a legend is tight, or a legend would make readers look back and forth",
+   "A minimal ring next to text that already names the parts (labels off)",
+   "One or two slices dominate and that's the message"
+  ],
+  "avoid_when": [
+   "More than 6 slices (fold the tail into 'Other' or use a ranked bar)",
+   "Slices are similar in size and need precise comparison (use bars)",
+   "Composition across several groups (use 100% stacked bars)"
+  ],
+  "anatomy": [
+   "Ring about 24% of the radius thick, 2px surface gaps between slices, starting at 12 o'clock, largest first, 'Other' last",
+   "Direct labels outside the ring: name in ink and share in secondary ink, right-aligned on the left side and left-aligned on the right",
+   "Leader lines: 1px from the slice's midpoint to an elbow, then horizontal to the label; labels are spaced so they never overlap",
+   "Centre: the total and its unit; on hover it shows the slice's value instead",
+   "Categorical slots in fixed order; no legend",
+   "Labels off (default): the ring is centred and larger, and slices are named by the hover readout and the centre text"
+  ],
+  "data": "[{ name: \"Mobile\", value: 61200 }, …] — sorted largest first, 'Other' last",
+  "interactions": [
+   "Labels switch (Off / On), off by default: on adds the direct labels and leader lines and shrinks the ring to make room",
+   "Dataset switch (Device / Region / Plan) redraws the slices and labels",
+   "Hover a slice or its label: that slice stays full strength, the rest dim, and the centre shows its value and share"
+  ],
+  "a11y": [
+   "With labels on, each slice is named and its share printed beside it, so colour never carries identity alone; with labels off, pair the ring with text or a table that names the parts",
+   "SVG aria-label lists every slice with its share",
+   "Hover readout is mirrored by the labels when they are on"
+  ],
+  "tokens": [
+   "--s1 … --s6",
+   "--surface",
+   "--ink",
+   "--ink-2",
+   "--axis"
+  ],
+  "prompt": "Build a donut chart with no legend in one self-contained HTML file using inline SVG and no libraries. Seeded data for three datasets (sessions by device, by region, by plan), each 3–6 slices sorted largest first with 'Other' last, coloured by categorical slots in fixed order. A Labels switch (off by default) toggles direct labels; with labels off the ring is centred and larger. Draw the ring about 24% of the radius thick with 2px surface-coloured gaps, starting at 12 o'clock. With labels on, label every slice directly outside the ring: a 1px leader line from the slice's midpoint to an elbow just outside the ring, then horizontal to the label; the label shows the name in ink and the share in secondary ink, right-aligned on the left half and left-aligned on the right half. Space labels on each side so they never overlap (push them apart vertically and keep the leader lines attached). Put the total and its unit in the centre; hovering a slice or its label dims the others and swaps the centre to that slice's value and share. Segmented controls switch labels and datasets. CSS variables for every colour, light and dark themes.",
+  "num": "58",
+  "slug": "donut-labeled",
+  "dir": "components/58-donut-labeled"
+ },
+ {
+  "title": "KPI donut cards",
+  "category": "KPI cards",
+  "maxw": 980,
+  "tags": [
+   "progress to goal",
+   "donut",
+   "ring",
+   "target",
+   "kpi card"
+  ],
+  "summary": "The standard KPI card with a progress donut: a ring fills toward the goal with the percent in its centre, beside the value, the goal and a delta vs the previous period. Switch between ring-beside and ring-on-top layouts.",
+  "use_when": [
+   "Each KPI has a goal and 'how far along are we?' is the headline",
+   "A row of 2–5 goals for the same period (month, quarter, year)",
+   "You want progress cards that sit beside ordinary KPI cards without looking like a different system"
+  ],
+  "avoid_when": [
+   "Metrics with no goal (use the sparkline KPI card)",
+   "Comparing progress precisely across many goals (use bullet charts or progress bars)",
+   "Values that routinely run far past 100% (the ring caps at full)"
+  ],
+  "anatomy": [
+   "Same card as the KPI row: 1px hairline border, card radius, label in secondary ink, 28px semibold value",
+   "Donut: a full ring with a pale track in the series hue, the fill starting at 12 o'clock with a round cap; percent of goal in the centre",
+   "A small tick on the ring marks where you should be today (share of the period elapsed)",
+   "Under the value: 'of <goal> goal' and a delta (▲/▼ vs the same point last period, coloured by good/bad)",
+   "Goal met: ring fills fully and a ✓ Goal met note replaces the pace line",
+   "Layout switch: ring beside the text, or ring on top with the text centred"
+  ],
+  "data": "[{ label: \"Revenue\", fmt: money, goal: 2400000, actual: 1840000, prev: 1710000 }, …] per period, plus the share of the period elapsed",
+  "interactions": [
+   "Period switch (Month / Quarter / Year) redraws every card",
+   "Layout switch (Beside / On top)",
+   "Hover a ring: actual, goal, remaining, and where pace says you should be today"
+  ],
+  "a11y": [
+   "role=meter on each ring with aria-valuenow, -min and -max",
+   "Percent of goal is printed in the ring, never only implied by the arc",
+   "Ahead / behind pace is stated in words, not colour alone"
+  ],
+  "tokens": [
+   "--s1",
+   "--track",
+   "--ink",
+   "--ink-2",
+   "--muted",
+   "--grid",
+   "--up",
+   "--down",
+   "--radius"
+  ],
+  "prompt": "Build a responsive row of KPI donut cards in one self-contained HTML file with inline SVG and no libraries. Each card follows the standard KPI card (1px hairline border, rounded corners, a secondary-ink label, a 28px semibold value) and adds a progress donut: a full ring with a pale track in the accent hue, the fill starting at 12 o'clock with a round cap, sized by actual ÷ goal and capped at 100%, with the percent of goal printed in the centre. Put a small ink tick on the ring at the share of the period elapsed so readers can see if they're on pace. Under the value print 'of <goal> goal' and a delta vs the same point last period (▲/▼, green when good, red when bad), then a line saying how far ahead or behind pace the metric is; when the goal is met, fill the ring and show '✓ Goal met'. Seeded data for Month, Quarter and Year with a segmented control to switch, and a second control to switch the layout between ring beside the text and ring on top with the text centred. Hover a ring for actual, goal, remaining and expected-by-today. role=meter with aria values. CSS variables for every colour, light and dark themes.",
+  "num": "59",
+  "slug": "kpi-donut",
+  "dir": "components/59-kpi-donut"
+ },
+ {
+  "title": "Gantt chart with progress",
+  "category": "Charts",
+  "maxw": 1080,
+  "tags": [
+   "gantt",
+   "project plan",
+   "timeline",
+   "schedule",
+   "milestones"
+  ],
+  "summary": "A project plan as a Gantt chart: a task table (owner, status, due) beside a month timeline where each task's bar fills with its progress, grouped into collapsible phases with tinted bands, milestones as diamonds and a today line.",
+  "use_when": [
+   "Showing a project's schedule and how far each task has got",
+   "Status reviews where 'what's late and who owns it?' matters",
+   "10–40 tasks grouped into a handful of phases"
+  ],
+  "avoid_when": [
+   "Hundreds of tasks (use a filtered table or a roll-up by phase)",
+   "Dependencies are the main story (use a network or critical-path view)",
+   "Comparing durations precisely (use a sorted bar chart)"
+  ],
+  "anatomy": [
+   "Left: a task table with Task, Owner, Status and Due columns; phase rows are bold with a ▾ chevron, a people count and the phase's last due date",
+   "Right: a month axis with light gridlines, a today line labelled with the date, and one 28px row per task aligned with the table",
+   "Bars: 12px tall, 3px radius, start to end date; the done share is solid, the rest a pale tint of the same hue",
+   "Phase rows: the whole row tinted with the phase's hue across both panes, with a thin summary bar spanning the phase",
+   "Milestones: a diamond on the due date (zero-length tasks)",
+   "Status: icon + word — ✓ Completed, ◐ In progress, ▲ Delayed (past its end date and not done), ○ Not started",
+   "Colour switch: by phase (categorical slots in order) or by status (status colours, the done share still solid)"
+  ],
+  "data": "[{ phase: \"Build\", task: \"Model\", owner: \"Sofia\", start: \"2026-10-05\", end: \"2026-10-23\", progress: 0.8 }, …] — status derived from progress, dates and today",
+  "interactions": [
+   "Click or press Enter on a phase row to collapse or expand it; Expand all / Collapse all",
+   "Colour switch: Phase / Status",
+   "Hover a bar or a row: dates, duration, progress and status"
+  ],
+  "a11y": [
+   "Status is an icon plus a word, never colour alone",
+   "Phase rows are buttons with aria-expanded",
+   "SVG aria-label summarises how many tasks are completed, in progress, delayed and not started"
+  ],
+  "tokens": [
+   "--s1 … --s4",
+   "--surface",
+   "--ink",
+   "--ink-2",
+   "--muted",
+   "--grid",
+   "--good",
+   "--warn",
+   "--crit"
+  ],
+  "prompt": "Build a Gantt chart in one self-contained HTML file with inline SVG and no libraries. Data: about 16 tasks in 4 phases (Plan, Build, Test, Launch), each with an owner, start and end dates and a progress share; zero-length tasks are milestones. Lay it out as a task table on the left (Task, Owner, Status, Due) aligned row-for-row with a month timeline on the right; 28px rows. Phase rows are bold with a chevron, the number of people and the phase's last due date, and the whole row is tinted with the phase's hue across both panes, with a thin summary bar spanning the phase. Each task bar runs from start to end (12px tall, 3px radius): the done share is solid and the rest a pale tint of the same hue. Milestones are diamonds. Derive status: Completed when progress is 1, Delayed when the end date has passed and it isn't done, In progress once started, otherwise Not started; show it as icon + word (✓ ◐ ▲ ○). Draw month gridlines and a labelled today line. Clicking a phase row collapses it; add Expand all / Collapse all and a switch to colour bars by phase or by status. Hover shows dates, duration, progress and status. On narrow screens drop the Owner and Due columns. CSS variables for every colour, light and dark themes.",
+  "num": "60",
+  "slug": "gantt",
+  "dir": "components/60-gantt"
+ }
+]
