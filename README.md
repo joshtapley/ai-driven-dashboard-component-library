@@ -19,7 +19,7 @@ A reference library of 59 dashboard components for people building dashboards wi
 | UI patterns | toast notifications, slide-out dashboard menu |
 
 - **Three sample dashboards:** Revenue overview, Product growth and Service health. Each is assembled from live components.
-- **Twelve themes:** Quiet Instrument is the default, and the Josh Tapley theme matches [joshtapley.github.io](https://joshtapley.github.io/). Switch themes from any page.
+- **Twelve themes:** the default, Cobalt Lab (Dark), puts white cards on the navy of [joshtapley.github.io](https://joshtapley.github.io/). Switch themes from any page.
 - **Excel download:** every data table can export a formatted `.xlsx`, with colours, number formats and data bars.
 - **Light and dark:** every component supports both and is keyboard accessible.
 

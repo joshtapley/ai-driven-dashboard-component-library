@@ -77,12 +77,13 @@ dd{margin:0;min-width:0}
 .pv .b2{background:transparent;color:var(--p-ink);border:1px solid var(--p-line)}
 .pv .row{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:12px}
 @media (max-width:520px){.pv .row{grid-template-columns:1fr}}
-.pv .card{background:var(--p-card);border:var(--p-card-border,1px) solid var(--p-line);border-radius:var(--p-card-r);padding:14px;box-shadow:var(--p-card-shadow,none);min-width:0}
+.pv .card{color:var(--p-card-ink,inherit);background:var(--p-card);border:var(--p-card-border,1px) solid var(--p-line);border-radius:var(--p-card-r);padding:14px;box-shadow:var(--p-card-shadow,none);min-width:0}
 .pv .lbl{font:var(--p-lbl-font,500 11px var(--p-mono));text-transform:uppercase;letter-spacing:.06em;color:var(--p-muted)}
+.pv .card .lbl{color:var(--p-card-muted,var(--p-muted))}
 .pv .val{font-family:var(--p-num,var(--p-display));font-weight:700;font-size:28px;margin:4px 0 2px;letter-spacing:var(--p-track,0)}
 .pv .dl{font-size:12px;font-weight:600;color:var(--p-up)}
 .pv .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-.pv .chip{font-size:11.5px;padding:3px 9px;border-radius:var(--p-chip-r,999px);background:var(--p-chip);color:var(--p-ink)}
+.pv .chip{font-size:11.5px;padding:3px 9px;border-radius:var(--p-chip-r,999px);background:var(--p-chip);color:var(--p-card-ink,var(--p-ink))}
 .pv svg{display:block;width:100%;height:auto;margin-top:8px}
 /* backgrounds and type treatments only; no extra components */
 .pv.grid{background-image:linear-gradient(var(--p-gridline) 1px,transparent 1px),linear-gradient(90deg,var(--p-gridline) 1px,transparent 1px);background-size:22px 22px}
@@ -149,6 +150,14 @@ const COPY = { hl: ["Dashboard components", "your AI can follow."], sub: "Charts
 const STRATS = { all: "Prepare for everything", fewer: "Fewer hues, more shades", more: "More hues, fewer shades", min: "Minimalist" };
 // every direction uses the same fields in the same order
 const DIRS = [
+  { id: "cobaltdark", name: "Cobalt Lab (Dark)", strat: "fewer",
+    thesis: "Cobalt Lab's white cards on a deep navy page. The cards keep Cobalt Lab's cobalt and peach and its friendly headlines; the page around them matches joshtapley.github.io.",
+    pal: [["Canvas", "#0B1220"], ["Card", "#FFFFFF"], ["Ink", "#16213E"], ["Accent", "#2D5BE3"], ["Second", "#FF8A5B"], ["Third", "#DDE5FB"]],
+    type: "<b>Plus Jakarta Sans</b> 800 for headlines, Plus Jakarta Sans 400/600 for body, Geist Mono for numbers.",
+    shape: "Pill buttons, 20px white cards on navy, rounded-square chips and marks, tints instead of borders.",
+    chart: "Cobalt shades for series, peach for the one highlight, tints for context, all on white.",
+    t: { bg: "#0B1220", card: "#FFFFFF", ink: "#F8FAFC", muted: "#94A3B8", soft: "#7FA0F0", acc: "#2D5BE3", line: "#22314F", chip: "#DDE5FB", up: "#0F8A4F", display: "'Plus Jakarta Sans',system-ui,sans-serif", body: "'Plus Jakarta Sans',system-ui,sans-serif", mono: "'Geist Mono',monospace", btnR: "999px", cardR: "20px", mkR: "8px", hW: 800, track: "-0.025em", chipR: "8px",
+      cardInk: "#16213E", cardMuted: "#5A6382", cardBorder: "0px", bars: ["#DDE5FB", "#DDE5FB", "#9DB3F1", "#DDE5FB", "#2D5BE3", "#FF8A5B"] } },
   { id: "instrument", name: "Quiet Instrument", strat: "min",
     thesis: "Calm and engineering-grade. A near-white canvas, hairline borders, tight medium-weight type and a single cool accent.",
     pal: [["Canvas", "#FCFCFC"], ["Card", "#FFFFFF"], ["Ink", "#0A0A0B"], ["Accent", "#0B84D8"], ["Second", "#8A8A93"], ["Third", "#E6E6E9"]],
@@ -173,14 +182,6 @@ const DIRS = [
     chart: "Bars rotate through orange, teal, yellow and red for single-series leaderboards, with white labels.",
     t: { bg: "#0E2238", card: "#16304C", ink: "#FFFFFF", muted: "#A9B8CC", soft: "#63D2BF", acc: "#63D2BF", line: "rgba(255,255,255,.18)", chip: "rgba(255,255,255,.12)", up: "#63D2BF", display: "'Montserrat',sans-serif", body: "'Montserrat',sans-serif", mono: "'Montserrat',sans-serif", btnR: "999px", cardR: "14px", mkR: "50%", hW: 800, wmW: 800, track: "-0.01em",
       btnFg: "#0E2238", cls: "keyline", bars: ["#F7953B", "#63D2BF", "#FFD978", "#F0592A", "#F7953B", "#63D2BF"] } },
-  { id: "tapley", name: "Josh Tapley", strat: "all",
-    thesis: "Matches joshtapley.github.io. A deep navy canvas, layered navy cards, the Tableau 10 palette led by a lifted blue and orange, and crisp Inter headlines with monospace labels.",
-    pal: [["Canvas", "#0B1220"], ["Card", "#131D33"], ["Ink", "#F8FAFC"], ["Accent", "#6B9BD1"], ["Second", "#F28E2B"], ["Third", "#59A14F"]],
-    type: "<b>Inter</b> 700–800 for headlines, Inter 400/500 for body, <b>IBM Plex Mono</b> for labels and section numbers.",
-    shape: "10px cards with 1px navy borders, small uppercase monospace labels, orange for highlights and tags.",
-    chart: "The full Tableau 10 order, blue first and orange second, with a warm cream light mode that keeps the same colours.",
-    t: { bg: "#0B1220", card: "#131D33", ink: "#F8FAFC", muted: "#94A3B8", soft: "#F28E2B", acc: "#6B9BD1", line: "#22314F", chip: "#18243D", up: "#59A14F", display: "'Inter',sans-serif", body: "'Inter',sans-serif", mono: "'IBM Plex Mono',monospace", btnR: "8px", cardR: "10px", mkR: "3px", hW: 800, wmW: 700, track: "-0.02em",
-      btnBg: "#F28E2B", btnFg: "#0B1220", bars: ["#2C3D5E", "#2C3D5E", "#4E79A7", "#2C3D5E", "#6B9BD1", "#F28E2B"] } },
   { id: "night", name: "Night Console", strat: "more",
     thesis: "Premium and dark-first. A near-black canvas, translucent glass panels, a warm coral glow and heavy grotesque headlines.",
     pal: [["Canvas", "#0A0B0E"], ["Card", "#16171C"], ["Ink", "#F4F4F6"], ["Accent", "#FF6B5B"], ["Second", "#4ADE80"], ["Third", "#8B8C94"]],
@@ -247,9 +248,9 @@ const DIRS = [
       cls: "hex", deco: "hex", bars: ["#C6CBD3", "#C6CBD3", "#C6CBD3", "#C6CBD3", "#3F5170", "#C6CBD3"] } }
 ];
 const COMPARE = {
+  cobaltdark: ["Friendly product tool, after dark", 0, "", "visitors to joshtapley.github.io and anyone who wants bright cards on a dark page"],
   cobalt: ["Friendly product tool", 0, "", "analysts moving from BI tools into AI-assisted building"],
   instrument: ["Developer infrastructure", 0, "", "developers and product engineers using AI coding tools"],
-  tapley: ["Personal portfolio", 0, "", "visitors to joshtapley.github.io and anyone who likes its navy and Tableau colours"],
   night: ["Power-user app", 0, "", "senior engineers who live in dark mode and keyboard shortcuts"],
   field: ["Trusted publication", 0, "", "data journalists, analysts and teachers who value good practice"],
   blueprint: ["Technical reference", 0, "", "teams that want a precise, documented standard to build against"],
@@ -293,7 +294,7 @@ const bars = t => { const v = [42, 55, 61, 48, 78, 66], W = 220, H = 92, bw = 22
 const hexPts = (cx, cy, r) => [0, 1, 2, 3, 4, 5].map(i => { const a = Math.PI / 3 * i; return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`; }).join(" ");
 const HEX_DECO = `<svg class="deco" style="right:0;top:0;width:110px;height:76px;margin:0" viewBox="0 0 110 76" aria-hidden="true">${[[30, 14, "#C6CBD3"], [58, 0, "#3F5170"], [86, 14, "#8E99AC"], [58, 30, "#DDE0E5"], [86, 46, "#3F5170"], [110, 30, "#C6CBD3"], [110, 0, "#5D6E8C"]].map(([x, y, c]) => `<polygon points="${hexPts(x, y, 15)}" fill="${c}" stroke="#F1F1F1" stroke-width="2"/>`).join("")}</svg><svg class="deco" style="left:0;bottom:0;width:96px;height:70px;margin:0" viewBox="0 0 96 70" aria-hidden="true">${[[0, 40, "#F7C9AF"], [26, 56, "#EE6A2C"], [26, 24, "#F49A6A"], [52, 70, "#F7C9AF"], [0, 72, "#F49A6A"]].map(([x, y, c]) => `<polygon points="${hexPts(x, y, 15)}" fill="${c}" stroke="#F1F1F1" stroke-width="2"/>`).join("")}</svg>`;
 const vars = t => [["bg", t.bg], ["card", t.card], ["ink", t.ink], ["muted", t.muted], ["soft", t.soft], ["acc", t.acc], ["line", t.line], ["chip", t.chip], ["up", t.up], ["display", t.display], ["body", t.body], ["mono", t.mono], ["btn-r", t.btnR], ["card-r", t.cardR], ["mk-r", t.mkR], ["h-w", t.hW], ["track", t.track],
-  ["wm-w", t.wmW], ["num", t.num], ["btn-bg", t.btnBg], ["btn-fg", t.btnFg], ["btn-border", t.btnBorder], ["btn-shadow", t.btnShadow], ["card-border", t.cardBorder], ["card-shadow", t.cardShadow], ["chip-r", t.chipR], ["gridline", t.gridline], ["lbl-font", t.lblFont], ["band", t.band]]
+  ["wm-w", t.wmW], ["num", t.num], ["btn-bg", t.btnBg], ["btn-fg", t.btnFg], ["btn-border", t.btnBorder], ["btn-shadow", t.btnShadow], ["card-border", t.cardBorder], ["card-ink", t.cardInk], ["card-muted", t.cardMuted], ["card-shadow", t.cardShadow], ["chip-r", t.chipR], ["gridline", t.gridline], ["lbl-font", t.lblFont], ["band", t.band]]
   .filter(([, v]) => v !== undefined).map(([k, v]) => `--p-${k}:${v}`).join(";");
 document.getElementById("dirs").innerHTML = DIRS.map(d => { const t = d.t;
   return `<article class="dir" id="${d.id}" aria-labelledby="t-${d.id}">
@@ -321,7 +322,7 @@ document.querySelector("#compare tbody").innerHTML = DIRS.map(d => { const c = C
 <script>
 // Themes page inside the component library: each direction can be applied to every component
 (() => {
-  let cur = "instrument"; try { cur = localStorage.getItem("dc-brand") || cur; } catch {}
+  let cur = "cobaltdark"; try { cur = localStorage.getItem("dc-brand") || cur; } catch {}
   const go = id => { try { localStorage.setItem("dc-brand", id); } catch {} location.href = "index.html#brand-" + (id || "default"); };
   document.querySelectorAll(".dir").forEach(d => {
     const b = document.createElement("button"); b.type = "button"; b.className = "use";
@@ -332,7 +333,7 @@ document.querySelector("#compare tbody").innerHTML = DIRS.map(d => { const c = C
   });
   const lede = document.querySelector(".lede");
   if (lede) { const p = document.createElement("p"); p.className = "lede"; p.style.fontSize = "15px";
-    p.innerHTML = 'Choose <b>Use this theme</b> on any theme to restyle every component in the library. Quiet Instrument is the default.';
+    p.innerHTML = 'Choose <b>Use this theme</b> on any theme to restyle every component in the library. Cobalt Lab (Dark) is the default.';
     lede.after(p); }
 })();
 </script>
