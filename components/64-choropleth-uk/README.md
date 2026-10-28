@@ -26,7 +26,7 @@ Live demo: [`index.html`](index.html) — one self-contained file, no dependenci
 
 ## Data shape
 ```
-{ <region id>: { share: 0.142, yoy: 0.011 } }  — keyed by the shape ids in GEO.shapes (NUTS 2016 codes (UKC…UKN, IE0)). GEO = { w, h, shapes: [{ id, name, d (SVG path), lx, ly (label point), a (area), data }] }, pre-projected and simplified by _geo/make_geo.py.
+{ <region id>: { share: 0.142, yoy: 0.011 } }  — keyed by the shape ids (NUTS 2016 codes (UKC…UKN, IE0)). GEO = { w, h, k: [id, name, d, lx, ly, a, data], s: [[…one array per shape]] }: pre-projected, simplified SVG paths with a label point and area, written by _geo/make_geo.py.
 ```
 
 ## Interactions

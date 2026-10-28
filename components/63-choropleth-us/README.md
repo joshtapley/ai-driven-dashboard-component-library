@@ -26,7 +26,7 @@ Live demo: [`index.html`](index.html) — one self-contained file, no dependenci
 
 ## Data shape
 ```
-{ <state id>: { share: 0.142, yoy: 0.011 } }  — keyed by the shape ids in GEO.shapes (USPS state codes). GEO = { w, h, shapes: [{ id, name, d (SVG path), lx, ly (label point), a (area), data }] }, pre-projected and simplified by _geo/make_geo.py.
+{ <state id>: { share: 0.142, yoy: 0.011 } }  — keyed by the shape ids (USPS state codes). GEO = { w, h, k: [id, name, d, lx, ly, a, data], s: [[…one array per shape]] }: pre-projected, simplified SVG paths with a label point and area, written by _geo/make_geo.py.
 ```
 
 ## Interactions
