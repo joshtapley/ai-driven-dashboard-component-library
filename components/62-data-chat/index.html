@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask-your-data chat assistant</title>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" rx="7" fill="%230b1220"/%3E%3Crect x="5.5" y="17" width="5.5" height="10" rx="1.2" fill="%234e79a7"/%3E%3Crect x="13.25" y="11" width="5.5" height="16" rx="1.2" fill="%236b9bd1"/%3E%3Crect x="21" y="5" width="5.5" height="22" rx="1.2" fill="%23f28e2b"/%3E%3C/svg%3E'>
+<meta name="description" content="An in-dashboard chat panel that answers plain-English questions about the dashboard&#x27;s data: a value for a period, the monthly trend, the year-over-year change or a split by region, each with an inline chart and a note on how it was calculated. It remembers context, so &#x27;show it trended&#x27; and &#x27;what&#x27;s the YoY change?&#x27; follow on from the last answer.">
+<!-- Dashboard Components · data-chat · self-contained: no libraries, no network. Synthetic seeded data. -->
+<style>
+/* ---------- Design tokens (swap these for your brand; nothing below hard-codes a colour) ---------- */
+:root{
+  color-scheme:light;
+  --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f3f2ee;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --hover:rgba(11,11,11,.04);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --up:#006300; --down:#d03b3b; --de-emph:#c3c2b7;
+  --seq-0:#cde2fb; --seq-1:#9ec5f4; --seq-2:#6da7ec; --seq-3:#3987e5; --seq-4:#256abf; --seq-5:#184f95; --seq-6:#0d366b;
+  --div-neg:#d03b3b; --div-mid:#f0efec; --div-pos:#2a78d6;
+  --track:#e7eefa;
+  --radius:12px; --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232321;
+    --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --hover:rgba(255,255,255,.05);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+    --up:#0ca30c; --down:#e66767; --de-emph:#4a4a46;
+    --seq-0:#1d3047; --seq-1:#1c4370; --seq-2:#1f5ba0; --seq-3:#2f77cf; --seq-4:#5598e7; --seq-5:#86b6ef; --seq-6:#cde2fb;
+    --div-neg:#e66767; --div-mid:#383835; --div-pos:#3987e5;
+    --track:#1f2c3d;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232321;
+  --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --hover:rgba(255,255,255,.05);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --up:#0ca30c; --down:#e66767; --de-emph:#4a4a46;
+  --seq-0:#1d3047; --seq-1:#1c4370; --seq-2:#1f5ba0; --seq-3:#2f77cf; --seq-4:#5598e7; --seq-5:#86b6ef; --seq-6:#cde2fb;
+  --div-neg:#e66767; --div-mid:#383835; --div-pos:#3987e5;
+  --track:#1f2c3d;
+}
+/* ---------- Brand themes (generated from _src/_brands.json; off unless data-brand is set) ---------- */
+:root[data-brand="cobaltdark"]{--font:'Plus Jakarta Sans',system-ui,sans-serif;--font-display:'Plus Jakarta Sans',system-ui,sans-serif;--radius:20px;--div-pos:#2D5BE3;--s1:#2D5BE3;--s2:#FF8A5B;--s3:#7FA0F0;--s4:#27428f;--s5:#b16649;--s6:#5F646C;--s7:#A7ABB2;--s8:#ffbfa5}
+:root[data-brand="cobaltdark"][data-theme="light"]{--seq-0:#d9e1fa;--seq-1:#b8c7f5;--seq-2:#92aaf0;--seq-3:#6889eb;--seq-4:#426be6;--seq-5:#274cba;--seq-6:#223e90;--track:#dde5fb;--page:#0B1220;--surface:#FFFFFF;--surface-2:#E9EDF7;--ink:#16213E;--ink-2:#3E4766;--muted:#5A6382;--grid:#E2E7F3;--axis:#C5CDE0;--border:rgba(22,33,62,.10);--on-page:#F8FAFC;--on-page-2:#E5E7EB;--on-page-muted:#94A3B8;--on-page-line:#22314F}
+:root[data-brand="cobaltdark"][data-theme="dark"]{--seq-0:#253359;--seq-1:#34477b;--seq-2:#445b9d;--seq-3:#5671c3;--seq-4:#6B8CF0;--seq-5:#97aef4;--seq-6:#c4d1f9;--track:#212f51;--s4:#8ca5f0;--s5:#ffb99d;--s6:#A7ABB2;--s7:#7D828A;--s8:#bc6b4c;--page:#0B1220;--surface:#131D33;--surface-2:#18243D;--ink:#F8FAFC;--ink-2:#E5E7EB;--muted:#94A3B8;--grid:#1E2B45;--axis:#2C3D5E;--border:#22314F;--s1:#6B8CF0}
+:root[data-brand="instrument"]{--font:'Geist',system-ui,sans-serif;--font-display:'Geist',system-ui,sans-serif;--radius:10px;--div-pos:#0B84D8;--s1:#0B84D8;--s2:#6E6E78;--s3:#7CC3F2;--s4:#145889;--s5:#52545c;--s6:#5F646C;--s7:#A7ABB2;--s8:#afafb5}
+:root[data-brand="instrument"][data-theme="light"]{--seq-0:#d3e9f8;--seq-1:#acd5f2;--seq-2:#80bfeb;--seq-3:#4fa6e3;--seq-4:#2390dc;--seq-5:#0b66a5;--seq-6:#0a4772;--track:#d8ebf9;--page:#FCFCFC;--surface:#FFFFFF;--surface-2:#F1F1F3;--ink:#0A0A0B;--ink-2:#45454D;--muted:#6E6E78;--grid:#E6E6E9;--axis:#CFCFD4;--border:rgba(10,10,11,.09)}
+:root[data-brand="instrument"][data-theme="dark"]{--seq-0:#172f3f;--seq-1:#144262;--seq-2:#125584;--seq-3:#0f6baa;--seq-4:#0B84D8;--seq-5:#54a9e4;--seq-6:#9dceef;--track:#182b38;--s4:#79bbea;--s5:#a8a8ae;--s6:#A7ABB2;--s7:#7D828A;--s8:#565860}
+:root[data-brand="cobalt"]{--font:'Plus Jakarta Sans',system-ui,sans-serif;--font-display:'Plus Jakarta Sans',system-ui,sans-serif;--radius:20px;--div-pos:#2D5BE3;--s1:#2D5BE3;--s2:#FF8A5B;--s3:#7FA0F0;--s4:#27428f;--s5:#b16649;--s6:#5F646C;--s7:#A7ABB2;--s8:#ffbfa5}
+:root[data-brand="cobalt"][data-theme="light"]{--seq-0:#d9e1fa;--seq-1:#b8c7f5;--seq-2:#92aaf0;--seq-3:#6889eb;--seq-4:#426be6;--seq-5:#274cba;--seq-6:#223e90;--track:#dde5fb;--page:#F2F4FA;--surface:#FFFFFF;--surface-2:#E9EDF7;--ink:#16213E;--ink-2:#3E4766;--muted:#5A6382;--grid:#E2E7F3;--axis:#C5CDE0;--border:rgba(22,33,62,.10)}
+:root[data-brand="cobalt"][data-theme="dark"]{--seq-0:#1e2741;--seq-1:#213366;--seq-2:#253e8a;--seq-3:#284bb3;--seq-4:#2D5BE3;--seq-5:#6c8ceb;--seq-6:#abbdf4;--track:#1d2439;--s4:#8ca5f0;--s5:#ffb99d;--s6:#A7ABB2;--s7:#7D828A;--s8:#bc6b4c}
+:root[data-brand="retro"]{--font:'Montserrat',system-ui,sans-serif;--font-display:'Montserrat',system-ui,sans-serif;--radius:14px;--div-pos:#63D2BF;--s1:#63D2BF;--s2:#F7953B;--s3:#FFD978;--s4:#F0592A}
+:root[data-brand="retro"][data-theme="light"]{--seq-0:#e0f4f0;--seq-1:#c8eee7;--seq-2:#ace6dc;--seq-3:#8eded0;--seq-4:#72d6c5;--seq-5:#4da092;--seq-6:#376e65;--track:#e4f5f1}
+:root[data-brand="retro"][data-theme="dark"]{--seq-0:#1f4553;--seq-1:#2e656b;--seq-2:#3e8584;--seq-3:#4fa89f;--seq-4:#63D2BF;--seq-5:#92e0d2;--seq-6:#c1ede5;--track:#1c3e4e;--page:#0B1B2E;--surface:#0E2238;--surface-2:#16304C;--ink:#FFFFFF;--ink-2:#D3DCE8;--muted:#A9B8CC;--grid:#1F3A58;--axis:#2D4C70;--border:rgba(255,255,255,.16)}
+:root[data-brand="night"]{--font:'Schibsted Grotesk',system-ui,sans-serif;--font-display:'Schibsted Grotesk',system-ui,sans-serif;--radius:12px;--div-pos:#FF6B5B;--s1:#FF6B5B;--s2:#4ADE80;--s3:#60A5FA}
+:root[data-brand="night"][data-theme="light"]{--seq-0:#fde2de;--seq-1:#fdcbc5;--seq-2:#feb1a8;--seq-3:#fe9488;--seq-4:#ff7a6b;--seq-5:#c25347;--seq-6:#853b33;--track:#fce5e1}
+:root[data-brand="night"][data-theme="dark"]{--seq-0:#452829;--seq-1:#6f3734;--seq-2:#98463f;--seq-3:#c7574c;--seq-4:#FF6B5B;--seq-5:#ff978c;--seq-6:#ffc4bd;--track:#3b2426;--page:#0A0B0E;--surface:#16171C;--surface-2:#1F2026;--ink:#F4F4F6;--ink-2:#C4C5CC;--muted:#8B8C94;--grid:#24252B;--axis:#34353C;--border:rgba(255,255,255,.10)}
+:root[data-brand="field"]{--font:'Public Sans',system-ui,sans-serif;--font-display:'Source Serif 4',Georgia,serif;--radius:4px;--div-pos:#007D9C;--s1:#007D9C;--s2:#4A6A93;--s3:#C0312B;--s4:#0e5468;--s5:#3b516e;--s6:#5F646C;--s7:#A7ABB2;--s8:#9badc4}
+:root[data-brand="field"][data-theme="light"]{--seq-0:#d1e8ed;--seq-1:#a8d3dd;--seq-2:#7abbcc;--seq-3:#47a1b8;--seq-4:#1a8aa6;--seq-5:#056a89;--seq-6:#0a5676;--track:#d6eaef;--page:#FBFBF8;--surface:#FFFFFF;--surface-2:#F1F3F2;--ink:#14304F;--ink-2:#3E5068;--muted:#5F6875;--grid:#E3E5E8;--axis:#C9CDD3;--border:rgba(20,48,79,.12)}
+:root[data-brand="field"][data-theme="dark"]{--seq-0:#152e33;--seq-1:#10404b;--seq-2:#0b5162;--seq-3:#06657d;--seq-4:#007D9C;--seq-5:#4ca4ba;--seq-6:#99cbd7;--track:#162a2e;--s4:#73b8c9;--s5:#92a6be;--s6:#A7ABB2;--s7:#7D828A;--s8:#3d5573}
+:root[data-brand="blueprint"]{--font:'IBM Plex Sans',system-ui,sans-serif;--font-display:'IBM Plex Sans',system-ui,sans-serif;--radius:2px;--div-pos:#1E5FD6;--s1:#1E5FD6;--s2:#E2462F;--s3:#6E8FC9;--s4:#1e4488;--s5:#9e3a2d;--s6:#5F646C;--s7:#A7ABB2;--s8:#ef998d}
+:root[data-brand="blueprint"][data-theme="light"]{--seq-0:#d6e2f8;--seq-1:#b2c9f1;--seq-2:#8aacea;--seq-3:#5d8ce1;--seq-4:#346fda;--seq-5:#1a52b2;--seq-6:#16448e;--track:#dbe5f8;--page:#F4F7FB;--surface:#FFFFFF;--surface-2:#EAF0F8;--ink:#0E2A47;--ink-2:#345170;--muted:#56708F;--grid:#DCE5F1;--axis:#B9CDEB;--border:rgba(30,95,214,.18)}
+:root[data-brand="blueprint"][data-theme="dark"]{--seq-0:#1b283f;--seq-1:#1c3461;--seq-2:#1c4183;--seq-3:#1d4ea9;--seq-4:#1E5FD6;--seq-5:#628fe2;--seq-6:#a5bfef;--track:#1b2537;--s4:#83a7e8;--s5:#ee9082;--s6:#A7ABB2;--s7:#7D828A;--s8:#a83c2d}
+:root[data-brand="consult"]{--font:'Outfit',system-ui,sans-serif;--font-display:'Outfit',system-ui,sans-serif;--radius:12px;--div-pos:#2D7F8C;--s1:#2D7F8C;--s2:#F2493A;--s3:#8FB8BF;--s4:#27565f;--s5:#a83c34;--s6:#5F646C;--s7:#A7ABB2;--s8:#f89b93}
+:root[data-brand="consult"][data-theme="light"]{--seq-0:#d9e8ea;--seq-1:#b8d3d8;--seq-2:#92bcc3;--seq-3:#68a3ac;--seq-4:#428c98;--seq-5:#246c79;--seq-6:#1c5a66;--track:#ddebed;--page:#EFF1F8;--surface:#FFFFFF;--surface-2:#F3F5FA;--ink:#0B3440;--ink-2:#2E5560;--muted:#4E6A72;--grid:#E3E8EF;--axis:#C4CED8;--border:rgba(11,52,64,.10)}
+:root[data-brand="consult"][data-theme="dark"]{--seq-0:#1e2e30;--seq-1:#214045;--seq-2:#255359;--seq-3:#286770;--seq-4:#2D7F8C;--seq-5:#6ca5ae;--seq-6:#abccd1;--track:#1d2a2b;--s4:#8cb9c0;--s5:#f79289;--s6:#A7ABB2;--s7:#7D828A;--s8:#b33e35}
+:root[data-brand="gold"]{--font:'Poppins',system-ui,sans-serif;--font-display:'Poppins',system-ui,sans-serif;--radius:14px;--div-pos:#6C63E0;--s1:#6C63E0;--s2:#F5B800;--s3:#A9A3F0;--s4:#49468d;--s5:#aa840e;--s6:#5F646C;--s7:#A7ABB2;--s8:#fad873}
+:root[data-brand="gold"][data-theme="light"]{--seq-0:#e5e3f9;--seq-1:#cdcaf4;--seq-2:#b3aeef;--seq-3:#958fe9;--seq-4:#7b73e3;--seq-5:#5851be;--seq-6:#453e9d;--track:#e7e6fa;--page:#FCFCFC;--surface:#FFFFFF;--surface-2:#F4F3FB;--ink:#1E1A5A;--ink-2:#433E7A;--muted:#5D5986;--grid:#E6E3F7;--axis:#CFCBEA;--border:rgba(30,26,90,.10)}
+:root[data-brand="gold"][data-theme="dark"]{--seq-0:#2a2941;--seq-1:#393665;--seq-2:#484388;--seq-3:#5851b0;--seq-4:#6C63E0;--seq-5:#9892e9;--seq-6:#c4c1f3;--track:#272639;--s4:#aea9ee;--s5:#f9d466;--s6:#A7ABB2;--s7:#7D828A;--s8:#b58b0c}
+:root[data-brand="signal"]{--font:'Barlow',system-ui,sans-serif;--font-display:'Barlow Condensed',system-ui,sans-serif;--radius:6px;--div-pos:#3B6AA8;--s1:#3B6AA8;--s2:#F26B1D;--s3:#FFC233;--s4:#2e4a6e;--s5:#a85221;--s6:#5F646C;--s7:#A7ABB2;--s8:#f8ae83}
+:root[data-brand="signal"][data-theme="light"]{--seq-0:#dce4ef;--seq-1:#bccce1;--seq-2:#99b2d2;--seq-3:#7294c0;--seq-4:#4f79b1;--seq-5:#2f578c;--seq-6:#234471;--track:#e0e7f1;--page:#F5F7FB;--surface:#FFFFFF;--surface-2:#EEF2F8;--ink:#0B1F3A;--ink-2:#33445E;--muted:#4D5D75;--grid:#DCE2EC;--axis:#BFC9D8;--border:rgba(11,31,58,.10)}
+:root[data-brand="signal"][data-theme="dark"]{--seq-0:#212a36;--seq-1:#27384f;--seq-2:#2c4769;--seq-3:#335786;--seq-4:#3B6AA8;--seq-5:#7697c2;--seq-6:#b1c3dc;--track:#1f2730;--s4:#93adcf;--s5:#f7a677;--s6:#A7ABB2;--s7:#7D828A;--s8:#b35520}
+:root[data-brand="news"]{--font:'Lato',system-ui,sans-serif;--font-display:'Lato',system-ui,sans-serif;--radius:2px;--div-pos:#2C6FA8;--s1:#2C6FA8;--s2:#C0312B;--s3:#7FA9CF;--s4:#264d6e;--s5:#882c2a;--s6:#5F646C;--s7:#A7ABB2;--s8:#dc8e8a}
+:root[data-brand="news"][data-theme="light"]{--seq-0:#d9e5ef;--seq-1:#b7cee1;--seq-2:#91b4d2;--seq-3:#6797c0;--seq-4:#417db1;--seq-5:#30628c;--seq-6:#335471;--track:#dde8f1;--page:#FFFFFF;--surface:#FFFFFF;--surface-2:#F4F4F4;--ink:#3A3A3A;--ink-2:#555555;--muted:#6B6B6B;--grid:#E6E6E6;--axis:#CBCBCB;--border:rgba(0,0,0,.10)}
+:root[data-brand="news"][data-theme="dark"]{--seq-0:#1e2b36;--seq-1:#213a4f;--seq-2:#244a69;--seq-3:#285b86;--seq-4:#2C6FA8;--seq-5:#6b9ac2;--seq-6:#abc5dc;--track:#1d2830;--s4:#8bb0cf;--s5:#d98380;--s6:#A7ABB2;--s7:#7D828A;--s8:#902d2a}
+:root[data-brand="hex"]{--font:'Source Sans 3',system-ui,sans-serif;--font-display:'Source Sans 3',system-ui,sans-serif;--radius:10px;--div-pos:#5A6E92;--s1:#5A6E92;--s2:#EE6A2C;--s3:#F2A43A;--s4:#3f4c62;--s5:#a6512b;--s6:#5F646C;--s7:#A7ABB2;--s8:#f6ad8b}
+:root[data-brand="hex"][data-theme="light"]{--seq-0:#e1e5eb;--seq-1:#c7ceda;--seq-2:#a9b4c6;--seq-3:#8897b1;--seq-4:#6a7c9d;--seq-5:#53678a;--seq-6:#4c6081;--track:#e5e8ee;--page:#F1F1F1;--surface:#FFFFFF;--surface-2:#EDEEF1;--ink:#3F5170;--ink-2:#55657F;--muted:#6E7787;--grid:#DDE0E5;--axis:#C6CBD3;--border:rgba(63,81,112,.12)}
+:root[data-brand="hex"][data-theme="dark"]{--seq-0:#272b31;--seq-1:#323a47;--seq-2:#3e495d;--seq-3:#4b5a75;--seq-4:#5A6E92;--seq-5:#8c9ab3;--seq-6:#bdc5d3;--track:#24272c;--s4:#a4afc3;--s5:#f5a680;--s6:#A7ABB2;--s7:#7D828A;--s8:#b0552b}
+:root[data-brand="dispatch"]{--font:'Arimo',Arial,system-ui,sans-serif;--font-display:'Arimo',Arial,system-ui,sans-serif;--radius:6px;--div-pos:#33449A;--s1:#33449A;--s2:#F7941D;--s3:#2DB57A;--s4:#5B4FE9}
+:root[data-brand="dispatch"][data-theme="light"]{--seq-0:#dadded;--seq-1:#babfdd;--seq-2:#959eca;--seq-3:#6c78b6;--seq-4:#4757a4;--seq-5:#2a397d;--seq-6:#222e60;--track:#dee1ef;--page:#F4F5F7;--surface:#FFFFFF;--surface-2:#EEF0F4;--ink:#111827;--ink-2:#374151;--muted:#6B7280;--grid:#E3E5EA;--axis:#C8CCD4;--border:rgba(17,24,39,.10)}
+:root[data-brand="dispatch"][data-theme="dark"]{--seq-0:#2b3252;--seq-1:#3e4772;--seq-2:#515c92;--seq-3:#6673b5;--seq-4:#7F8FE0;--seq-5:#a5b1e9;--seq-6:#ccd2f3;--track:#272e4a;--page:#0E1220;--surface:#161B2E;--surface-2:#1D2338;--ink:#F3F5FA;--ink-2:#C9CEDD;--muted:#8E96AD;--grid:#262D45;--axis:#343C57;--border:rgba(255,255,255,.10);--s1:#7F8FE0}
+/* ---------- Base ---------- */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ink);font:14px/1.45 var(--font);padding:24px 16px;-webkit-font-smoothing:antialiased}
+body.embed{padding:12px}
+/* ?tile=1: a tile inside a sample dashboard — no page padding, fills its slot, reports its height */
+body.tile{padding:0;background:transparent}
+body.tile .viz{padding:14px 16px}
+body.tile .viz-head{margin-bottom:10px}
+/* in a dashboard a tile shows its default view: layout and option switches belong on the component's own demo page */
+body.tile .seg,body.tile .viz-head .btn:not(.xl-btn),body.tile .xl-ctl{display:none!important}
+html:has(body.tile),body.tile{overflow:hidden}
+body.tile .stage{max-width:none}
+html:has(body.tile),body.tile,body.tile .stage{height:100%}
+body.tile .stage>.viz{min-height:100%}
+.stage{max-width:760px;margin:0 auto}
+.viz{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.viz-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.viz-title{font-size:15px;font-weight:600;margin:0;font-family:var(--font-display,var(--font))}
+.viz-sub{font-size:13px;color:var(--ink-2);margin:2px 0 0}
+.muted{color:var(--muted)} .ink2{color:var(--ink-2)}
+.num{font-variant-numeric:tabular-nums}
+svg{display:block;overflow:visible}
+svg text{fill:var(--muted);font:11px var(--font);font-variant-numeric:tabular-nums}
+svg text.ink{fill:var(--ink)} svg text.ink2{fill:var(--ink-2)}
+/* controls */
+.seg{display:inline-flex;background:var(--surface-2);border-radius:8px;padding:2px;gap:2px}
+.seg button{all:unset;cursor:pointer;font-size:12px;padding:4px 10px;border-radius:6px;color:var(--ink-2)}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--border)}
+.seg button:focus-visible,.btn:focus-visible{outline:2px solid var(--s1);outline-offset:1px}
+.btn{all:unset;cursor:pointer;font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);color:var(--ink-2);background:var(--surface)}
+.btn:hover{background:var(--hover);color:var(--ink)}
+input[type=search],input[type=text],select{font:13px var(--font);color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+/* Excel download: an opt-in switch beside the title, and a button whenever a data table is on screen */
+.viz-head:has(.xl){justify-content:flex-start} .viz-head:has(.xl)>:first-child{margin-right:auto}
+.xl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.xl-ctl{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.xl-btn[hidden]{display:none}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.delta{font-size:12px;font-weight:600;white-space:nowrap}
+.delta.up{color:var(--up)} .delta.down{color:var(--down)} .delta.flat{color:var(--muted)}
+/* tooltip */
+.v-tip{position:fixed;z-index:50;pointer-events:none;display:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.45;box-shadow:0 6px 24px rgba(0,0,0,.14);max-width:260px;font-variant-numeric:tabular-nums}
+.v-tip b{font-weight:600}
+.v-tip .k{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+/* theme toggle (hidden when embedded) */
+.theme-bar{position:fixed;top:10px;right:10px;z-index:40;display:flex;gap:6px;align-items:center}
+.theme-bar select{font-size:12px;padding:4px 8px;border-radius:8px}
+body.embed .theme-bar{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script>
+/* ---------- Tiny helper kit (V) — shared by every component, ~60 lines ---------- */
+const V = (() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, a, p) => { const e = document.createElementNS(NS, tag); for (const k in a || {}) if (a[k] != null) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+  const svg = (box, h, w) => { box.innerHTML = ""; const W = w || Math.max(160, box.clientWidth); return { s: el("svg", { width: W, height: h, viewBox: `0 0 ${W} ${h}`, role: "img" }, box), W, H: h }; };
+  const rng = seed => { let a = seed >>> 0, sp = null; const r = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const g = () => { if (sp !== null) { const s = sp; sp = null; return s; } let u, v, q; do { u = r() * 2 - 1; v = r() * 2 - 1; q = u * u + v * v; } while (!q || q >= 1); const m = Math.sqrt(-2 * Math.log(q) / q); sp = v * m; return u * m; };
+    return { r, g, int: (lo, hi) => lo + Math.floor(r() * (hi - lo + 1)), pick: a => a[Math.floor(r() * a.length)] }; };
+  const scale = (d0, d1, r0, r1) => { const f = v => r0 + (v - d0) / ((d1 - d0) || 1) * (r1 - r0); f.inv = p => d0 + (p - r0) / ((r1 - r0) || 1) * (d1 - d0); return f; };
+  const ticks = (lo, hi, n = 4) => { const span = (hi - lo) || 1, raw = span / n, mag = 10 ** Math.floor(Math.log10(raw)); const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => span / s <= n) || mag * 10; const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-6; v += step) out.push(+v.toFixed(10)); return out; };
+  const niceMax = (v, n = 4) => { const t = ticks(0, v * 1.0001, n); const s = (t[1] - t[0]) || 1; return Math.ceil(v / s) * s || 1; };
+  const short = (n, d) => { const a = Math.abs(n), s = n < 0 ? "−" : ""; const f = (x, u) => s + x.toFixed(d ?? (x < 10 ? 1 : 0)).replace(/\.0$/, "") + u; return a >= 1e9 ? f(a / 1e9, "B") : a >= 1e6 ? f(a / 1e6, "M") : a >= 1e3 ? f(a / 1e3, "K") : s + (Number.isInteger(a) ? a : a.toFixed(d ?? 1)); };
+  const comma = (n, d = 0) => (+n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const pct = (v, d = 1) => (v * 100).toFixed(d) + "%";
+  const money = (n, d) => (n < 0 ? "−$" : "$") + short(Math.abs(n), d);
+  const signed = (v, f = pct) => (v > 0 ? "+" : v < 0 ? "−" : "±") + f(Math.abs(v));
+  const sum = a => a.reduce((s, x) => s + x, 0), mean = a => a.length ? sum(a) / a.length : 0, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const hex2 = h => { h = h.replace("#", ""); if (h.length === 3) h = [...h].map(c => c + c).join(""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  const mix = (a, b, t) => { const A = hex2(a), B = hex2(b); return "#" + A.map((x, i) => Math.round(x + (B[i] - x) * t).toString(16).padStart(2, "0")).join(""); };
+  const ramp = t => { const st = [0, 1, 2, 3, 4, 5, 6].map(i => css("--seq-" + i)); t = clamp(t, 0, 1) * 6; const i = Math.min(5, Math.floor(t)); return mix(st[i], st[i + 1], t - i); };
+  const diverge = t => { t = clamp(t, -1, 1); return t < 0 ? mix(css("--div-mid"), css("--div-neg"), -t) : mix(css("--div-mid"), css("--div-pos"), t); };
+  const ink = bg => { const [r, g, b] = hex2(bg).map(c => { c /= 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }); return .2126 * r + .7152 * g + .0722 * b > .36 ? "#0b0b0b" : "#ffffff"; };
+  let tipEl;
+  const tip = (e, html) => { if (!tipEl) { tipEl = document.createElement("div"); tipEl.className = "v-tip"; document.body.appendChild(tipEl); }
+    tipEl.innerHTML = html; tipEl.style.display = "block"; const r = tipEl.getBoundingClientRect(); let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 14; tipEl.style.left = Math.max(4, x) + "px"; tipEl.style.top = Math.max(4, y) + "px"; };
+  const untip = () => tipEl && (tipEl.style.display = "none");
+  const hover = (node, fn) => { node.addEventListener("mousemove", e => { const h = fn(e); h ? tip(e, h) : untip(); }); node.addEventListener("mouseleave", untip); };
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const seg = (box, opts, val, on) => { box.innerHTML = opts.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button type="button" data-v="${esc(v)}" aria-pressed="${String(v) === String(val)}">${esc(l)}</button>`; }).join("");
+    box.onclick = e => { const b = e.target.closest("button"); if (!b) return; box.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); on(b.dataset.v); }; };
+  // bar path with a 4px rounded data end and a square baseline end; dir = the way the bar grows: up | down | right | left
+  const bar = (x, y, w, h, dir = "up", r = 4) => { const v = dir === "up" || dir === "down"; r = Math.max(0, Math.min(r, v ? h : w, (v ? w : h) / 2));
+    if (dir === "up") return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+    if (dir === "down") return `M${x},${y}V${y + h - r}Q${x},${y + h} ${x + r},${y + h}H${x + w - r}Q${x + w},${y + h} ${x + w},${y + h - r}V${y}Z`;
+    if (dir === "right") return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+    return `M${x + w},${y}H${x + r}Q${x},${y} ${x},${y + r}V${y + h - r}Q${x},${y + h} ${x + r},${y + h}H${x + w}Z`; };
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  // mount(render): runs on load, on width change and on theme change
+  // fill(h): a chart's usual height, adjusted to fit its dashboard row when it sits in a tile (unchanged elsewhere)
+  let slack = 0, used = 0, rerun = null, fills = false, base = 0;
+  const fill = h => { fills = true; base = h; used = Math.max(140 - h, Math.min(slack, 420)); return h + used; };   // shrinks to 140px at least, grows by 420px at most
+  const mount = fn => { let w = 0, t; const run = () => { untip(); used = 0; fn(); }; rerun = run;
+    addEventListener("DOMContentLoaded", () => { const st = document.querySelector(".stage") || document.body;
+      w = st.clientWidth; run(); // render now; the observer only re-renders when the width really changes
+      new ResizeObserver(() => { const nw = st.clientWidth; if (nw && nw !== w) { w = nw; clearTimeout(t); t = setTimeout(run, 80); } }).observe(st); });
+    addEventListener("v-theme", run); matchMedia("(prefers-color-scheme: dark)").addEventListener("change", run); };
+  // theme: ?theme=dark|light, ?embed=1, postMessage({theme}), toggle button
+  const setTheme = th => { if (th === "dark" || th === "light") document.documentElement.dataset.theme = th; else delete document.documentElement.dataset.theme; dispatchEvent(new Event("v-theme")); };
+  // brand themes: ?brand=<id> or postMessage({brand}); fonts load on demand and trigger a re-render
+  const BRANDS = {"cobaltdark": {"name": "Cobalt Lab (Dark)", "mode": "light", "fonts": "family=Plus+Jakarta+Sans:wght@400;600;800"}, "instrument": {"name": "Quiet Instrument", "mode": "light", "fonts": "family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500"}, "cobalt": {"name": "Cobalt Lab", "mode": "light", "fonts": "family=Plus+Jakarta+Sans:wght@400;600;800"}, "retro": {"name": "Retro Flashback", "mode": "dark", "fonts": "family=Montserrat:wght@500;700;800"}, "night": {"name": "Night Console", "mode": "dark", "fonts": "family=Schibsted+Grotesk:wght@400;600;800"}, "field": {"name": "Field Notes", "mode": "light", "fonts": "family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;600"}, "blueprint": {"name": "Blueprint", "mode": "light", "fonts": "family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500"}, "consult": {"name": "Coral Consulting", "mode": "light", "fonts": "family=Outfit:wght@400;600;800;900"}, "gold": {"name": "Indigo & Gold", "mode": "light", "fonts": "family=Poppins:wght@400;600;800"}, "signal": {"name": "Navy & Signal", "mode": "light", "fonts": "family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600"}, "news": {"name": "Newsroom", "mode": "light", "fonts": "family=Lato:ital,wght@0,400;0,700;1,400"}, "hex": {"name": "Hex & Slate", "mode": "light", "fonts": "family=Source+Sans+3:wght@400;600;700"}, "dispatch": {"name": "Service Dispatch", "mode": "light", "fonts": "family=Arimo:wght@400;600;700"}};
+  // Cobalt Lab (Dark) is the default theme: an unknown or empty id falls back to it (the neutral tokens on :root sit underneath every theme)
+  const DEF_BRAND = BRANDS.cobaltdark ? "cobaltdark" : "";
+  const setBrand = id => { if (!BRANDS[id]) id = DEF_BRAND; const b = BRANDS[id], root = document.documentElement;
+    if (!b) { delete root.dataset.brand; return; }
+    root.dataset.brand = id;
+    if (b.fonts && !document.getElementById("bf-" + id)) { const l = document.createElement("link"); l.id = "bf-" + id; l.rel = "stylesheet";
+      l.href = "https://fonts.googleapis.com/css2?" + b.fonts + "&display=swap"; l.onload = () => document.fonts.ready.then(() => dispatchEvent(new Event("v-theme"))); document.head.appendChild(l); } };
+  const q = new URLSearchParams(location.search);
+  setBrand(q.get("brand")); { const id = document.documentElement.dataset.brand; if (!q.get("theme") && BRANDS[id]) document.documentElement.dataset.theme = BRANDS[id].mode; }
+  if (q.get("theme")) document.documentElement.dataset.theme = q.get("theme");
+  addEventListener("message", e => { if (!e.data) return; if ("brand" in e.data) setBrand(e.data.brand); if ("theme" in e.data) setTheme(e.data.theme); else if ("brand" in e.data) dispatchEvent(new Event("v-theme")); });
+  addEventListener("DOMContentLoaded", () => { if (q.get("embed")) document.body.classList.add("embed");
+    if (q.get("tile") && parent !== window) { document.body.classList.add("tile"); let h = 0;
+      // report the natural height (the card stretches to fill its slot, so measure its content, not the card)
+      const natural = () => { let b = 0; for (const el of document.querySelector(".stage").children) { if (/^(SCRIPT|STYLE)$/.test(el.tagName)) continue;
+        if (el.classList.contains("viz")) { const cs = getComputedStyle(el), top = el.getBoundingClientRect().top; let inner = 0;
+          for (const k of el.children) inner = Math.max(inner, k.getBoundingClientRect().bottom - top);
+          b = Math.max(b, top + inner + parseFloat(cs.paddingBottom) + parseFloat(cs.borderBottomWidth)); } else b = Math.max(b, el.getBoundingClientRect().bottom); }
+        return Math.ceil(b + scrollY) - used; };
+      // fit(): match the chart to the frame; runs when the frame resizes and whenever the natural height changes,
+      // because a frame that starts at its final height never gets a resize event
+      const fit = () => { const ns = innerHeight - h; if (fills && Math.abs(ns - slack) > 2) { slack = ns; rerun && rerun(); } };
+      const ro = new ResizeObserver(() => { const nh = natural(); if (nh !== h) { h = nh;
+        // dcMin: the shortest this tile can get (a resizable chart shrinks to 140px), so a row never squeezes a tile into scrolling
+        parent.postMessage({ dcHeight: nh, dcMin: fills ? nh - Math.max(0, base - 140) : nh, fills }, "*"); fit(); } });
+      ro.observe(document.body); document.querySelectorAll(".stage > .viz > *").forEach(k => ro.observe(k));
+      // the dashboard sets this frame's height to its row height; charts that use fill() grow or shrink to fit
+      addEventListener("resize", fit); }
+    // Excel download (pages that show a data table): an Off/On switch beside the title, and a button while a table is on screen;
+    // ?excel=1 starts it on, which is how a dashboard turns it on for its table tiles
+    const viz = document.querySelector(".stage > .viz"), head = viz && viz.querySelector(".viz-head");
+    if (head && document.body.dataset.tables) { let on = !!q.get("excel");
+      const box = document.createElement("div"); box.className = "xl";
+      box.innerHTML = '<div class="xl-ctl"><span>Excel download</span><div class="seg"></div></div><button class="btn xl-btn" type="button" title="Download this table as an Excel workbook" hidden>⤓ Excel</button>';
+      head.appendChild(box); const btn = box.querySelector(".xl-btn");
+      const sync = () => { btn.hidden = !on || ![...viz.querySelectorAll("table")].some(x => x.getClientRects().length); };
+      seg(box.querySelector(".seg"), [["0", "Off"], ["1", "On"]], on ? "1" : "0", v => { on = v === "1"; sync(); });
+      btn.onclick = exportExcel; new MutationObserver(sync).observe(viz, { childList: true, subtree: true }); setTimeout(sync); }
+    const bar = document.createElement("div"); bar.className = "theme-bar";
+    const sel = document.createElement("select"); sel.setAttribute("aria-label", "Theme");
+    sel.innerHTML = Object.entries(BRANDS).map(([id, b]) => `<option value="${id}">${esc(b.name)}</option>`).join("");
+    sel.value = document.documentElement.dataset.brand || DEF_BRAND;
+    sel.onchange = () => { const id = sel.value, b = BRANDS[id]; setBrand(id);
+      try { const u = new URL(location.href); id ? u.searchParams.set("brand", id) : u.searchParams.delete("brand"); history.replaceState(null, "", u); } catch {} // keep the theme on reload where the page allows it
+      if (b && b.mode !== getComputedStyle(document.documentElement).colorScheme) setTheme(b.mode); else dispatchEvent(new Event("v-theme")); };
+    const b = document.createElement("button"); b.className = "btn"; b.type = "button"; b.textContent = "◐ Light / dark"; b.title = "Toggle light / dark";
+    b.onclick = () => setTheme(getComputedStyle(document.documentElement).colorScheme === "dark" ? "light" : "dark");
+    bar.append(sel, b); document.body.appendChild(bar); });
+  // ---------- save(filename, blob): the claude.ai viewer grants downloads to the top page, so a framed page hands the file up ----------
+  const save = async (filename, blob) => {
+    const dl = window.claude ? await window.claude.use("downloads") : null;
+    if (dl) { try { await dl.save({ filename, data: blob }); } catch {} return; }
+    if (parent !== window) { const ack = new Promise(r => { const f = e => { if (e.data && e.data.dcSaved === filename) { removeEventListener("message", f); r(true); } }; addEventListener("message", f); setTimeout(() => r(false), 600); });
+      parent.postMessage({ dcSave: { filename, blob } }, "*"); if (await ack) return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
+  addEventListener("message", e => { const d = e.data && e.data.dcSave; if (d && e.source) { e.source.postMessage({ dcSaved: d.filename }, "*"); save(d.filename, d.blob); } });
+  // ---------- xlsx(viz): the table on screen as a styled Excel workbook, written by hand (a stored zip of SpreadsheetML; no libraries) ----------
+  const crcT = Array.from({ length: 256 }, (_, n) => { for (let k = 0; k < 8; k++) n = n & 1 ? 0xEDB88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; });
+  const crc32 = b => { let c = ~0; for (const x of b) c = crcT[(c ^ x) & 255] ^ (c >>> 8); return ~c >>> 0; };
+  const zip = files => { const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+    for (const [name, text] of files) { const n = enc.encode(name), d = enc.encode(text), c = crc32(d), h = new DataView(new ArrayBuffer(30)), ch = new DataView(new ArrayBuffer(46));
+      [[0, 0x04034b50, 4], [4, 20], [6, 0x0800], [12, 0x5B21], [14, c, 4], [18, d.length, 4], [22, d.length, 4], [26, n.length]].forEach(([o, v, w]) => w ? h.setUint32(o, v, true) : h.setUint16(o, v, true));
+      [[0, 0x02014b50, 4], [4, 20], [6, 20], [8, 0x0800], [14, 0x5B21], [16, c, 4], [20, d.length, 4], [24, d.length, 4], [28, n.length], [42, off, 4]].forEach(([o, v, w]) => w ? ch.setUint32(o, v, true) : ch.setUint16(o, v, true));
+      parts.push(h, n, d); cen.push(ch, n); off += 30 + n.length + d.length; }
+    const e = new DataView(new ArrayBuffer(22)), size = cen.reduce((s, p) => s + p.byteLength, 0);
+    [[0, 0x06054b50, 4], [8, files.length], [10, files.length], [12, size, 4], [16, off, 4]].forEach(([o, v, w]) => w ? e.setUint32(o, v, true) : e.setUint16(o, v, true));
+    return new Blob([...parts, ...cen, e], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }); };
+  const X = s => String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // computed colour → "RRGGBB" (null when transparent); translucent colours are blended over the card
+  const rgb = (s, over = [255, 255, 255]) => { const m = String(s).match(/-?[\d.]+/g); if (!m || m.length < 3) return null; let [r, g, b, a = 1] = m.map(Number);
+    if (/^color\(/.test(s)) [r, g, b] = [r, g, b].map(x => x * 255); if (a === 0) return null;
+    return [r, g, b].map((x, i) => Math.round(x * a + over[i] * (1 - a)).toString(16).padStart(2, "0")).join("").toUpperCase(); };
+  const SKIP = ".av,.xb,.cv,.sr,.sp,svg,.xl";
+  // a cell's words, one line per block (account + owner, KPI name + target); sort arrows dropped from headers
+  const textOf = (cell, head) => { let out = "", nl = false;
+    const walk = n => { for (const k of n.childNodes) { if (k.nodeType === 3) { if (k.nodeValue.trim() && nl && out.trim()) out += "\n"; if (k.nodeValue.trim()) nl = false; out += k.nodeValue; }
+      else if (k.nodeType === 1 && !k.matches(SKIP)) { const d = getComputedStyle(k).display; if (d === "none") continue; const fx = /flex|grid/.test(getComputedStyle(n).display), blk = !/^inline/.test(d) && !fx; if (fx && out.trim() && !/\s$/.test(out)) out += " "; if (blk) nl = true; walk(k); if (blk) nl = true; } } };
+    walk(cell); out = out.replace(/[ \t ]+/g, " ").replace(/ *\n */g, "\n").trim(); return head ? out.replace(/ *[▲▼↺]$/gm, "") : out; };
+  // "$18,400" → 18400 as "$"#,##0 · "+12.0%" → 0.12 as +0.0% · "−$2.1K" → −2100; anything else stays text
+  const num = t => { const m = t.replace(/−/g, "-").replace(/^[▲▼]\s*/, "").match(/^([+±-])?(-)?(\$)?(\d[\d,]*\.?\d*|\.\d+)([KMB%])?$/); if (!m) return null;
+    const [, sg, sg2, cur, dg, suf] = m; let v = parseFloat(dg.replace(/,/g, "")); if (sg === "-" || sg2 === "-") v = -v;
+    const z = (dg.split(".")[1] || "").length, dec = z ? "." + "0".repeat(z) : "";
+    let f = (/,/.test(dg) || cur || Math.abs(v) >= 1e4 ? "#,##0" : "0") + dec;
+    if (suf === "%") { v /= 100; f += "%"; } else if (suf) { const k = "KMB".indexOf(suf) + 1; v *= 1e3 ** k; f += ",".repeat(k) + `"${suf}"`; }
+    if (cur) f = '"$"' + f;
+    f = sg === "+" || sg === "±" ? `"+"${f};"-"${f};"±"${f}` : cur ? `${f};"-"${f}` : f;
+    return { v, f }; };
+  const xval = (x, f) => /^\d{4}-\d\d-\d\d$/.test(x) ? { v: (Date.UTC(+x.slice(0, 4), +x.slice(5, 7) - 1, +x.slice(8)) - Date.UTC(1899, 11, 30)) / 864e5, f: f || "mmm d, yyyy" } : x !== "" && !isNaN(x) ? { v: +x, f: f || "General" } : null;
+  const colL = n => { let s = ""; for (n++; n; n = (n - 1 - (n - 1) % 26) / 26) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; };
+  const xlsx = viz => {
+    const t = [...viz.querySelectorAll("table")].find(x => x.getClientRects().length); if (!t) return null;
+    const card = rgb(getComputedStyle(viz).backgroundColor) || "FFFFFF", over = hex2(card), INK = rgb(getComputedStyle(viz).color);
+    const fonts = ['<font><sz val="10"/><name val="Calibri"/></font>'], fills = ['<fill><patternFill patternType="none"/></fill>', '<fill><patternFill patternType="gray125"/></fill>'], borders = ["<border/>"], fmts = [], xfs = ['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'];
+    const at = (a, x) => { let i = a.indexOf(x); if (i < 0) i = a.push(x) - 1; return i; };
+    const side = (k, s) => s ? `<${k} style="${s[0]}"><color rgb="FF${s[1]}"/></${k}>` : `<${k}/>`;
+    const sty = s => at(xfs, `<xf numFmtId="${!s.f || s.f === "General" ? 0 : 164 + at(fmts, s.f)}" fontId="${at(fonts, `<font>${s.b ? "<b/>" : ""}<sz val="${s.sz || 10}"/>${s.c ? `<color rgb="FF${s.c}"/>` : ""}<name val="Calibri"/></font>`)}" fillId="${s.bg ? at(fills, `<fill><patternFill patternType="solid"><fgColor rgb="FF${s.bg}"/><bgColor indexed="64"/></patternFill></fill>`) : 0}" borderId="${s.bd ? at(borders, `<border>${side("left", s.bd.l)}${side("right", s.bd.r)}${side("top", s.bd.t)}${side("bottom", s.bd.b)}<diagonal/></border>`) : 0}" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"${s.h ? ` horizontal="${s.h}"` : ""}${s.wrap ? ' wrapText="1"' : ""}${s.ind ? ` indent="${s.ind}"` : ""}/></xf>`);
+    const cell = (r, c, val, s) => val == null || val === "" ? `<c r="${colL(c)}${r + 1}" s="${s}"/>` : typeof val === "number" ? `<c r="${colL(c)}${r + 1}" s="${s}"><v>${val}</v></c>` : `<c r="${colL(c)}${r + 1}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${X(val)}</t></is></c>`;
+    // pass 1: read every visible row into a grid of { text/number, style }
+    const grid = [], occ = new Set(), merges = [], width = [], heads = [];
+    for (const tr of t.rows) { if (!tr.getClientRects().length) continue; const r = grid.length, row = { cells: [], lvl: +tr.getAttribute("aria-level") || 0, ht: tr.getBoundingClientRect().height, head: tr.parentElement.tagName === "THEAD" };
+      if (row.head) heads.push(r); grid.push(row); let c = 0;
+      for (const td of tr.cells) { const cs = getComputedStyle(td); if (cs.display === "none") continue; while (occ.has(r + "," + c)) c++;
+        const sp = td.colSpan || 1, rs = td.rowSpan || 1; for (let i = 0; i < sp; i++) for (let j = 0; j < rs; j++) occ.add((r + j) + "," + (c + i));
+        if (sp > 1 || rs > 1) merges.push([r, c, r + rs - 1, c + sp - 1]);
+        const head = row.head || td.tagName === "TH" && !td.closest("tbody"), txt = textOf(td, head);
+        const nv = td.dataset.x != null ? xval(td.dataset.x, td.dataset.xf) : head || txt.includes("\n") ? null : num(txt);
+        // colours and weight come from the element that holds the words (a status pill, a +/− delta)
+        const w = document.createTreeWalker(td, NodeFilter.SHOW_TEXT, { acceptNode: n => n.nodeValue.trim() && !n.parentElement.closest(SKIP) ? 1 : 3 }), tn = w.nextNode(), te = tn ? tn.parentElement : td, ts = getComputedStyle(te);
+        let bg = rgb(cs.backgroundColor, over); if (bg === card) bg = null;
+        if (!bg) { const p = [...td.querySelectorAll("*")].find(e => !e.closest(SKIP) && e.tagName !== "I" && e.textContent.trim() && rgb(getComputedStyle(e).backgroundColor)); if (p) bg = rgb(getComputedStyle(p).backgroundColor, over); }
+        let fc = rgb(ts.color, hex2("#" + (bg || card))); if (fc === INK) fc = null;
+        const ln = (k, cs) => parseFloat(cs["border" + k + "Width"]) > 0 && rgb(cs["border" + k + "Color"]) ? [parseFloat(cs["border" + k + "Width"]) >= 2 ? "medium" : "thin", rgb(cs["border" + k + "Color"], over)] : null;
+        const bd = { t: ln("Top", cs), b: ln("Bottom", cs) };
+        if (cs.boxShadow && cs.boxShadow !== "none") { const ring = ["medium", rgb(cs.boxShadow.match(/rgba?\([^)]*\)|color\([^)]*\)/)?.[0] || "") || "0B0B0B"]; Object.assign(bd, { l: ring, r: ring, t: ring, b: ring }); }
+        const ta = cs.textAlign, bar = [...td.querySelectorAll("i")].find(e => e.getBoundingClientRect().width > 0 && rgb(getComputedStyle(e).backgroundColor));
+        row.cells[c] = { v: nv ? nv.v : txt, bar: nv && bar ? rgb(getComputedStyle(bar).backgroundColor, over) : null, s: { f: nv && nv.f, b: head || +ts.fontWeight >= 600, sz: head ? 10 : Math.round(clamp(parseFloat(ts.fontSize) * .75, 8, 12)),
+          c: fc, bg, bd: bd.t || bd.b || bd.l ? bd : null, h: /right|end/.test(ta) ? "right" : ta === "center" ? "center" : nv ? "left" : null, wrap: txt.includes("\n"), ind: c === 0 && row.lvl > 1 ? (row.lvl - 1) * 2 : 0 } };
+        if (sp === 1) width[c] = Math.max(width[c] || 0, td.getBoundingClientRect().width);
+        c += sp; } }
+    // drop columns that hold only pictures (expand chevrons, sparklines): nothing to put in a cell
+    const ncol = Math.max(0, ...grid.map(r => r.cells.length)), keep = [];
+    for (let c = 0; c < ncol; c++) if (merges.length || grid.some(r => !r.head && r.cells[c] && r.cells[c].v !== "")) keep.push(c);
+    // pass 2: write the sheet — title and subtitle on top, header frozen, rows grouped by level, inline bars as data bars
+    const title = viz.querySelector(".viz-title")?.textContent.trim() || "Table", sub = viz.querySelector(".viz-sub")?.textContent.trim();
+    const rows = [`<row r="1" ht="21" customHeight="1">${cell(0, 0, title, sty({ b: 1, sz: 14 }))}</row>`]; let top = 2;
+    if (sub) { rows.push(`<row r="2">${cell(1, 0, sub, sty({ c: css("--ink-2").replace("#", "").toUpperCase() || "52514E" }))}</row>`); top = 3; }
+    const bars = {};
+    grid.forEach((row, i) => { const r = top + i, lines = Math.max(1, ...row.cells.map(x => x ? String(x.v).split("\n").length : 1));
+      rows.push(`<row r="${r + 1}" ht="${Math.max(lines * 13.5, Math.round(row.ht * .75 * 2) / 2)}" customHeight="1"${row.lvl > 1 ? ` outlineLevel="${row.lvl - 1}"` : ""}>` +
+        keep.map((c, j) => { const x = row.cells[c]; if (!x) return ""; if (x.bar) (bars[j] = bars[j] || { c: x.bar, at: [] }).at.push(colL(j) + (r + 1)); return cell(r, j, x.v, sty(x.s)); }).join("") + "</row>"); });
+    const hr = heads.length, last = top + grid.length, lc = colL(Math.max(0, keep.length - 1)), filter = hr === 1 && t.querySelector("thead button") && !grid.some(r => r.lvl) && !merges.length && !grid[0].cells.some(x => x && x.s.wrap);
+    const name = title.replace(/[[\]:*?/\\]/g, " ").slice(0, 31);
+    const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+      (grid.some(r => r.lvl > 1) ? '<sheetPr><outlinePr summaryBelow="0"/></sheetPr>' : "") + `<dimension ref="A1:${lc}${last}"/>` +
+      `<sheetViews><sheetView workbookViewId="0" showGridLines="0">${hr ? `<pane ySplit="${top + hr}" topLeftCell="A${top + hr + 1}" activePane="bottomLeft" state="frozen"/>` : ""}</sheetView></sheetViews>` +
+      `<sheetFormatPr defaultRowHeight="15"/><cols>${keep.map((c, j) => `<col min="${j + 1}" max="${j + 1}" width="${clamp(Math.round((width[c] || 80) / 6.5), 8, 60)}" customWidth="1"/>`).join("")}</cols>` +
+      `<sheetData>${rows.join("")}</sheetData>` + (filter ? `<autoFilter ref="A${top + 1}:${lc}${last}"/>` : "") +
+      (merges.length ? `<mergeCells count="${merges.length}">${merges.map(([a, b, c, d]) => `<mergeCell ref="${colL(b)}${top + a + 1}:${colL(d)}${top + c + 1}"/>`).join("")}</mergeCells>` : "") +
+      Object.values(bars).map((b, i) => `<conditionalFormatting sqref="${b.at.join(" ")}"><cfRule type="dataBar" priority="${i + 1}"><dataBar><cfvo type="num" val="0"/><cfvo type="max"/><color rgb="FF${b.c}"/></dataBar></cfRule></conditionalFormatting>`).join("") +
+      '<pageMargins left="0.5" right="0.5" top="0.75" bottom="0.75" header="0.3" footer="0.3"/><pageSetup orientation="landscape" fitToHeight="0"/></worksheet>';
+    const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"', REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships", PKG = "http://schemas.openxmlformats.org/package/2006/relationships";
+    return zip([
+      ["[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+      ["_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+      ["xl/workbook.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook ${NS} xmlns:r="${REL}"><sheets><sheet name="${X(name)}" sheetId="1" r:id="rId1"/></sheets>${filter ? `<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'${X(name.replace(/'/g, "''"))}'!$A$${top + 1}:$${lc}$${last}</definedName></definedNames>` : ""}</workbook>`],
+      ["xl/_rels/workbook.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${REL}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${REL}/styles" Target="styles.xml"/></Relationships>`],
+      ["xl/styles.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet ${NS}>${fmts.length ? `<numFmts count="${fmts.length}">${fmts.map((f, i) => `<numFmt numFmtId="${164 + i}" formatCode="${X(f)}"/>`).join("")}</numFmts>` : ""}<fonts count="${fonts.length}">${fonts.join("")}</fonts><fills count="${fills.length}">${fills.join("")}</fills><borders count="${borders.length}">${borders.join("")}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join("")}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`],
+      ["xl/worksheets/sheet1.xml", sheet]]); };
+  // exportExcel(): re-render in the light theme so the workbook matches a printed page, let the component show every row (window.XL_PREP), write, restore
+  const exportExcel = async () => { const viz = document.querySelector(".stage > .viz"), root = document.documentElement, th = root.dataset.theme; let blob;
+    root.dataset.theme = "light"; dispatchEvent(new Event("v-theme")); const undo = window.XL_PREP ? window.XL_PREP() : null;
+    try { blob = xlsx(viz); } finally { if (undo) undo(); if (th) root.dataset.theme = th; else delete root.dataset.theme; dispatchEvent(new Event("v-theme")); }
+    if (blob) await save((viz.querySelector(".viz-title")?.textContent.trim() || "table").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".xlsx", blob); };
+  return { save, xlsx, exportExcel, el, svg, fill, rng, scale, ticks, niceMax, short, comma, pct, money, signed, sum, mean, clamp, css, mix, ramp, diverge, ink, tip, untip, hover, esc, seg, bar, MON, DOW, mount, setTheme };
+})();
+</script>
+<script data-goatcounter="https://joshtapley.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+<div class="stage">
+<style>
+.chat{display:flex;flex-direction:column;border:1px solid var(--grid);border-radius:10px;overflow:hidden}
+.log{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;min-height:140px}
+.msg{font-size:13.5px;line-height:1.5}
+.msg.u{align-self:flex-end;max-width:82%;background:var(--surface-2);color:var(--ink);padding:7px 12px;border-radius:14px 14px 4px 14px;overflow-wrap:anywhere}
+.msg.a{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start}
+.av{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:var(--s1);background:color-mix(in srgb,var(--s1) 14%,transparent)}
+.tx b{font-weight:600}
+.tx .delta{font-size:inherit}
+.card{margin-top:8px;border:1px solid var(--grid);border-radius:10px;padding:12px 14px 8px}
+.card .legend{margin-bottom:6px}
+.kpi{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:4px}
+.kpi .v{font-size:28px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums;font-family:var(--font-display,var(--font))}
+.kpi .l{font-size:12px;color:var(--ink-2);width:100%}
+.how{margin-top:6px;font-size:12px;color:var(--muted)}
+.how summary{cursor:pointer;width:max-content;list-style:none}
+.how summary::before{content:"▸ "}.how[open] summary::before{content:"▾ "}
+.how summary:focus-visible{outline:2px solid var(--s1);outline-offset:2px;border-radius:4px}
+.how p{margin:4px 0 0;line-height:1.6;color:var(--ink-2)}
+.dots{display:inline-flex;gap:4px;padding:8px 0}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.foot{border-top:1px solid var(--grid);padding:10px 12px 12px;display:grid;gap:8px;background:var(--surface)}
+.ctx{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctx b{color:var(--ink-2);font-weight:600}
+.sugs{display:flex;gap:6px;flex-wrap:wrap}
+.sug{all:unset;cursor:pointer;font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:999px;color:var(--ink-2);background:var(--surface)}
+.sug:hover{background:var(--hover);color:var(--ink)}
+.sug:focus-visible{outline:2px solid var(--s1);outline-offset:1px}
+.ask{display:flex;gap:8px}
+.ask input{flex:1;min-width:0;font-size:14px;padding:9px 12px;border-radius:10px}
+.ask input:focus-visible{outline:2px solid var(--s1);outline-offset:0;border-color:transparent}
+.send{all:unset;cursor:pointer;width:38px;border-radius:10px;display:grid;place-items:center;background:var(--s1)}
+.send:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.send:disabled{opacity:.5;cursor:default}
+</style>
+
+<div class="viz">
+  <div class="viz-head">
+    <div>
+      <h2 class="viz-title">Ask your data</h2>
+      <p class="viz-sub">Sales · 4 regions · monthly, Jan 2024 – Oct 2026</p>
+    </div>
+    <button class="btn" type="button" id="clear">Clear</button>
+  </div>
+  <div class="chat">
+    <div class="log" id="log" role="log" aria-live="polite" aria-label="Conversation"></div>
+    <div class="foot">
+      <div class="ctx" id="ctx"></div>
+      <div class="sugs" id="sugs"></div>
+      <form class="ask" id="ask" autocomplete="off">
+        <label class="sr" for="q">Ask a question about this data</label>
+        <input type="text" id="q" placeholder="Ask about revenue, orders, conversion…" maxlength="200">
+        <button class="send" type="submit" id="send" aria-label="Send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- data: monthly additive measures per region (ratios are computed from the summed parts) ----------
+const R = V.rng(62), NM = 34, LAST = NM - 1, Y0 = 2024;
+const REG = ["Northeast", "South", "Midwest", "West"];
+const RAW = REG.map((_, ri) => { const w = [1.25, 1.05, .8, 1.1][ri], g = [.07, .11, .02, .06][ri];
+  return Array.from({ length: NM }, (_, i) => { const t = i / 12, mo = i % 12;
+    const seas = 1 + .12 * Math.sin(mo / 12 * Math.PI * 2 - 1.9) + (mo >= 10 ? .16 : 0);
+    const sessions = 410000 * w * seas * (1 + g) ** t * (1 + R.g() * .03);
+    const orders = sessions * .021 * (1 + .04 * ri) * (1 + .05 * t) * (1 + R.g() * .04);
+    const aov = 78 * (1 + .03 * t) * (1 + ri * .02) * (1 + R.g() * .03);
+    return { sessions, orders, revenue: orders * aov, newc: orders * (.34 - .02 * t) * (1 + R.g() * .05) }; }); });
+// matched in this order, so the more specific synonyms come first
+const MET = {
+  aov: { label: "Average order value", re: /\baov\b|average order|avg\.? order|order value|basket|per order/, calc: s => s.revenue / s.orders, f: v => "$" + v.toFixed(2), fs: v => "$" + v.toFixed(0), def: "revenue ÷ orders" },
+  conv: { label: "Conversion rate", re: /conversion|convert|\bcvr\b/, calc: s => s.orders / s.sessions, f: v => V.pct(v, 2), fs: v => V.pct(v, 1), pts: true, def: "orders ÷ sessions" },
+  newc: { label: "New customers", re: /new (customer|buyer)s?|first[- ]time|acquisition|sign[- ]?ups?|customers?/, calc: s => s.newc, f: v => V.comma(v), fs: v => V.short(v), unit: " new customers", def: "count of first-time buyers" },
+  sessions: { label: "Sessions", re: /sessions?|traffic|visits?|visitors?/, calc: s => s.sessions, f: v => V.short(v, 2), fs: v => V.short(v), unit: " sessions", def: "count of site sessions" },
+  orders: { label: "Orders", re: /\borders?\b|purchases?|transactions?/, calc: s => s.orders, f: v => V.comma(v), fs: v => V.short(v), unit: " orders", def: "count of completed orders" },
+  revenue: { label: "Revenue", re: /revenue|sales|income|\bgmv\b|turnover|bookings|money|earn/, calc: s => s.revenue, f: v => V.money(v, 2), fs: v => V.money(v, 1), def: "sum of order revenue" }
+};
+const agg = (a, b, r) => { const s = { sessions: 0, orders: 0, revenue: 0, newc: 0 };
+  RAW.forEach((rows, ri) => { if (r != null && r !== ri) return; for (let i = a; i <= b; i++) for (const k in s) s[k] += rows[i][k]; }); return s; };
+const val = (m, a, b, r) => a < 0 || b > LAST ? null : MET[m].calc(agg(a, b, r));
+
+// ---------- periods: month indexes a..b (0 = Jan 2024) with a readable label ----------
+const MS = V.MON, yOf = i => Y0 + Math.floor(i / 12), mOf = i => ((i % 12) + 12) % 12, idx = (y, m) => (y - Y0) * 12 + m;
+const mLab = i => MS[mOf(i)] + " " + yOf(i);
+const span = (a, b) => a === b ? mLab(a) : yOf(a) === yOf(b) ? MS[mOf(a)] + "–" + MS[mOf(b)] + " " + yOf(a) : mLab(a) + " – " + mLab(b);
+const P = (a, b, label, kind) => ({ a, b, label: label || span(a, b), kind });
+// the same months a year earlier: quarter, month and year labels keep their shape, anything else is spelled out
+const prior = p => P(p.a - 12, p.b - 12, /^(q|m|y)$/.test(p.kind) ? p.label.replace(/20\d\d/g, y => +y - 1) : span(p.a - 12, p.b - 12), p.kind);
+const ytd = () => P(idx(yOf(LAST), 0), LAST, yOf(LAST) + " year to date", "ytd");
+const MONRE = /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)\b/;
+const NUMW = { three: 3, six: 6, nine: 9, twelve: 12, eighteen: 18, "twenty four": 24 };
+function parsePeriod(q) {
+  const yr = +(q.match(/\b(20\d\d)\b/) || [])[1] || null, ly = yOf(LAST); let m;
+  if ((m = q.match(/\b(?:last|past|previous|trailing|rolling) (\d+|three|six|nine|twelve|eighteen|twenty four) months?\b/))) { const n = NUMW[m[1]] || +m[1]; return P(Math.max(0, LAST - n + 1), LAST, `last ${n} months`, "n"); }
+  if (/\bttm\b|\b(trailing|rolling) (12|twelve)\b|\bpast year\b/.test(q)) return P(LAST - 11, LAST, "last 12 months", "n");
+  if (/\bytd\b|year[- ]to[- ]date|this year|so far/.test(q)) return ytd();
+  if (/\bthis quarter\b|\bqtd\b|quarter[- ]to[- ]date/.test(q)) { const a = LAST - mOf(LAST) % 3; return P(a, LAST, `Q${mOf(a) / 3 + 1} ${ly} to date`, "q"); }
+  if (/\b(last|previous|prior) quarter\b/.test(q)) { const a = LAST - mOf(LAST) % 3 - 3; return P(a, a + 2, `Q${mOf(a) / 3 + 1} ${yOf(a)}`, "q"); }
+  if ((m = q.match(/\bq([1-4])\b|\b(first|second|third|fourth|1st|2nd|3rd|4th) quarter\b/))) {
+    const n = m[1] ? +m[1] : { first: 1, second: 2, third: 3, fourth: 4, "1st": 1, "2nd": 2, "3rd": 3, "4th": 4 }[m[2]];
+    let y = yr || ly; if (!yr && idx(y, (n - 1) * 3) > LAST) y--; const a = idx(y, (n - 1) * 3), b = Math.min(a + 2, LAST);
+    return P(a, b, `Q${n} ${y}${b < a + 2 ? " to date" : ""}`, "q"); }
+  if (/\bthis month\b|\bmtd\b/.test(q)) return P(LAST, LAST, "", "m");
+  if (/\b(last|previous|prior) month\b/.test(q)) return P(LAST - 1, LAST - 1, "", "m");
+  if ((m = q.match(MONRE)) && !(m[1] === "may" && !yr && !/\bin may\b/.test(q))) {
+    const mo = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(m[1].slice(0, 3));
+    let y = yr || ly; if (!yr && idx(y, mo) > LAST) y--; const i = idx(y, mo); return P(i, i, "", "m"); }
+  if (/\b(last|previous|prior) year\b/.test(q)) return P(idx(ly - 1, 0), idx(ly - 1, 11), String(ly - 1), "y");
+  if (yr) { const a = idx(yr, 0), b = Math.min(idx(yr, 11), LAST); return P(a, b, yr + (b < a + 11 ? " to date" : ""), "y"); }
+  return null;
+}
+// "vs last year" names the comparison, not the period
+const stripCmp = q => q.replace(/\b(vs\.?|versus|compared (to|with)|than|over|from|against|on) (the )?(same period )?(last|previous|prior) year\b|year[- ]over[- ]year|\byoy\b|a year (ago|earlier|before)/g, " ");
+const regOf = q => { if (/\b(all regions|overall|company[- ]wide|in total|everywhere)\b/.test(q)) return -1;
+  const i = REG.findIndex(r => new RegExp("\\b" + r.toLowerCase() + "\\b").test(q)); if (i >= 0) return i;
+  return /\bnorth ?east\b|\beast\b/.test(q) ? 0 : /\bmid ?west\b|\bcentral\b/.test(q) ? 2 : null; };
+const intentOf = q => /\b(by|per|across|each|every) regions?\b|\bregions?\b|break (it|that|this) down|breakdown|\bsplit\b|\bwhere\b/.test(q) ? "breakdown"
+  : /trend|over time|\bchart|graph|plot|visuali[sz]e|by month|monthly|month by month|\bline\b|show (me )?(it|that|this)\b|trajectory/.test(q) ? "trend"
+  : /\byoy\b|year[- ]over[- ]year|(vs\.?|versus|compared (to|with)|than) (the )?(last|previous|prior) year|year (ago|earlier|before)|change|growth|grow|grew|up or down|increase|decrease|differ|compare/.test(q) ? "yoy" : null;
+
+// ---------- conversation state ----------
+let ctx = { metric: null, period: null, region: null, intent: null }, hist = [], busy = false;
+const cards = [];
+const log = document.getElementById("log"), sugBox = document.getElementById("sugs"), ctxBox = document.getElementById("ctx"), input = document.getElementById("q");
+const START = ["What was revenue in Q3?", "Show it to me trended", "What's the YoY change?", "Which region grew fastest?", "Conversion rate last month"];
+
+function localPlan(text) {
+  const q = text.toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, " ").trim();
+  if (/^(hi|hello|hey|help)\b|what can you|what do you (know|do)|how does this work/.test(q)) return { intent: "help" };
+  const metric = Object.keys(MET).find(k => MET[k].re.test(q)) || null, period = parsePeriod(stripCmp(q)), reg = regOf(q);
+  const follow = /\b(about|same|instead|too|also|again)\b|^(and|for|in|now|what if)\b/.test(q);
+  let intent = intentOf(q) || (follow && ctx.intent) || (metric || period || reg != null ? "value" : null);
+  if (!intent) return { intent: "unknown" };
+  if (intent === "breakdown" && ctx.intent === "breakdown" && !intentOf(q)) intent = "breakdown";
+  return { intent, metric: metric || ctx.metric, period: period || ctx.period || ytd(),
+    region: intent === "breakdown" ? null : reg === -1 ? null : reg != null ? reg : metric ? null : ctx.region,
+    byGrowth: /grow|grew|fast|change|increase|improv/.test(q) };
+}
+// a model's plan ({ intent, metric, period: { from: "YYYY-MM", to: "YYYY-MM" }, region }) becomes the same shape as the local one
+function fromModel(p) {
+  const ix = s => { const [y, m] = String(s).split("-").map(Number); return idx(y, m - 1); };
+  const per = p.period && p.period.from ? P(ix(p.period.from), ix(p.period.to || p.period.from), p.period.label) : ctx.period || ytd();
+  return { intent: p.intent || "value", metric: MET[p.metric] ? p.metric : ctx.metric, period: per, region: REG.indexOf(p.region) >= 0 ? REG.indexOf(p.region) : null, byGrowth: !!p.byGrowth };
+}
+async function plan(text) {
+  if (window.DC_CHAT && typeof DC_CHAT.plan === "function") {
+    try { const p = await DC_CHAT.plan(text, { last: ctx, history: hist.slice(-6), metrics: Object.fromEntries(Object.entries(MET).map(([k, m]) => [k, m.label + " (" + m.def + ")"])), regions: REG, dataRange: ["2024-01", "2026-10"] });
+      if (p) return fromModel(p); } catch (e) { console.warn("DC_CHAT.plan failed, using the built-in parser", e); }
+  }
+  return localPlan(text);
+}
+
+// ---------- answers ----------
+const where = r => r == null ? "" : " in the " + REG[r];
+const delta = (M, v, pv) => { const ch = v / pv - 1, up = M.pts ? v >= pv : ch >= 0;
+  return { up, rel: V.signed(ch), main: M.pts ? V.signed(v - pv, x => (x * 100).toFixed(2) + " pts") : V.signed(ch), abs: (v >= pv ? "+" : "−") + M.fs(Math.abs(v - pv)) }; };
+const dSpan = (d, words) => `<span class="delta ${d.up ? "up" : "down"}">${d.up ? "▲" : "▼"} ${words ? (d.up ? "up " : "down ") : ""}${d.main.replace(/^[+−±]/, "")}</span>`;
+const how = (M, p, r, cmp) => `<details class="how"><summary>How this was calculated</summary><p><b>${M.label}</b> = ${M.def}<br>Period: ${span(p.a, p.b)}${cmp ? ` · compared with ${span(p.a - 12, p.b - 12)}` : ""}<br>Region: ${r == null ? "all regions" : REG[r]}<br>Source: monthly sales table (synthetic, seeded)</p></details>`;
+const legend = (a, b) => `<div class="legend"><span><i style="background:var(--s1)"></i>${a}</span><span><i style="background:var(--de-emph)"></i>${b}</span></div>`;
+const other = m => ({ revenue: "orders", orders: "average order value", aov: "conversion rate", conv: "new customers", newc: "sessions", sessions: "revenue" })[m];
+
+function answer(pl) {
+  if (pl.intent === "help" || pl.intent === "unknown") return { html: (pl.intent === "unknown" ? "I didn't catch a metric or period in that. " : "")
+    + "I can answer questions about <b>revenue, orders, average order value, conversion rate, new customers and sessions</b>: the value for a period, the monthly trend, the year-over-year change, or a split by region. Data runs from Jan 2024 to Oct 2026.", sugs: START };
+  if (!pl.metric) return { html: "Which metric do you mean?", sugs: Object.values(MET).map(m => m.label).reverse() };
+  const M = MET[pl.metric], p = pl.period, r = pl.region;
+  if (p.a < 0 || p.b > LAST || p.a > p.b) return { html: `I only have data from <b>Jan 2024</b> to <b>Oct 2026</b>, so I can't answer for that period.`, sugs: ["Revenue this year", "Revenue last quarter", "Revenue in 2025"] };
+  ctx = { metric: pl.metric, period: p, region: r, intent: pl.intent };
+  const v = val(pl.metric, p.a, p.b, r), pv = val(pl.metric, p.a - 12, p.b - 12, r), pp = prior(p), tense = p.b === LAST ? "is" : "was";
+
+  if (pl.intent === "value") {
+    const d = pv != null && delta(M, v, pv);
+    return { html: `<b>${M.label}</b>${where(r)} in <b>${p.label}</b> ${tense} <b>${M.f(v)}</b>.`,
+      card: { html: `<div class="kpi"><span class="v">${M.f(v)}</span>${d ? `${dSpan(d)}<span class="muted" style="font-size:12px">vs ${M.f(pv)} in ${pp.label}</span>` : `<span class="muted" style="font-size:12px">no year-earlier data</span>`}<span class="l">${M.label} · ${p.label} · ${r == null ? "all regions" : REG[r]}</span></div>` },
+      how: how(M, p, r, !!d), sugs: ["Show it to me trended", "What's the YoY change?", "Break it down by region", `What about ${other(pl.metric)}?`] };
+  }
+  if (pl.intent === "trend") {
+    const b = p.b, a = p.b - p.a < 5 ? Math.max(0, b - 11) : p.a, ser = [];
+    for (let i = a; i <= b; i++) ser.push({ i, v: val(pl.metric, i, i, r) });
+    const pk = ser.reduce((x, y) => y.v > x.v ? y : x), lo = ser.reduce((x, y) => y.v < x.v ? y : x), hasPy = a - 12 >= 0;
+    const ctxNote = a < p.a ? ` I've shown the 12 months to ${mLab(b)} so ${p.label} has context; it's shaded.` : "";
+    return { html: `Here's <b>${M.label.toLowerCase()}</b>${where(r)} by month, ${span(a, b)}. It peaked in <b>${mLab(pk.i)}</b> at <b>${M.f(pk.v)}</b> and was lowest in ${mLab(lo.i)} (${M.f(lo.v)}).${ctxNote}`,
+      card: { html: legend(span(a, b), hasPy ? "Year earlier" : "Year earlier (n/a)"), draw: box => drawTrend(box, pl.metric, r, a, b, p.a, p.b) },
+      how: how(M, P(a, b), r, hasPy), sugs: ["What's the YoY change?", "Break it down by region", `Show ${other(pl.metric)} trended`, "Last 6 months"] };
+  }
+  if (pl.intent === "yoy") {
+    if (pv == null) return { html: `I don't have data before Jan 2024, so there's no year-earlier figure for <b>${p.label}</b>. Try a 2025 or 2026 period.`, sugs: ["YoY change for 2025", "YoY change this year"] };
+    const d = delta(M, v, pv); let up = 0; const n = p.b - p.a + 1;
+    for (let i = p.a; i <= p.b; i++) if (val(pl.metric, i, i, r) >= val(pl.metric, i - 12, i - 12, r)) up++;
+    return { html: `<b>${M.label}</b>${where(r)} ${tense} <b>${M.f(v)}</b> in ${p.label} vs <b>${M.f(pv)}</b> in ${pp.label}: ${dSpan(d, true)}${M.pts ? ` (${d.rel} relative)` : ` (${d.abs})`}.${n > 1 ? ` ${up} of ${n} months were higher than a year earlier.` : ""}`,
+      card: { html: legend(p.label, pp.label), draw: box => drawYoy(box, pl.metric, r, p, pp) },
+      how: how(M, p, r, true), sugs: ["Which region grew fastest?", "Show it to me trended", "Same for last quarter", `What about ${other(pl.metric)}?`] };
+  }
+  // breakdown by region
+  const rows = REG.map((n, i) => ({ n, v: val(pl.metric, p.a, p.b, i), pv: val(pl.metric, p.a - 12, p.b - 12, i) }));
+  rows.forEach(x => x.ch = x.pv ? x.v / x.pv - 1 : null);
+  const byG = pl.byGrowth && rows[0].pv != null;
+  rows.sort((x, y) => byG ? y.ch - x.ch : y.v - x.v);
+  const total = rows.reduce((s, x) => s + x.v, 0), additive = !/aov|conv/.test(pl.metric), fast = [...rows].sort((x, y) => (y.ch ?? -9) - (x.ch ?? -9))[0];
+  const lead = [...rows].sort((x, y) => y.v - x.v)[0];
+  const html = byG
+    ? `The <b>${fast.n}</b> grew fastest: ${M.label.toLowerCase()} of <b>${M.f(fast.v)}</b> in ${p.label}, <b>${V.signed(fast.ch)}</b> vs ${pp.label}. The slowest was the ${rows[rows.length - 1].n} (${V.signed(rows[rows.length - 1].ch)}).`
+    : `The <b>${lead.n}</b> ${additive ? "led" : "was highest"} with <b>${M.f(lead.v)}${M.unit || ""}</b>${additive ? ` (${Math.round(lead.v / total * 100)}% of the total)` : ""} in ${p.label}.${fast.ch != null ? ` The ${fast.n} grew fastest (${V.signed(fast.ch)} vs ${pp.label}).` : ""}`;
+  return { html, card: { html: `<div class="legend"><span>${M.label} by region · ${p.label}${rows[0].pv != null ? " · change vs " + pp.label : ""}</span></div>`, draw: box => drawRegions(box, M, rows, byG) },
+    how: how(M, p, null, rows[0].pv != null), sugs: ["Show it to me trended", "What's the YoY change?", `What about ${other(pl.metric)}?`, "Revenue in the West"] };
+}
+
+// ---------- inline charts (redrawn on resize and theme change) ----------
+function drawTrend(box, m, r, a, b, ha, hb) {
+  const M = MET[m], n = b - a + 1, cy = [], py = [];
+  for (let i = a; i <= b; i++) { cy.push(val(m, i, i, r)); py.push(val(m, i - 12, i - 12, r)); }
+  const { s, W, H } = V.svg(box, 190), ml = 46, mr = 10, mt = 8, mb = 22;
+  const hi = V.niceMax(Math.max(...cy, ...py.filter(v => v != null)) * 1.05), x = V.scale(0, Math.max(1, n - 1), ml, W - mr), y = V.scale(0, hi, H - mb, mt);
+  if (ha > a || hb < b) V.el("rect", { x: x(ha - a) - 7, y: mt, width: Math.max(14, x(hb - a) - x(ha - a) + 14), height: H - mb - mt, rx: 4, fill: "var(--s1)", opacity: .09 }, s);
+  V.ticks(0, hi, 4).forEach(t => { V.el("line", { x1: ml, x2: W - mr, y1: y(t), y2: y(t), stroke: t ? "var(--grid)" : "var(--axis)" }, s); V.el("text", { x: ml - 8, y: y(t) + 4, "text-anchor": "end" }, s).textContent = M.fs(t); });
+  const ev = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((W - ml - mr) / 46))));
+  cy.forEach((_, k) => { if (k % ev) return; const i = a + k; V.el("text", { x: x(k), y: H - 6, "text-anchor": "middle" }, s).textContent = MS[mOf(i)] + (mOf(i) === 0 || k === 0 ? " ’" + String(yOf(i)).slice(2) : ""); });
+  const path = arr => arr.map((v, k) => v == null ? "" : ((k && arr[k - 1] != null) ? "L" : "M") + x(k).toFixed(1) + "," + y(v).toFixed(1)).join("");
+  if (py.some(v => v != null)) V.el("path", { d: path(py), fill: "none", stroke: "var(--de-emph)", "stroke-width": 1.5, "stroke-dasharray": "4 3" }, s);
+  V.el("path", { d: path(cy), fill: "none", stroke: "var(--s1)", "stroke-width": 2, "stroke-linejoin": "round" }, s);
+  if (n <= 14) cy.forEach((v, k) => V.el("circle", { cx: x(k), cy: y(v), r: a + k >= ha && a + k <= hb ? 3.5 : 2.5, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 1.5 }, s));
+  const g = V.el("g", { style: "display:none" }, s), gl = V.el("line", { y1: mt, y2: H - mb, stroke: "var(--axis)" }, g);
+  const hit = V.el("rect", { x: ml, y: 0, width: W - ml - mr, height: H, fill: "transparent" }, s);
+  V.hover(hit, e => { const k = V.clamp(Math.round(x.inv(e.clientX - s.getBoundingClientRect().left)), 0, n - 1), c = cy[k], pv = py[k];
+    g.style.display = ""; gl.setAttribute("x1", x(k)); gl.setAttribute("x2", x(k));
+    return `<b>${mLab(a + k)}</b><br><span class="k" style="background:var(--s1)"></span>${M.f(c)}${pv != null ? `<br><span class="k" style="background:var(--de-emph)"></span>${mLab(a + k - 12)} ${M.f(pv)}<br>${V.signed(c / pv - 1)} year over year` : ""}`; });
+  hit.addEventListener("mouseleave", () => g.style.display = "none");
+}
+function drawYoy(box, m, r, p, pp) {
+  const M = MET[m], n = p.b - p.a + 1, grp = n > 1 && n <= 12, data = [];
+  if (grp) for (let i = p.a; i <= p.b; i++) data.push({ l: MS[mOf(i)], t: mLab(i), tp: mLab(i - 12), c: val(m, i, i, r), p: val(m, i - 12, i - 12, r) });
+  else data.push({ l: "", t: p.label, tp: pp.label, c: val(m, p.a, p.b, r), p: val(m, p.a - 12, p.b - 12, r) });
+  const { s, W, H } = V.svg(box, grp ? 170 : 150), ml = grp ? 46 : 12, mr = 10, mt = 18, mb = 22;
+  const hi = V.niceMax(Math.max(...data.flatMap(d => [d.c, d.p])) * 1.08), y = V.scale(0, hi, H - mb, mt);
+  const gw = (W - ml - mr) / data.length, bw = Math.max(3, Math.min(grp ? 18 : 64, gw * .36));
+  if (grp) V.ticks(0, hi, 3).forEach(t => { if (t) V.el("line", { x1: ml, x2: W - mr, y1: y(t), y2: y(t), stroke: "var(--grid)" }, s); V.el("text", { x: ml - 8, y: y(t) + 4, "text-anchor": "end" }, s).textContent = M.fs(t); });
+  data.forEach((d, k) => { const cx = ml + gw * (k + .5);
+    [[d.p, "var(--de-emph)", cx - bw - 1.5, d.tp], [d.c, "var(--s1)", cx + 1.5, d.t]].forEach(([v, col, x0, lab]) => {
+      V.el("path", { d: V.bar(x0, y(v), bw, Math.max(.5, y(0) - y(v))), fill: col }, s);
+      if (!grp) { V.el("text", { x: x0 + bw / 2, y: y(v) - 6, "text-anchor": "middle", class: "ink", style: "font-weight:600" }, s).textContent = M.f(v);
+        V.el("text", { x: x0 + bw / 2, y: H - 6, "text-anchor": "middle" }, s).textContent = lab; } });
+    if (grp && (gw > 26 || k % 2 === 0)) V.el("text", { x: cx, y: H - 6, "text-anchor": "middle" }, s).textContent = d.l;
+    const hit = V.el("rect", { x: cx - gw / 2, y: mt, width: gw, height: H - mt, fill: "transparent" }, s);
+    V.hover(hit, () => `<b>${d.t}</b> ${M.f(d.c)}<br>${d.tp} ${M.f(d.p)}<br>${M.pts ? V.signed(d.c - d.p, x => (x * 100).toFixed(2) + " pts") : V.signed(d.c / d.p - 1)}`); });
+  V.el("line", { x1: ml, x2: W - mr, y1: y(0), y2: y(0), stroke: "var(--axis)" }, s);
+}
+function drawRegions(box, M, rows, byG) {
+  const rh = 30, { s, W } = V.svg(box, rows.length * rh + 4), lw = 84, rw = W < 380 ? 92 : 128;
+  const hi = Math.max(...rows.map(d => d.v)), x = V.scale(0, hi, lw, Math.max(lw + 40, W - rw));
+  rows.forEach((d, k) => { const yy = k * rh + 4;
+    V.el("text", { x: 0, y: yy + 16, class: "ink2" }, s).textContent = d.n;
+    V.el("path", { d: V.bar(lw, yy + 5, Math.max(1, x(d.v) - lw), 16, "right"), fill: "var(--s1)", opacity: k === 0 ? 1 : .5 }, s);
+    V.el("text", { x: x(d.v) + 6, y: yy + 17, class: "ink", style: "font-weight:600" }, s).textContent = M.fs(d.v);
+    if (d.ch != null) V.el("text", { x: W - 2, y: yy + 17, "text-anchor": "end", style: `fill:var(--${d.ch >= 0 ? "up" : "down"});font-weight:${byG && k === 0 ? 700 : 500}` }, s).textContent = (d.ch >= 0 ? "▲ " : "▼ ") + V.pct(Math.abs(d.ch));
+    const hit = V.el("rect", { x: 0, y: yy, width: W, height: rh, fill: "transparent" }, s);
+    V.hover(hit, () => `<b>${d.n}</b><br>${M.f(d.v)}${d.pv != null ? `<br>Year earlier ${M.f(d.pv)}<br>${V.signed(d.ch)}` : ""}`); });
+}
+
+// ---------- message log ----------
+const ICON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
+const scrollEnd = () => { log.scrollTop = log.scrollHeight; };
+function addUser(t) { const d = document.createElement("div"); d.className = "msg u"; d.textContent = t; log.appendChild(d); hist.push({ role: "user", text: t }); }
+function addBot(ans) {
+  const d = document.createElement("div"); d.className = "msg a";
+  d.innerHTML = `<div class="av" aria-hidden="true">${ICON}</div><div><div class="tx">${ans.html}</div></div>`;
+  const body = d.lastElementChild;
+  if (ans.card) { const c = document.createElement("div"); c.className = "card"; c.innerHTML = ans.card.html || ""; body.appendChild(c);
+    if (ans.card.draw) { const box = document.createElement("div"); c.appendChild(box); const draw = () => ans.card.draw(box); cards.push(draw); log.appendChild(d); draw(); } }
+  if (ans.how) body.insertAdjacentHTML("beforeend", ans.how);
+  log.appendChild(d); hist.push({ role: "assistant", text: body.querySelector(".tx").textContent });
+  setSugs(ans.sugs || START); showCtx();
+}
+function setSugs(list) { sugBox.innerHTML = list.map(t => `<button type="button" class="sug">${V.esc(t)}</button>`).join(""); }
+function showCtx() { ctxBox.innerHTML = ctx.metric ? `Talking about <b>${MET[ctx.metric].label}</b> · ${ctx.period.label} · ${ctx.region == null ? "all regions" : REG[ctx.region]}` : "Ask a question, or start with a suggestion"; }
+async function ask(text, instant) {
+  text = String(text || "").trim(); if (!text || busy) return; busy = true; input.value = "";
+  addUser(text); scrollEnd();
+  let typing = null; if (!instant) { typing = document.createElement("div"); typing.className = "msg a"; typing.innerHTML = `<div class="av" aria-hidden="true">${ICON}</div><div class="dots" aria-label="Thinking"><i></i><i></i><i></i></div>`; log.appendChild(typing); scrollEnd(); }
+  const pl = instant ? localPlan(text) : await plan(text);
+  if (!instant) await new Promise(r => setTimeout(r, 420));
+  if (typing) typing.remove();
+  addBot(answer(pl)); busy = false; scrollEnd();
+}
+function reset() { log.innerHTML = ""; cards.length = 0; hist = []; ctx = { metric: null, period: null, region: null, intent: null };
+  addBot({ html: "Hi! Ask me about this dashboard's sales data: revenue, orders, average order value, conversion, new customers or sessions, for any period from Jan 2024 to Oct 2026.", sugs: START }); }
+
+document.getElementById("ask").onsubmit = e => { e.preventDefault(); ask(input.value); };
+sugBox.onclick = e => { const b = e.target.closest(".sug"); if (b) ask(b.textContent); };
+input.onkeydown = e => { if (e.key === "ArrowUp" && !input.value) { const last = [...hist].reverse().find(h => h.role === "user"); if (last) { e.preventDefault(); input.value = last.text; } } };
+document.getElementById("clear").onclick = () => { reset(); input.focus(); };
+window.dcChat = { ask, query: (metric, from, to, region) => val(metric, from, to, region), plan: localPlan };
+
+// sample conversation: the three questions this component is built around
+reset();
+["What was revenue in Q3?", "Show it to me trended", "What's the YoY change?"].forEach(t => { busy = false; ask(t, true); });
+
+function render() {
+  log.style.height = V.fill(440) + "px";
+  const send = document.getElementById("send"); try { send.style.color = V.ink(V.css("--s1")); } catch { send.style.color = "#fff"; }
+  cards.forEach(f => f()); scrollEnd();
+}
+V.mount(render);
+</script>
+</div>
+</body>
+</html>
