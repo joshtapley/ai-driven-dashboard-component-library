@@ -2,7 +2,7 @@
 
 **[Open the live library →](https://joshtapley.github.io/ai-driven-dashboard-component-library/)**
 
-A reference library of 68 dashboard components for people building dashboards with Claude, Cursor or any AI coding assistant. Every component is one self-contained HTML file with no libraries. Each comes with a spec and a tested, ready-to-paste build prompt, and all of them share one colour-blind-safe token set in light and dark.
+A reference library of 69 dashboard components for people building dashboards with Claude, Cursor or any AI coding assistant. Every component is one self-contained HTML file with no libraries. Each comes with a spec and a tested, ready-to-paste build prompt, and all of them share one colour-blind-safe token set in light and dark.
 
 ## What's inside
 
@@ -11,7 +11,7 @@ A reference library of 68 dashboard components for people building dashboards wi
 | Basic charts | line, curved line, area, stacked area, column, horizontal bar, grouped bar, stacked bar, donut |
 | Maps | square, circle, hex and sparkline tile US maps, globe with flight paths |
 | Gauges | speedometer gauge, ring meters, activity rings, bullet charts |
-| KPI cards | sparkline, target and pace, YoY columns, breakdown, hero with range, status tiles, tabs driving a chart, progress donuts |
+| KPI cards | sparkline, target and pace, YoY columns, breakdown, hero with range, status tiles, tabs driving a chart, progress donuts, aging buckets |
 | Tables | interactive data table, highlight table, leaderboard with sparklines, expandable pivot, scorecard vs target |
 | Charts | line vs last year and target, ranked bars, waterfall, funnel, calendar and day × hour heatmaps, slopegraph, dumbbell, waffle, streamgraph, bump, beeswarm, radar, polar area, ternary plot, Gantt and more |
 | Flows & networks | tapered funnel, Sankey, force-directed network, chord diagram, radial Sankey, tournament bracket |
