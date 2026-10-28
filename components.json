@@ -3388,7 +3388,7 @@
    "filter",
    "search"
   ],
-  "summary": "A filled (choropleth) map of every country on an Equal Earth projection (Antarctica left out); microstates too small to draw appear as dots. Each country is shaded by its value on a sequential scale from zero (or a diverging scale for change), with a gradient legend, an optional value-label layer and click-to-filter.",
+  "summary": "A filled (choropleth) map of every country on an Equal Earth projection (Antarctica left out), with a switch to Mercator; microstates too small to draw appear as dots. Each country is shaded by its value on a sequential scale from zero (or a diverging scale for change), with a gradient legend, an optional value-label layer and click-to-filter.",
   "use_when": [
    "The question is geographic: which countries are high or low, and where they cluster",
    "Values are rates or shares (normalised), not raw totals",
@@ -3430,7 +3430,7 @@
    "--surface-2",
    "--ink"
   ],
-  "prompt": "Build a country choropleth map in one self-contained HTML file with inline SVG (no libraries, no network): every country on an Equal Earth projection (Antarctica left out); microstates too small to draw appear as dots. Embed pre-projected, simplified boundary paths with a label point per shape. Shade each country on a sequential colour ramp anchored at 0 (a 'YoY change' measure uses a diverging ramp centred on 0); shapes without data are neutral grey. Thin card-coloured borders between shapes. A gradient legend with the scale ends and a No data swatch. A 'Show labels' Off/On switch adds value labels (black or white ink by contrast, with a halo; skip tiny shapes). Hover shows a tooltip with value and rank; click or Enter/Space filters to that country (others fade to 30%, subtitle reads 'Filtered to X · Clear', Esc clears) and fires a dc-filter CustomEvent plus a parent postMessage. Every country is a focusable button with an aria-label; include a visually hidden ranked list. Credit the boundary source in the footer. CSS variables for every colour, light and dark themes. Seeded synthetic data.",
+  "prompt": "Build a country choropleth map in one self-contained HTML file with inline SVG (no libraries, no network): every country on an Equal Earth projection (Antarctica left out), with a switch to Mercator; microstates too small to draw appear as dots. Embed pre-projected, simplified boundary paths with a label point per shape. Shade each country on a sequential colour ramp anchored at 0 (a 'YoY change' measure uses a diverging ramp centred on 0); shapes without data are neutral grey. Thin card-coloured borders between shapes. A gradient legend with the scale ends and a No data swatch. A 'Show labels' Off/On switch adds value labels (black or white ink by contrast, with a halo; skip tiny shapes). Hover shows a tooltip with value and rank; click or Enter/Space filters to that country (others fade to 30%, subtitle reads 'Filtered to X · Clear', Esc clears) and fires a dc-filter CustomEvent plus a parent postMessage. Every country is a focusable button with an aria-label; include a visually hidden ranked list. Credit the boundary source in the footer. CSS variables for every colour, light and dark themes. Seeded synthetic data.",
   "maxw": 1000,
   "num": "67",
   "slug": "choropleth-world",

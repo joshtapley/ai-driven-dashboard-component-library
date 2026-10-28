@@ -408,6 +408,14 @@ let met = "share", labels = false, sel = null, hot = null;
 const box = document.getElementById("map"), sub = document.getElementById("sub");
 V.seg(document.getElementById("met"), [["share", "Share"], ["yoy", "YoY change"]], met, v => { met = v; render(); });
 V.seg(document.getElementById("lab"), [["0", "Off"], ["1", "On"]], "0", v => { labels = v === "1"; render(); });
+// projection switch (maps that ship an alternative, e.g. Mercator): swap every shape's path, label point and area, then redraw
+const projBox = document.getElementById("proj");
+if (projBox && GEO.alt) {
+  const base = { w: GEO.w, h: GEO.h, s: Object.fromEntries(GEO.shapes.map(g => [g.id, [g.d, g.lx, g.ly, g.a]])) }, views = { base, ...GEO.alt.views };
+  V.seg(projBox, [["base", GEO.alt.label], ...Object.entries(GEO.alt.views).map(([k, v]) => [k, v.label])], "base", v => {
+    const src = views[v]; GEO.w = src.w; GEO.h = src.h;
+    GEO.shapes.forEach(g => { [g.d, g.lx, g.ly, g.a] = src.s[g.id] || ["", 0, 0, 0]; }); render(); });
+}
 
 // filter: click a shape to select it (others fade); the dashboard hears about it through an event and postMessage
 function select(id) {
