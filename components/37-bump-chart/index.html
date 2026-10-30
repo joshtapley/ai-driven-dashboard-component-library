@@ -102,7 +102,17 @@ body.tile .stage{max-width:none}
 html:has(body.tile),body.tile,body.tile .stage{height:100%}
 body.tile .stage>.viz{min-height:100%}
 .stage{max-width:1000px;margin:0 auto}
-.viz{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.viz{background:var(--surface);border:1px solid var(--card-line,var(--border));border-radius:var(--radius);padding:18px 20px;box-shadow:var(--card-edge),var(--card-shadow)}
+/* card shadows: ?shadow=flat|soft|lifted|float|edge or postMessage({shadow}); flat is the default. Dark mode deepens the shadow and adds a
+   faint top highlight, because a dark shadow on a dark page barely shows. In a dashboard the page draws the outer shadow around each tile. */
+:root{--card-shadow:0 0 0 0 transparent;--card-edge:0 0 0 0 transparent;--sh-c:16,24,40;--sh-a:1}
+:root[data-theme="dark"]{--sh-c:0,0,0;--sh-a:2.6}
+:root[data-shadow="soft"]{--card-shadow:0 1px 2px rgba(var(--sh-c),calc(.06*var(--sh-a))),0 1px 3px rgba(var(--sh-c),calc(.1*var(--sh-a)))}
+:root[data-shadow="lifted"],:root[data-shadow="edge"]{--card-shadow:0 2px 4px -2px rgba(var(--sh-c),calc(.06*var(--sh-a))),0 8px 18px -6px rgba(var(--sh-c),calc(.14*var(--sh-a)))}
+:root[data-shadow="float"]{--card-shadow:0 4px 8px -4px rgba(var(--sh-c),calc(.08*var(--sh-a))),0 18px 40px -12px rgba(var(--sh-c),calc(.24*var(--sh-a)));--card-line:transparent}
+:root[data-shadow="edge"]{--card-edge:inset 5px 0 0 var(--s2)}
+:root[data-theme="dark"][data-shadow]:not([data-shadow="flat"]){--card-line:color-mix(in srgb,var(--border) 70%,#fff 6%)}
+body.tile .viz{box-shadow:var(--card-edge)}
 .viz-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
 .viz-title{font-size:15px;font-weight:600;margin:0;font-family:var(--font-display,var(--font))}
 .viz-sub{font-size:13px;color:var(--ink-2);margin:2px 0 0}
@@ -201,9 +211,13 @@ const V = (() => {
     if (b.fonts && !document.getElementById("bf-" + id)) { const l = document.createElement("link"); l.id = "bf-" + id; l.rel = "stylesheet";
       l.href = "https://fonts.googleapis.com/css2?" + b.fonts + "&display=swap"; l.onload = () => document.fonts.ready.then(() => dispatchEvent(new Event("v-theme"))); document.head.appendChild(l); } };
   const q = new URLSearchParams(location.search);
+  // card shadow presets (see the CSS above)
+  const SHADOWS = [["flat", "Flat"], ["soft", "Soft"], ["lifted", "Lifted"], ["float", "Floating"], ["edge", "Accent edge"]];
+  const setShadow = v => { if (SHADOWS.some(x => x[0] === v) && v !== "flat") document.documentElement.dataset.shadow = v; else delete document.documentElement.dataset.shadow; };
+  setShadow(q.get("shadow"));
   setBrand(q.get("brand")); { const id = document.documentElement.dataset.brand; if (!q.get("theme") && BRANDS[id]) document.documentElement.dataset.theme = BRANDS[id].mode; }
   if (q.get("theme")) document.documentElement.dataset.theme = q.get("theme");
-  addEventListener("message", e => { if (!e.data) return; if ("brand" in e.data) setBrand(e.data.brand); if ("theme" in e.data) setTheme(e.data.theme); else if ("brand" in e.data) dispatchEvent(new Event("v-theme")); });
+  addEventListener("message", e => { if (!e.data) return; if ("brand" in e.data) setBrand(e.data.brand); if ("shadow" in e.data) setShadow(e.data.shadow); if ("theme" in e.data) setTheme(e.data.theme); else if ("brand" in e.data) dispatchEvent(new Event("v-theme")); });
   addEventListener("DOMContentLoaded", () => { if (q.get("embed")) document.body.classList.add("embed");
     if (q.get("tile") && parent !== window) { document.body.classList.add("tile"); let h = 0;
       // report the natural height (the card stretches to fill its slot, so measure its content, not the card)
@@ -240,7 +254,10 @@ const V = (() => {
       if (b && b.mode !== getComputedStyle(document.documentElement).colorScheme) setTheme(b.mode); else dispatchEvent(new Event("v-theme")); };
     const b = document.createElement("button"); b.className = "btn"; b.type = "button"; b.textContent = "◐ Light / dark"; b.title = "Toggle light / dark";
     b.onclick = () => setTheme(getComputedStyle(document.documentElement).colorScheme === "dark" ? "light" : "dark");
-    bar.append(sel, b); document.body.appendChild(bar); });
+    const sh = document.createElement("select"); sh.setAttribute("aria-label", "Card shadow"); sh.title = "Card shadow";
+    sh.innerHTML = SHADOWS.map(([v, l]) => `<option value="${v}">${l === "Flat" ? "Shadow: flat" : l}</option>`).join(""); sh.value = document.documentElement.dataset.shadow || "flat";
+    sh.onchange = () => { setShadow(sh.value); try { const u = new URL(location.href); sh.value === "flat" ? u.searchParams.delete("shadow") : u.searchParams.set("shadow", sh.value); history.replaceState(null, "", u); } catch {} };
+    bar.append(...(viz ? [sel, sh, b] : [sel, b])); document.body.appendChild(bar); });   // dashboards pick the shadow from their menu
   // ---------- save(filename, blob): the claude.ai viewer grants downloads to the top page, so a framed page hands the file up ----------
   const save = async (filename, blob) => {
     const dl = window.claude ? await window.claude.use("downloads") : null;
@@ -346,7 +363,7 @@ const V = (() => {
     root.dataset.theme = "light"; dispatchEvent(new Event("v-theme")); const undo = window.XL_PREP ? window.XL_PREP() : null;
     try { blob = xlsx(viz); } finally { if (undo) undo(); if (th) root.dataset.theme = th; else delete root.dataset.theme; dispatchEvent(new Event("v-theme")); }
     if (blob) await save((viz.querySelector(".viz-title")?.textContent.trim() || "table").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".xlsx", blob); };
-  return { save, xlsx, exportExcel, el, svg, fill, rng, scale, ticks, niceMax, short, comma, pct, money, signed, sum, mean, clamp, css, mix, ramp, diverge, ink, tip, untip, hover, esc, seg, bar, MON, DOW, mount, setTheme };
+  return { SHADOWS, setShadow, save, xlsx, exportExcel, el, svg, fill, rng, scale, ticks, niceMax, short, comma, pct, money, signed, sum, mean, clamp, css, mix, ramp, diverge, ink, tip, untip, hover, esc, seg, bar, MON, DOW, mount, setTheme };
 })();
 </script>
 <script data-goatcounter="https://joshtapley.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>

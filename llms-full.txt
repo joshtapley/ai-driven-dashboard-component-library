@@ -3537,3 +3537,164 @@ Live demo: [`index.html`](index.html) — one self-contained file, no dependenci
 Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
 
 > Build an accounts-receivable aging KPI card in one self-contained HTML file. Header: title 'Receivables aging', a subline with the open total and invoice count, and the DSO right-aligned (28px bold) with its change vs last month (fewer days is good, coloured accordingly). Below, one 44px-tall 100% bar split into five ordered buckets (Current, 1–30, 31–60, 61–90, 90+) coloured green → lime → amber → orange → red from status tokens, 3px gaps, 8px rounding on every segment, the share printed inside segments of at least 12%. Under it a five-column legend: swatch, monospaced band label, total (20px bold). Then an optional 'Top open balances' list (toggle Show / Hide in the header): customer name, open amount, a 12px 100% bar of that customer's aging mix, and the oldest bucket it carries in that bucket's colour. Hovering or focusing a bucket highlights it everywhere and fades the rest to 30%; tooltips give amount and share. CSS variables for every colour, light and dark themes.
+
+
+---
+
+# Lollipop chart
+
+**Category:** Basic charts · **Tags:** lollipop, dot plot, ranking, deviation, bar alternative
+
+A bar chart's lighter cousin: a thin stem and a prominent dot per category, sorted by value. Switch between columns and rows, stem from zero or from the average (a diverging view that colours each side), and click a lollipop to highlight it while everything else steps back.
+
+Live demo: [`index.html`](index.html) — one self-contained file, no dependencies. Light and dark themes; add `?theme=dark` or `?embed=1` to the URL.
+
+## Use it when
+- Ranking 6–25 categories where many bars would look heavy
+- The end value matters more than the filled area
+- Showing how each category sits above or below an average or target
+
+## Avoid it when
+- Values that are close together (the dots overlap; use bars or a dot plot with a zoomed axis)
+- Part-to-whole comparisons (use stacked bars or a waffle)
+- Negative and positive values on a zero baseline with no reference (use diverging bars)
+
+## Anatomy
+- Stems: 2px lines in the series colour from the baseline to the value; dots: 12px circles with a 2px surface ring so they read over gridlines
+- Baseline: zero (axis line) or the average (a dashed reference line labelled with its value); in average mode stems above use --s1 and below use --s2, named in a legend
+- Sorted by value by default, with an A–Z option; long labels switch the chart to rows
+- Value labels at the dot end; gridlines in --grid along the value axis only
+- Highlight: the clicked lollipop keeps its colour and gains a label, the rest turn --de-emph
+- On load the stems grow from the baseline once (skipped for reduced motion)
+
+## Data shape
+```
+[{ port: "Singapore", days: 3.1 }, …] plus the optional reference value (average or target)
+```
+
+## Interactions
+- Orientation switch: Columns / Rows
+- Baseline switch: Zero / Average
+- Sort switch: By value / A–Z
+- Click a lollipop (or press Enter on it) to highlight it; click again to clear
+- Hover for the value and its difference from the average
+
+## Accessibility
+- The svg has an aria-label naming the top and bottom categories
+- Each lollipop is a focusable group with its own aria-label
+- Above / below average is shown by position and the legend, not colour alone
+- Growth animation respects prefers-reduced-motion
+
+## Design tokens used
+`--s1`, `--s2`, `--de-emph`, `--grid`, `--axis`, `--ink`, `--ink-2`, `--muted`, `--surface` — defined once on `:root` in the demo, with dark-mode values.
+
+## Prompt
+Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
+
+> Build a lollipop chart in one self-contained HTML file with inline SVG and no libraries. Twelve container ports with an average dwell time in days, sorted by value. Each category is a 2px stem in the accent colour from the baseline to the value, ending in a 12px dot with a 2px ring in the card surface colour, with the value labelled past the dot; gridlines only along the value axis. Add three segmented controls: Columns / Rows (rows put long labels on the left), Zero / Average baseline (average mode draws a dashed reference line with its value and stems out from it, accent colour above and a second colour below, with a legend), and By value / A–Z sort. Clicking a lollipop highlights it (others turn a muted grey) and clicking again clears; hovering shows the value and the difference from the average. Stems grow from the baseline once on load, skipped under prefers-reduced-motion. Focusable lollipops with aria-labels, CSS variables for every colour, light and dark themes.
+
+
+---
+
+# KPI lollipop cards
+
+**Category:** KPI cards · **Tags:** lollipop, kpi card, journey, stage, voyage, progress
+
+KPI cards for a journey with fixed stops (a voyage, a route, a pipeline): a big value and a delta pill on the left, and a mini lollipop chart of every stop on the right, with completed stops solid, the focus stop in the accent colour with a ring, and planned stops dashed. Click a stop to move the focus on every card at once.
+
+Live demo: [`index.html`](index.html) — one self-contained file, no dependencies. Light and dark themes; add `?theme=dark` or `?embed=1` to the URL.
+
+## Use it when
+- A metric that changes stop by stop along a known route (ports, warehouses, project phases)
+- Readers need the current value and where it sits in the whole journey
+- Two to four related metrics that should move together when the focus changes
+
+## Avoid it when
+- Continuous time series with many points (use the sparkline KPI card)
+- More than about 10 stops (the stems crowd; use a small line chart)
+- Metrics with no natural sequence
+
+## Anatomy
+- Card: uppercase label, a large value with an optional small unit, and a tinted delta pill (▲/▼ and percent) with 'vs previous voyage' beside it
+- Optional 5px accent edge on the card's left side
+- Mini lollipop: one stem and dot per stop, letters underneath; completed stops in --ink, the focus stop in --s2 with a ring, planned stops as dashed --de-emph stems with grey dots
+- Each card scales its own lollipops from zero to its maximum
+- Focus is shared: choosing a stop on one card updates every card
+
+## Data shape
+```
+stops: ["Shanghai", "Hong Kong", …]; metrics: [{ label: "Containers on board", values: [1671, 1798, …], prev: [1640, …] }, …]; focus index
+```
+
+## Interactions
+- Click a lollipop or its letter (or use the arrow keys on a focused card) to change the focus stop
+- Planned stops switch: Dashed / Hidden
+- Accent edge switch: On / Off
+- Hover a lollipop for the stop, value and whether it is completed, current or planned
+
+## Accessibility
+- Every card has an aria-label with the value, delta and focus stop
+- Lollipops are buttons named with the stop and value; arrow keys move the focus stop
+- Completed, current and planned differ by line style and ring as well as colour
+
+## Design tokens used
+`--s2`, `--ink`, `--ink-2`, `--muted`, `--de-emph`, `--surface`, `--grid`, `--up`, `--down`, `--radius` — defined once on `:root` in the demo, with dark-mode values.
+
+## Prompt
+Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
+
+> Build a row of three KPI lollipop cards in one self-contained HTML file with inline SVG and no libraries, for a container ship visiting seven ports (Shanghai, Hong Kong, Singapore, Colombo, Suez, Barcelona, Rotterdam). Metrics: containers on board, containers on/off and total weight in kg. Each card has an uppercase label, a large value (a small 'KG' unit for weight), a tinted pill with the change vs the previous voyage (▲/▼ and percent) and the words 'vs previous voyage', and on the right a mini lollipop chart with one stem and dot per port and the port's first letter underneath. Ports before the focus port are solid ink, the focus port uses the accent colour with an outer ring, and later ports are planned: dashed light-grey stems with grey dots. Each card scales from zero to its own maximum. Clicking any lollipop or letter moves the focus port on all cards; arrow keys do the same on a focused card. Add switches for planned ports (Dashed / Hidden) and a 5px accent edge on the cards (On / Off). Hover shows the port, value and status. aria-labels on every card, CSS variables for every colour, light and dark themes.
+
+
+---
+
+# Progress timeline
+
+**Category:** UI patterns · **Tags:** timeline, stepper, journey, progress, animation, voyage
+
+A journey timeline of fixed stops with completed stops filled, the current stop ringed in the accent colour and the route behind it drawn in the accent, plus per-stop figures underneath. Click a stop to move the focus. Animation options: draw the route on load, pulse the current stop's ring (three times or continuously) and refill the route on a repeat timer.
+
+Live demo: [`index.html`](index.html) — one self-contained file, no dependencies. Light and dark themes; add `?theme=dark` or `?embed=1` to the URL.
+
+## Use it when
+- Showing where something is along a known sequence of stops: a voyage, a delivery route, an order or project pipeline
+- Each stop has one or two figures worth reading in place
+- The focus stop drives other views on the page
+
+## Avoid it when
+- Dates matter more than order (use a Gantt or a dated timeline axis)
+- More than about 10 stops in one row (wrap to the vertical layout or group stops)
+- Branching or parallel paths (use a flow diagram)
+
+## Anatomy
+- Track: a 3px line through every stop; the part up to the current stop is drawn in --s2, the rest in --de-emph
+- Stops: completed are filled --ink dots, the current stop is an --s2 dot with an outer ring, upcoming stops are --de-emph
+- Under each stop: its name in bold, then ▲ Loaded and ▼ Offloaded figures with green and red arrows
+- Narrow containers switch to a vertical layout with figures beside each stop
+- Animation: route draws from the first stop to the current one, stops fill as the line reaches them; the ring pulses after the draw finishes
+
+## Data shape
+```
+[{ port: "Shanghai", loaded: 1671, offloaded: 0 }, …] plus the current stop index
+```
+
+## Interactions
+- Click a stop (or use the arrow keys on the timeline) to change the current stop; the route animates to it
+- Animate on load: On / Off
+- Pulse current stop: Off / 3 times / Continuous
+- Refill the route: Off / every 5 s / 10 s / 30 s
+- Hover a stop for its status and figures
+
+## Accessibility
+- The timeline is a focusable list; each stop is a button with an aria-label giving its status and figures
+- The current stop is marked aria-current="step" and named in the subtitle
+- Status is shown by fill, ring and position as well as colour
+- All animation is off under prefers-reduced-motion, and the continuous pulse only runs when chosen
+
+## Design tokens used
+`--s2`, `--ink`, `--ink-2`, `--muted`, `--de-emph`, `--surface`, `--up`, `--down` — defined once on `:root` in the demo, with dark-mode values.
+
+## Prompt
+Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
+
+> Build a progress timeline in one self-contained HTML file with inline SVG and no libraries, for a container ship's voyage through seven ports (Shanghai, Hong Kong, Singapore, Colombo, Suez, Barcelona, Rotterdam) with containers loaded and offloaded at each. A 3px track joins the stops: the part up to the current port is in the accent colour and the rest is grey. Completed ports are filled ink dots, the current port is an accent dot with an outer ring, upcoming ports are grey. Under each port show its name in bold, then '▲ Loaded: n' and '▼ Offloaded: n' with green and red arrows. Clicking a port (or arrow keys) makes it current and animates the accent line to it. Add three option groups: Animate on load (On / Off: the line draws from the first port and each dot fills as the line reaches it), Pulse current port (Off / 3 times / Continuous: the outer ring gently scales and fades, starting after the draw), and Refill (Off / every 5 s / 10 s / 30 s: clear and redraw the route on a timer). Switch to a vertical layout under 620px wide. Disable all animation under prefers-reduced-motion. Focusable stops with aria-labels and aria-current="step", CSS variables for every colour, light and dark themes.

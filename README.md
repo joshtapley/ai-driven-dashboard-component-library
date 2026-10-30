@@ -2,7 +2,7 @@
 
 **[Open the live library →](https://joshtapley.github.io/ai-driven-dashboard-component-library/)**
 
-A reference library of 69 dashboard components for people building dashboards with Claude, Cursor or any AI coding assistant. Every component is one self-contained HTML file with no libraries. Each comes with a spec and a tested, ready-to-paste build prompt, and all of them share one colour-blind-safe token set in light and dark.
+A reference library of 72 dashboard components for people building dashboards with Claude, Cursor or any AI coding assistant. Every component is one self-contained HTML file with no libraries. Each comes with a spec and a tested, ready-to-paste build prompt, and all of them share one colour-blind-safe token set in light and dark.
 
 ## What's inside
 

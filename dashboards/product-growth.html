@@ -102,7 +102,17 @@ body.tile .stage{max-width:none}
 html:has(body.tile),body.tile,body.tile .stage{height:100%}
 body.tile .stage>.viz{min-height:100%}
 .stage{max-width:1480px;margin:0 auto}
-.viz{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.viz{background:var(--surface);border:1px solid var(--card-line,var(--border));border-radius:var(--radius);padding:18px 20px;box-shadow:var(--card-edge),var(--card-shadow)}
+/* card shadows: ?shadow=flat|soft|lifted|float|edge or postMessage({shadow}); flat is the default. Dark mode deepens the shadow and adds a
+   faint top highlight, because a dark shadow on a dark page barely shows. In a dashboard the page draws the outer shadow around each tile. */
+:root{--card-shadow:0 0 0 0 transparent;--card-edge:0 0 0 0 transparent;--sh-c:16,24,40;--sh-a:1}
+:root[data-theme="dark"]{--sh-c:0,0,0;--sh-a:2.6}
+:root[data-shadow="soft"]{--card-shadow:0 1px 2px rgba(var(--sh-c),calc(.06*var(--sh-a))),0 1px 3px rgba(var(--sh-c),calc(.1*var(--sh-a)))}
+:root[data-shadow="lifted"],:root[data-shadow="edge"]{--card-shadow:0 2px 4px -2px rgba(var(--sh-c),calc(.06*var(--sh-a))),0 8px 18px -6px rgba(var(--sh-c),calc(.14*var(--sh-a)))}
+:root[data-shadow="float"]{--card-shadow:0 4px 8px -4px rgba(var(--sh-c),calc(.08*var(--sh-a))),0 18px 40px -12px rgba(var(--sh-c),calc(.24*var(--sh-a)));--card-line:transparent}
+:root[data-shadow="edge"]{--card-edge:inset 5px 0 0 var(--s2)}
+:root[data-theme="dark"][data-shadow]:not([data-shadow="flat"]){--card-line:color-mix(in srgb,var(--border) 70%,#fff 6%)}
+body.tile .viz{box-shadow:var(--card-edge)}
 .viz-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
 .viz-title{font-size:15px;font-weight:600;margin:0;font-family:var(--font-display,var(--font))}
 .viz-sub{font-size:13px;color:var(--ink-2);margin:2px 0 0}
@@ -201,9 +211,13 @@ const V = (() => {
     if (b.fonts && !document.getElementById("bf-" + id)) { const l = document.createElement("link"); l.id = "bf-" + id; l.rel = "stylesheet";
       l.href = "https://fonts.googleapis.com/css2?" + b.fonts + "&display=swap"; l.onload = () => document.fonts.ready.then(() => dispatchEvent(new Event("v-theme"))); document.head.appendChild(l); } };
   const q = new URLSearchParams(location.search);
+  // card shadow presets (see the CSS above)
+  const SHADOWS = [["flat", "Flat"], ["soft", "Soft"], ["lifted", "Lifted"], ["float", "Floating"], ["edge", "Accent edge"]];
+  const setShadow = v => { if (SHADOWS.some(x => x[0] === v) && v !== "flat") document.documentElement.dataset.shadow = v; else delete document.documentElement.dataset.shadow; };
+  setShadow(q.get("shadow"));
   setBrand(q.get("brand")); { const id = document.documentElement.dataset.brand; if (!q.get("theme") && BRANDS[id]) document.documentElement.dataset.theme = BRANDS[id].mode; }
   if (q.get("theme")) document.documentElement.dataset.theme = q.get("theme");
-  addEventListener("message", e => { if (!e.data) return; if ("brand" in e.data) setBrand(e.data.brand); if ("theme" in e.data) setTheme(e.data.theme); else if ("brand" in e.data) dispatchEvent(new Event("v-theme")); });
+  addEventListener("message", e => { if (!e.data) return; if ("brand" in e.data) setBrand(e.data.brand); if ("shadow" in e.data) setShadow(e.data.shadow); if ("theme" in e.data) setTheme(e.data.theme); else if ("brand" in e.data) dispatchEvent(new Event("v-theme")); });
   addEventListener("DOMContentLoaded", () => { if (q.get("embed")) document.body.classList.add("embed");
     if (q.get("tile") && parent !== window) { document.body.classList.add("tile"); let h = 0;
       // report the natural height (the card stretches to fill its slot, so measure its content, not the card)
@@ -240,7 +254,10 @@ const V = (() => {
       if (b && b.mode !== getComputedStyle(document.documentElement).colorScheme) setTheme(b.mode); else dispatchEvent(new Event("v-theme")); };
     const b = document.createElement("button"); b.className = "btn"; b.type = "button"; b.textContent = "◐ Light / dark"; b.title = "Toggle light / dark";
     b.onclick = () => setTheme(getComputedStyle(document.documentElement).colorScheme === "dark" ? "light" : "dark");
-    bar.append(sel, b); document.body.appendChild(bar); });
+    const sh = document.createElement("select"); sh.setAttribute("aria-label", "Card shadow"); sh.title = "Card shadow";
+    sh.innerHTML = SHADOWS.map(([v, l]) => `<option value="${v}">${l === "Flat" ? "Shadow: flat" : l}</option>`).join(""); sh.value = document.documentElement.dataset.shadow || "flat";
+    sh.onchange = () => { setShadow(sh.value); try { const u = new URL(location.href); sh.value === "flat" ? u.searchParams.delete("shadow") : u.searchParams.set("shadow", sh.value); history.replaceState(null, "", u); } catch {} };
+    bar.append(...(viz ? [sel, sh, b] : [sel, b])); document.body.appendChild(bar); });   // dashboards pick the shadow from their menu
   // ---------- save(filename, blob): the claude.ai viewer grants downloads to the top page, so a framed page hands the file up ----------
   const save = async (filename, blob) => {
     const dl = window.claude ? await window.claude.use("downloads") : null;
@@ -346,7 +363,7 @@ const V = (() => {
     root.dataset.theme = "light"; dispatchEvent(new Event("v-theme")); const undo = window.XL_PREP ? window.XL_PREP() : null;
     try { blob = xlsx(viz); } finally { if (undo) undo(); if (th) root.dataset.theme = th; else delete root.dataset.theme; dispatchEvent(new Event("v-theme")); }
     if (blob) await save((viz.querySelector(".viz-title")?.textContent.trim() || "table").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".xlsx", blob); };
-  return { save, xlsx, exportExcel, el, svg, fill, rng, scale, ticks, niceMax, short, comma, pct, money, signed, sum, mean, clamp, css, mix, ramp, diverge, ink, tip, untip, hover, esc, seg, bar, MON, DOW, mount, setTheme };
+  return { SHADOWS, setShadow, save, xlsx, exportExcel, el, svg, fill, rng, scale, ticks, niceMax, short, comma, pct, money, signed, sum, mean, clamp, css, mix, ramp, diverge, ink, tip, untip, hover, esc, seg, bar, MON, DOW, mount, setTheme };
 })();
 </script>
 <script data-goatcounter="https://joshtapley.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
@@ -362,7 +379,7 @@ body:not(.embed){padding:12px 20px 28px}
 body.embed .back{display:none}
 body.embed .dhd{padding-right:0}
 .dgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
-.dtile{grid-column:span var(--span);min-width:0}
+.dtile{grid-column:span var(--span);min-width:0;border-radius:var(--radius);box-shadow:var(--card-shadow)}
 .dtile iframe{display:block;width:100%;height:300px;border:0;background:transparent;color-scheme:normal}
 @media (max-width:900px){.dtile{grid-column:1/-1}.dhd{padding:40px 0 0}}
 /* slide-out menu: every sample dashboard, one click away */
@@ -389,6 +406,10 @@ body.embed .burger,body.embed .dnav,body.embed .dscrim{display:none}
 .dnav a[aria-current="page"]{background:color-mix(in srgb,var(--s1) 12%,transparent);color:var(--ink);font-weight:600}
 .dnav a[aria-current="page"]::before{content:"";position:absolute;left:-8px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--s1)}
 .dnav a:focus-visible,.dnav-x:focus-visible{outline:2px solid var(--s1);outline-offset:-2px}
+.dshadow{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;padding:4px 8px 10px}
+.dshadow button{all:unset;cursor:pointer;font-size:12px;text-align:center;padding:7px 4px;border-radius:8px;background:var(--surface);color:var(--ink-2);border:1px solid var(--grid)}
+.dshadow button:hover{color:var(--ink)} .dshadow button[aria-pressed="true"]{color:var(--ink);font-weight:600;border-color:var(--s1);box-shadow:0 0 0 1px var(--s1)}
+.dshadow button:focus-visible{outline:2px solid var(--s1);outline-offset:1px}
 @media (prefers-reduced-motion:reduce){.dnav,.dscrim{transition:none}}
 </style>
 <div class="dhd"><button class="burger" id="dmenu" type="button" aria-label="Open dashboard menu" aria-controls="dnav" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><a class="btn back" href="../index.html">← Library</a><h1>Product growth</h1><p>Product analytics · last 30 days · sample dashboard built from library components</p></div>
@@ -401,6 +422,8 @@ body.embed .burger,body.embed .dnav,body.embed .dscrim{display:none}
   <div class="dnav-body">
     <div class="dnav-sec">Dashboards</div>
     <ul><li><a href="revenue-overview.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/></svg><span>Revenue overview<small>Executive summary · October 2026</small></span></a></li><li><a href="product-growth.html" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Product growth<small>Product analytics · last 30 days</small></span></a></li><li><a href="service-health.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><span>Service health<small>Operations · live</small></span></a></li></ul>
+    <div class="dnav-sec">Card style</div>
+    <div class="dshadow" id="dshadow" role="group" aria-label="Card shadow"></div>
     <div class="dnav-sec">Library</div>
     <ul><li><a href="../index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>All components</span></a></li>
       <li><a href="../themes.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg><span>Themes</span></a></li></ul>
@@ -420,13 +443,19 @@ body.embed .burger,body.embed .dnav,body.embed .dscrim{display:none}
     if (e.key === "Escape") open(false);
     if (e.key === "Tab") { const l = links(), i = l.indexOf(document.activeElement); if (e.shiftKey && i <= 0) { e.preventDefault(); l[l.length - 1].focus(); } else if (!e.shiftKey && i === l.length - 1) { e.preventDefault(); l[0].focus(); } } });
   nav.addEventListener("click", e => { const a = e.target.closest("a"); if (!a || /^https?:/.test(a.getAttribute("href"))) return; if (a.getAttribute("aria-current")) { e.preventDefault(); open(false); return; }
-    const r = document.documentElement, u = new URL(a.href); u.searchParams.set("theme", getComputedStyle(r).colorScheme === "dark" ? "dark" : "light"); if (r.dataset.brand) u.searchParams.set("brand", r.dataset.brand); a.href = u.href; });
+    const r = document.documentElement, u = new URL(a.href); u.searchParams.set("theme", getComputedStyle(r).colorScheme === "dark" ? "dark" : "light"); if (r.dataset.brand) u.searchParams.set("brand", r.dataset.brand); if (r.dataset.shadow) u.searchParams.set("shadow", r.dataset.shadow); a.href = u.href; });
 })();
 // every tile is a library component in ?tile=1 mode: it reports its natural height, and theme changes here flow down to it
 const frames = [...document.querySelectorAll(".dtile iframe")];
-const state = () => { const r = document.documentElement; return { brand: r.dataset.brand || "", theme: getComputedStyle(r).colorScheme === "dark" ? "dark" : "light" }; };
+const state = () => { const r = document.documentElement; return { brand: r.dataset.brand || "", theme: getComputedStyle(r).colorScheme === "dark" ? "dark" : "light", shadow: r.dataset.shadow || "flat" }; };
+// card shadow: from ?shadow=, else the visitor's last choice; this page draws the outer shadow, the tile draws the accent edge
+try { const k = new URLSearchParams(location.search).get("shadow") || localStorage.getItem("dc-shadow"); if (k) V.setShadow(k); } catch {}
 const s0 = state();
-frames.forEach(f => f.src = f.dataset.src + `?embed=1&tile=1&theme=${s0.theme}` + (s0.brand ? "&brand=" + s0.brand : "") + (f.dataset.q || ""));
+frames.forEach(f => f.src = f.dataset.src + `?embed=1&tile=1&theme=${s0.theme}&shadow=${s0.shadow}` + (s0.brand ? "&brand=" + s0.brand : "") + (f.dataset.q || ""));
+(() => { const box = document.getElementById("dshadow");
+  const draw = () => V.seg(box, V.SHADOWS, state().shadow, v => { V.setShadow(v); try { localStorage.setItem("dc-shadow", v); } catch {}
+    frames.forEach(f => { try { f.contentWindow.postMessage({ shadow: v }, "*"); } catch {} }); });
+  draw(); })();
 // a row with a set height (data-h) holds it: charts that can resize (fill) shrink or grow to it (down to their minimum), and only a tile that can't
 // (a table, a map) makes the row taller. A row without one takes its tallest tile. Stacked on narrow screens, each tile keeps its own height.
 const nat = new Map(), mins = new Map(), fills = new Map();
