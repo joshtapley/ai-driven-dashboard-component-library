@@ -383,7 +383,8 @@ const V = (() => {
 .kl-pill{font-weight:700;font-size:12px;padding:3px 10px;border-radius:999px}
 .kl-ch{flex:none;width:172px}
 .kl-ch g.st{cursor:pointer}
-.kl-ctl{display:flex;gap:8px;flex-wrap:wrap}
+.kl-ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:-4px 0 12px}
+.kl-ctl label{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
 </style>
 
 <div class="viz">
@@ -392,7 +393,10 @@ const V = (() => {
       <h2 class="viz-title">Voyage KPIs</h2>
       <p class="viz-sub" id="sub"></p>
     </div>
-    <div class="kl-ctl"><div class="seg" id="plan"></div><div class="seg" id="edge"></div></div>
+  </div>
+  <div class="kl-ctl">
+    <label>Planned stops <span class="seg" id="plan"></span></label>
+    <label>Accent edge <span class="seg" id="edge"></span></label>
   </div>
   <div class="kl" id="kl"></div>
 </div>
@@ -413,8 +417,8 @@ let focus = 2, plan = "dashed", edge = "on";
 const status = i => i < focus ? "Completed" : i === focus ? "Current port" : "Planned";
 
 function render() {
-  V.seg(document.getElementById("plan"), [["dashed", "Planned: dashed"], ["hide", "Hidden"]], plan, v => { plan = v; render(); });
-  V.seg(document.getElementById("edge"), [["on", "Accent edge"], ["off", "No edge"]], edge, v => { edge = v; render(); });
+  V.seg(document.getElementById("plan"), [["dashed", "Dashed"], ["hide", "Hidden"]], plan, v => { plan = v; render(); });
+  V.seg(document.getElementById("edge"), [["on", "On"], ["off", "Off"]], edge, v => { edge = v; render(); });
   document.getElementById("sub").textContent = `Focus port: ${PORTS[focus]} · stop ${focus + 1} of ${PORTS.length} · click a lollipop to move it`;
   const box = document.getElementById("kl"), had = box.contains(document.activeElement) ? [...box.children].indexOf(document.activeElement.closest(".kl-card")) : -1;
   box.className = "kl" + (edge === "on" ? " edge" : "");
