@@ -110,7 +110,7 @@ body.tile .stage>.viz{min-height:100%}
 :root[data-shadow="soft"]{--card-shadow:0 1px 2px rgba(var(--sh-c),calc(.06*var(--sh-a))),0 1px 3px rgba(var(--sh-c),calc(.1*var(--sh-a)))}
 :root[data-shadow="lifted"],:root[data-shadow="edge"]{--card-shadow:0 2px 4px -2px rgba(var(--sh-c),calc(.06*var(--sh-a))),0 8px 18px -6px rgba(var(--sh-c),calc(.14*var(--sh-a)))}
 :root[data-shadow="float"]{--card-shadow:0 4px 8px -4px rgba(var(--sh-c),calc(.08*var(--sh-a))),0 18px 40px -12px rgba(var(--sh-c),calc(.24*var(--sh-a)));--card-line:transparent}
-:root[data-shadow="edge"]{--card-edge:inset 5px 0 0 var(--s2)}
+:root[data-shadow="edge"]{--card-edge:inset 5px 0 0 var(--s1)}
 :root[data-theme="dark"][data-shadow]:not([data-shadow="flat"]){--card-line:color-mix(in srgb,var(--border) 70%,#fff 6%)}
 body.tile .viz{box-shadow:var(--card-edge)}
 .viz-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
@@ -373,8 +373,8 @@ const V = (() => {
 <style>
 .kl{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
 .kl-card{position:relative;border:1px solid var(--grid);border-radius:var(--radius,10px);padding:16px 16px 14px 18px;display:flex;gap:12px;align-items:stretch;outline:none;overflow:hidden}
-.kl.edge .kl-card{box-shadow:inset 5px 0 0 var(--s2);padding-left:22px}
-.kl-card:focus-visible{outline:2px solid var(--s2);outline-offset:2px}
+.kl.edge .kl-card{box-shadow:inset 5px 0 0 var(--s1);padding-left:22px}
+.kl-card:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
 .kl-tx{flex:1;min-width:0;display:flex;flex-direction:column}
 .kl-lb{font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--ink);font-family:var(--font-display,var(--font))}
 .kl-vl{font-size:34px;font-weight:800;letter-spacing:-.01em;margin:auto 0 6px;font-family:var(--font-display,var(--font));font-variant-numeric:tabular-nums;line-height:1.1;color:var(--ink)}
@@ -434,10 +434,10 @@ function render() {
       V.el("rect", { x: x - step / 2, y: 0, width: step, height: H, fill: "transparent" }, g);
       V.el("text", { x, y: H - 4, "text-anchor": "middle", style: `font-size:11px;${cur ? "font-weight:700;fill:var(--ink)" : ""}` }, g).textContent = p[0];
       if (!(fut && plan === "hide")) {
-        const col = cur ? "var(--s2)" : past ? "var(--ink)" : "var(--de-emph)";
+        const col = cur ? "var(--s1)" : past ? "var(--ink)" : "var(--de-emph)";
         V.el("line", { x1: x, x2: x, y1: base, y2: y(m.vals[i]), stroke: col, "stroke-width": cur ? 3 : past ? 2.5 : 2, "stroke-dasharray": fut ? "4 3" : null, "stroke-linecap": fut ? "butt" : "round" }, g);
-        if (cur) V.el("circle", { cx: x, cy: y(m.vals[i]), r: 8.5, fill: surf, stroke: "var(--s2)", "stroke-width": 1.8 }, g);
-        V.el("circle", { cx: x, cy: y(m.vals[i]), r: cur ? 5.5 : 5, fill: cur ? "var(--s2)" : past ? "var(--ink)" : "var(--de-emph)" }, g);
+        if (cur) V.el("circle", { cx: x, cy: y(m.vals[i]), r: 8.5, fill: surf, stroke: "var(--s1)", "stroke-width": 1.8 }, g);
+        V.el("circle", { cx: x, cy: y(m.vals[i]), r: cur ? 5.5 : 5, fill: cur ? "var(--s1)" : past ? "var(--ink)" : "var(--de-emph)" }, g);
       }
       g.addEventListener("click", () => { focus = i; render(); });
       V.hover(g, () => `<b>${p}</b> · ${status(i)}<br>${m.label}: <b>${m.fmt(m.vals[i])}${m.unit ? " " + m.unit.toLowerCase() : ""}</b>${fut ? '<br><span class="muted">Planned figure</span>' : ""}`);

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Progress timeline</title>
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" rx="7" fill="%230b1220"/%3E%3Crect x="5.5" y="17" width="5.5" height="10" rx="1.2" fill="%234e79a7"/%3E%3Crect x="13.25" y="11" width="5.5" height="16" rx="1.2" fill="%236b9bd1"/%3E%3Crect x="21" y="5" width="5.5" height="22" rx="1.2" fill="%23f28e2b"/%3E%3C/svg%3E'>
-<meta name="description" content="A journey timeline of fixed stops with completed stops filled, the current stop ringed in the accent colour and the route behind it drawn in the accent, plus per-stop figures underneath. Click a stop to move the focus. Animation options: draw the route on load, pulse the current stop&#x27;s ring (three times or continuously) and refill the route on a repeat timer.">
+<meta name="description" content="A journey timeline of fixed stops, horizontal or vertical, in the theme&#x27;s main colour: completed stops and the route up to the current stop are filled, the current stop is ringed, and each stop shows its Load and Off figures, shortened to fit. Click a stop to move the focus. Animation options: draw the route on load, pulse the current stop&#x27;s ring (three times or continuously) and refill the route on a repeat timer.">
 <!-- Dashboard Components · progress-timeline · self-contained: no libraries, no network. Synthetic seeded data. -->
 <style>
 /* ---------- Design tokens (swap these for your brand; nothing below hard-codes a colour) ---------- */
@@ -110,7 +110,7 @@ body.tile .stage>.viz{min-height:100%}
 :root[data-shadow="soft"]{--card-shadow:0 1px 2px rgba(var(--sh-c),calc(.06*var(--sh-a))),0 1px 3px rgba(var(--sh-c),calc(.1*var(--sh-a)))}
 :root[data-shadow="lifted"],:root[data-shadow="edge"]{--card-shadow:0 2px 4px -2px rgba(var(--sh-c),calc(.06*var(--sh-a))),0 8px 18px -6px rgba(var(--sh-c),calc(.14*var(--sh-a)))}
 :root[data-shadow="float"]{--card-shadow:0 4px 8px -4px rgba(var(--sh-c),calc(.08*var(--sh-a))),0 18px 40px -12px rgba(var(--sh-c),calc(.24*var(--sh-a)));--card-line:transparent}
-:root[data-shadow="edge"]{--card-edge:inset 5px 0 0 var(--s2)}
+:root[data-shadow="edge"]{--card-edge:inset 5px 0 0 var(--s1)}
 :root[data-theme="dark"][data-shadow]:not([data-shadow="flat"]){--card-line:color-mix(in srgb,var(--border) 70%,#fff 6%)}
 body.tile .viz{box-shadow:var(--card-edge)}
 .viz-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
@@ -374,7 +374,7 @@ const V = (() => {
 .tl-ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:-4px 0 12px}
 .tl-ctl label{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
 #tl{outline:none}
-#tl:focus-visible{outline:2px solid var(--s2);outline-offset:4px;border-radius:6px}
+#tl:focus-visible{outline:2px solid var(--s1);outline-offset:4px;border-radius:6px}
 #tl g.stop{cursor:pointer}
 @keyframes tl-pulse{0%{transform:scale(1);opacity:.9}70%{transform:scale(1.9);opacity:0}100%{transform:scale(1.9);opacity:0}}
 #tl .pulse{transform-box:fill-box;transform-origin:center;animation:tl-pulse 1.8s ease-out var(--pd,0s) var(--pn,3) forwards}
@@ -389,6 +389,7 @@ const V = (() => {
     </div>
   </div>
   <div class="tl-ctl">
+    <label>Layout <span class="seg" id="o-ori"></span></label>
     <label>Animate on load <span class="seg" id="o-load"></span></label>
     <label>Pulse current <span class="seg" id="o-pulse"></span></label>
     <label>Refill <span class="seg" id="o-rep"></span></label>
@@ -400,34 +401,62 @@ const V = (() => {
 const S = [["Shanghai", 1671, 0], ["Hong Kong", 407, 280], ["Singapore", 382, 358], ["Colombo", 361, 455], ["Suez", 507, 577], ["Barcelona", 599, 795], ["Rotterdam", 0, 1462]]
   .map(([port, loaded, offloaded]) => ({ port, loaded, offloaded }));
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-let cur = 2, shown = 0, load = "on", pulse = "3", rep = "0", first = true, raf = 0, timer = 0;
+let cur = 2, shown = 0, ori = "h", load = "on", pulse = "3", rep = "0", first = true, raf = 0, timer = 0;
 const status = i => i < cur ? "Completed" : i === cur ? "Current port" : "Upcoming";
 let geo = null;   // positions from the last draw, used by the animation
 
+// shorten a text node to max px: try each candidate in turn, then trim the last one with an ellipsis
+function fit(t, max, ...alts) {
+  for (const a of alts) { t.textContent = a; if (t.getComputedTextLength() <= max) return; }
+  let s = alts[alts.length - 1];
+  while (s.length > 1 && t.getComputedTextLength() > max) { s = s.slice(0, -1); t.textContent = s.trimEnd() + "…"; }
+}
+// a figure: coloured arrow, then "Load 1,671", or just the number when the words are off
+let words = true;
+const figText = (up, v, w) => `${up ? "▲" : "▼"} ${w ? (up ? "Load " : "Off ") : ""}${V.comma(v)}`;
+function fig(g, x, y, a, fs, max, up, v) {
+  const t = V.el("text", { x, y, "text-anchor": a, class: "ink2", style: `font-size:${fs}px` }, g);
+  fit(t, max, figText(up, v, words));
+  const said = t.textContent; t.textContent = "";
+  V.el("tspan", { fill: `var(--${up ? "up" : "down"})` }, t).textContent = said[0]; V.el("tspan", {}, t).textContent = said.slice(1);
+}
+
 function draw() {
-  const box = document.getElementById("tl"), W = Math.max(280, box.clientWidth), vert = W < 620, n = S.length;
-  const { s } = V.svg(box, vert ? n * 66 + 8 : 132);
+  const box = document.getElementById("tl"), W = Math.max(200, box.clientWidth), n = S.length, vert = ori === "v";
+  const cw = W / n, fs = vert ? 13 : V.clamp(cw / 8, 10, 13), ff = fs - 1;     // text shrinks a little on narrow widths
+  const step = vert ? Math.max(40, V.fill(n * 50) / n) : 0;                     // vertical rows stretch to fill a dashboard tile
+  const r = vert ? 8 : V.clamp(cw / 10, 6, 9), H = vert ? n * step : 22 + r + 10 + fs + ff * 2.75 + 8;
+  const { s } = V.svg(box, H);
   s.setAttribute("aria-hidden", "true");
-  const P = i => vert ? [22, 22 + i * 66] : [W * (.5 + i) / n, 26];
+  const P = i => vert ? [20, step * (i + .5)] : [cw * (i + .5), 22];
   const [ax, ay] = P(0), [bx, by] = P(n - 1);
   V.el("line", { x1: ax, y1: ay, x2: bx, y2: by, stroke: "var(--de-emph)", "stroke-width": 3, "stroke-linecap": "round" }, s);
-  const prog = V.el("line", { x1: ax, y1: ay, x2: ax, y2: ay, stroke: "var(--s2)", "stroke-width": 3, "stroke-linecap": "round" }, s);
+  const prog = V.el("line", { x1: ax, y1: ay, x2: ax, y2: ay, stroke: "var(--s1)", "stroke-width": 3, "stroke-linecap": "round" }, s);
   const surf = V.css("--surface"), dots = [];
+  // the words Load/Off show on every stop or on none, so the row reads evenly
+  const fits = (size, max) => { const t = V.el("text", { style: `font-size:${size}px` }, s), ok = S.every(d => [[true, d.loaded], [false, d.offloaded]].every(([u, v]) => (t.textContent = figText(u, v, true), t.getComputedTextLength() <= max))); t.remove(); return ok; };
   S.forEach((d, i) => {
     const [x, y] = P(i), g = V.el("g", { class: "stop" }, s);
-    V.el("rect", vert ? { x: 0, y: y - 30, width: W, height: 60, fill: "transparent" } : { x: x - W / n / 2, y: 0, width: W / n, height: 132, fill: "transparent" }, g);
-    const ring = V.el("circle", { cx: x, cy: y, r: 13, fill: "none", stroke: "var(--s2)", "stroke-width": 1.8, opacity: 0 }, g);
-    const pr = V.el("circle", { cx: x, cy: y, r: 13, fill: "none", stroke: "var(--s2)", "stroke-width": 1.5, opacity: 0 }, g);
-    const dot = V.el("circle", { cx: x, cy: y, r: 9, fill: "var(--de-emph)", stroke: surf, "stroke-width": 2 }, g);
-    const tx = vert ? { x: 48, a: "start", y0: y - 6 } : { x, a: "middle", y0: y + 46 };
-    V.el("text", { x: tx.x, y: tx.y0, "text-anchor": tx.a, class: "ink", style: "font-size:13px;font-weight:700" }, g).textContent = d.port;
-    const fig = (y1, up, label, v) => { const t = V.el("text", { x: tx.x, y: y1, "text-anchor": tx.a, class: "ink2", style: "font-size:12px" }, g);
-      const a = V.el("tspan", { fill: `var(--${up ? "up" : "down"})` }, t); a.textContent = up ? "▲ " : "▼ "; V.el("tspan", {}, t).textContent = `${label}: ${V.comma(v)}`; };
-    if (vert) { const t = V.el("text", { x: 48, y: y + 12, class: "ink2", style: "font-size:12px" }, g);
-      [["up", "Loaded", d.loaded], ["down", "Offloaded", d.offloaded]].forEach(([c, l, v], k) => { V.el("tspan", { fill: `var(--${c})`, dx: k ? 12 : 0 }, t).textContent = c === "up" ? "▲ " : "▼ "; V.el("tspan", {}, t).textContent = `${l}: ${V.comma(v)}`; }); }
-    else { fig(y + 70, true, "Loaded", d.loaded); fig(y + 88, false, "Offloaded", d.offloaded); }
+    V.el("rect", vert ? { x: 0, y: y - step / 2, width: W, height: step, fill: "transparent" } : { x: x - cw / 2, y: 0, width: cw, height: H, fill: "transparent" }, g);
+    const ring = V.el("circle", { cx: x, cy: y, r: r + 4, fill: "none", stroke: "var(--s1)", "stroke-width": 1.8, opacity: 0 }, g);
+    const pr = V.el("circle", { cx: x, cy: y, r: r + 4, fill: "none", stroke: "var(--s1)", "stroke-width": 1.5, opacity: 0 }, g);
+    const dot = V.el("circle", { cx: x, cy: y, r, fill: "var(--de-emph)", stroke: surf, "stroke-width": 2 }, g);
+    const name = (tx, ty, a, max) => fit(V.el("text", { x: tx, y: ty, "text-anchor": a, class: "ink", style: `font-size:${fs}px;font-weight:700` }, g), max, d.port);
+    if (vert) {
+      // one line (name, Load, Off) when there is room, otherwise the figures go under the name
+      const tx = 44, room = W - tx - 4, wide = room >= 300, nw = Math.min(110, room * .36);
+      name(tx, wide ? y + 4.5 : y - 3, "start", wide ? nw : room);
+      const fx = wide ? tx + nw + 10 : tx, fy = wide ? y + 4.5 : y + 13, half = Math.min(130, (W - fx - 4) / 2);
+      if (!i) words = fits(ff, half - 8);
+      fig(g, fx, fy, "start", ff, half - 8, true, d.loaded); fig(g, fx + half, fy, "start", ff, half - 4, false, d.offloaded);
+    } else {
+      const max = cw - 6, y0 = y + r + 10 + fs;
+      if (!i) words = fits(ff, max);
+      name(x, y0, "middle", max);
+      fig(g, x, y0 + ff * 1.4, "middle", ff, max, true, d.loaded); fig(g, x, y0 + ff * 2.75, "middle", ff, max, false, d.offloaded);
+    }
     g.addEventListener("click", () => go(i));
-    V.hover(g, () => `<b>${d.port}</b> · ${status(i)}<br><span style="color:var(--up)">▲</span> Loaded ${V.comma(d.loaded)}<br><span style="color:var(--down)">▼</span> Offloaded ${V.comma(d.offloaded)}`);
+    V.hover(g, () => `<b>${d.port}</b> · ${status(i)}<br><span style="color:var(--up)">▲</span> Load ${V.comma(d.loaded)}<br><span style="color:var(--down)">▼</span> Off ${V.comma(d.offloaded)}`);
     dots.push({ dot, ring, pr, x, y });
   });
   // a hidden list for screen readers mirrors the drawing
@@ -436,16 +465,16 @@ function draw() {
   sr.innerHTML = S.map((d, i) => `<li role="listitem"${i === cur ? ' aria-current="step"' : ""}><button type="button" data-i="${i}">${d.port}: ${status(i)}, loaded ${V.comma(d.loaded)}, offloaded ${V.comma(d.offloaded)}</button></li>`).join("");
   sr.onclick = e => { const b = e.target.closest("button"); if (b) go(+b.dataset.i); };
   box.appendChild(sr);
-  geo = { prog, dots, P, vert };
+  geo = { prog, dots, P };
 }
 
 // paint the route as if the line had reached position t (in stop units, 0 … cur)
 function paint(t) {
   const { prog, dots, P } = geo, i0 = Math.floor(t), f = t - i0, [x0, y0] = P(i0), [x1, y1] = P(Math.min(i0 + 1, S.length - 1));
   prog.setAttribute("x2", x0 + (x1 - x0) * f); prog.setAttribute("y2", y0 + (y1 - y0) * f);
-  dots.forEach((d, i) => { const reached = i <= t + 1e-6, isCur = i === cur && reached;
-    d.dot.setAttribute("fill", !reached ? "var(--de-emph)" : isCur ? "var(--s2)" : "var(--ink)");
-    d.ring.setAttribute("opacity", isCur ? 1 : 0); });
+  dots.forEach((d, i) => { const reached = i <= t + 1e-6;
+    d.dot.setAttribute("fill", reached ? "var(--s1)" : "var(--de-emph)");
+    d.ring.setAttribute("opacity", i === cur && reached ? 1 : 0); });
 }
 // animate the line from stop a to stop b; the pulse starts when it arrives
 function run(a, b) {
@@ -465,11 +494,12 @@ function header() { document.getElementById("sub").textContent = `Current port: 
 function schedule() { clearInterval(timer); if (+rep && !reduce) timer = setInterval(() => run(0, cur), +rep * 1000); }
 
 function render() {
+  V.seg(document.getElementById("o-ori"), [["h", "Horizontal"], ["v", "Vertical"]], ori, v => { ori = v; render(); });
   V.seg(document.getElementById("o-load"), [["on", "On"], ["off", "Off"]], load, v => { load = v; if (v === "on") run(0, cur); });
   V.seg(document.getElementById("o-pulse"), [["0", "Off"], ["3", "3 times"], ["inf", "Continuous"]], pulse, v => { pulse = v; run(cur, cur); });
   V.seg(document.getElementById("o-rep"), [["0", "Off"], ["5", "5 s"], ["10", "10 s"], ["30", "30 s"]], rep, v => { rep = v; schedule(); });
   header(); draw();
-  if (first && load === "on") { paint(0); run(0, cur); } else { shown = cur; paint(cur); startPulse(); }
+  if (first && load === "on") { paint(0); run(0, cur); } else { cancelAnimationFrame(raf); shown = cur; paint(cur); startPulse(); }
   first = false; schedule();
 }
 document.getElementById("tl").addEventListener("keydown", e => { const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!d) return; e.preventDefault(); go(V.clamp(cur + d, 0, S.length - 1)); });

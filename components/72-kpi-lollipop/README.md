@@ -19,7 +19,7 @@ Live demo: [`index.html`](index.html) — one self-contained file, no dependenci
 ## Anatomy
 - Card: uppercase label, a large value with an optional small unit, and a tinted delta pill (▲/▼ and percent) with 'vs previous voyage' beside it
 - Optional 5px accent edge on the card's left side
-- Mini lollipop: one stem and dot per stop, letters underneath; completed stops in --ink, the focus stop in --s2 with a ring, planned stops as dashed --de-emph stems with grey dots
+- Mini lollipop: one stem and dot per stop, letters underneath; completed stops in --ink, the focus stop in --s1 with a ring, planned stops as dashed --de-emph stems with grey dots
 - Each card scales its own lollipops from zero to its maximum
 - Focus is shared: choosing a stop on one card updates every card
 
@@ -40,7 +40,7 @@ stops: ["Shanghai", "Hong Kong", …]; metrics: [{ label: "Containers on board",
 - Completed, current and planned differ by line style and ring as well as colour
 
 ## Design tokens used
-`--s2`, `--ink`, `--ink-2`, `--muted`, `--de-emph`, `--surface`, `--grid`, `--up`, `--down`, `--radius` — defined once on `:root` in the demo, with dark-mode values.
+`--s1`, `--ink`, `--ink-2`, `--muted`, `--de-emph`, `--surface`, `--grid`, `--up`, `--down`, `--radius` — defined once on `:root` in the demo, with dark-mode values.
 
 ## Prompt
 Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
