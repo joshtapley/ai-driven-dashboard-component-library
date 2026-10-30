@@ -127,7 +127,13 @@ h3{font-size:1.06rem;font-weight:600;letter-spacing:-.01em}
 .detail.on{display:block}
 .dhead{position:sticky;top:0;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:saturate(140%) blur(10px);-webkit-backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--border);z-index:2}
 .dhead .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
-.dhead h2{font-size:1.15rem;margin:0 auto 0 4px;font-weight:700}
+.dpick{display:flex;align-items:center;gap:4px;margin-right:auto;min-width:0}
+.dpick h2{margin:0;min-width:0}
+.dpick select{font:700 1.05rem var(--font);color:var(--heading);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 30px 7px 10px;max-width:min(420px,60vw);cursor:pointer;
+  appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.dpick select:focus-visible,.dpick .step:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
+.dpick .step{all:unset;cursor:pointer;width:32px;height:34px;display:grid;place-items:center;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);background:var(--surface);font-size:1rem}
+.dpick .step:hover{color:var(--heading);border-color:var(--accent)}
 .dhead .cat{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--hl)}
 .seg{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:2px;gap:2px}
 .seg button{all:unset;cursor:pointer;font-size:.8rem;font-weight:500;padding:5px 10px;border-radius:6px;color:var(--text-muted)}
@@ -230,7 +236,10 @@ h3{font-size:1.06rem;font-weight:600;letter-spacing:-.01em}
 <div class="detail" id="detail" role="dialog" aria-modal="true" aria-labelledby="dt">
   <div class="dhead"><div class="wrap">
     <button class="btn" id="back" type="button">← All components</button>
-    <h2 id="dt"></h2><span class="cat" id="dc"></span>
+    <div class="dpick"><button class="step" id="prev" type="button" aria-label="Previous component" title="Previous component">‹</button>
+      <h2 id="dt"><select id="dsel" aria-label="Component"></select></h2>
+      <button class="step" id="next" type="button" aria-label="Next component" title="Next component">›</button>
+      <span class="cat" id="dc"></span></div>
     <div class="seg" id="width"></div>
     <div class="seg" id="dtheme"></div>
     <label class="bsel" for="dbrand"><span>Theme</span><select id="dbrand"></select></label>
@@ -316,15 +325,22 @@ new ResizeObserver(fit).observe(document.body);
 function openDetail(slug, push = true) {
   cur = LIB.items.find(i => i.slug === slug); if (!cur) return closeDetail(false);
   if (push) history.pushState(null, "", "#" + slug);
-  $("#dt").textContent = cur.title; $("#dc").textContent = `${cur.num} · ${cur.category}`; $("#dsum").textContent = cur.summary;
+  $("#dsel").value = cur.slug; $("#dc").textContent = `${cur.num} · ${cur.category}`; $("#dsum").textContent = cur.summary;
   $("#open").href = cur.dir + "/index.html?brand=" + brand;
   $("#frame").src = `${cur.dir}/index.html?embed=1&theme=${dtheme || pm()}${brandQ()}`;
+  const was = $("#detail").classList.contains("on");   // switching from the dropdown keeps focus where it is
   $("#detail").classList.add("on"); document.body.style.overflow = "hidden"; $("#detail").scrollTop = 0;
   seg($("#width"), [["100%", "Desktop"], ["768px", "Tablet"], ["390px", "Mobile"]], width, v => { width = v; $("#frame").style.width = v; });
   $("#frame").style.width = width;
   seg($("#dtheme"), [["light", "Light"], ["dark", "Dark"]], dtheme || pm(), v => { dtheme = v; $("#frame").contentWindow.postMessage({ theme: v }, "*"); });
-  tabs(); $("#back").focus();
+  tabs(); if (!was) $("#back").focus();
 }
+// switch components without leaving the detail view: a dropdown grouped by category, plus previous / next in gallery order
+const ORDER = () => LIB.cats.flatMap(c => LIB.items.filter(i => i.category === c));
+$("#dsel").innerHTML = LIB.cats.map(c => `<optgroup label="${esc(c)}">` + LIB.items.filter(i => i.category === c).map(i => `<option value="${i.slug}">${esc(i.title)}</option>`).join("") + "</optgroup>").join("");
+$("#dsel").onchange = e => openDetail(e.target.value);
+const step = d => { const o = ORDER(), i = o.findIndex(x => x === cur); openDetail(o[(i + d + o.length) % o.length].slug); };
+$("#prev").onclick = () => step(-1); $("#next").onclick = () => step(1);
 function closeDetail(push = true) { $("#detail").classList.remove("on"); document.body.style.overflow = ""; $("#frame").src = "about:blank"; if (push) history.pushState(null, "", location.pathname); cur = null; }
 function seg(box, opts, val, on) { box.innerHTML = opts.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${v === val}">${l}</button>`).join(""); box.onclick = e => { const b = e.target.closest("button"); if (!b) return; box.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); on(b.dataset.v); }; }
 function tabs() {
