@@ -80,6 +80,7 @@
 - [Polar area (Nightingale rose)](components/44-polar-area/README.md): Twelve monthly wedges whose area (not radius) is proportional to value, stacked by cause like Nightingale's rose, with a stacked / single-cause switch, square-root rings and hover readouts.
 - [Ternary plot](components/46-ternary-plot/README.md): Each store's sales mix across three channels (online, in-store, wholesale) as a point in a triangle, sized by revenue and coloured by format, with guide lines to the three axes on hover and arrows showing how the mix moved since last year.
 - [Gantt chart with progress](components/60-gantt/README.md): A project plan as a Gantt chart: a task table (owner, status, due) beside a month timeline where each task's bar fills with its progress, grouped into collapsible phases with tinted bands, milestones as diamonds and a today line.
+- [Radial bar chart](components/75-radial-bar/README.md): Bars bent into concentric arcs that all start at 12 o'clock and sweep clockwise by value, labelled at their start, with the latest (or fastest) bar highlighted and its value as a big KPI beside the chart. Here: how the fastest scheduled train from Tokyo to Shin-Osaka got shorter.
 
 ## Flows & networks
 
