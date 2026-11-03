@@ -51,6 +51,7 @@
 - [KPI icon cards](components/61-kpi-icon-cards/README.md): A full-width row of compact KPI cards, each led by an icon from one consistent line-icon set: the label beside the icon, a large value, a coloured delta (percent or points) and the comparison period. Switch the icon style between tinted badges, coloured outlines and a single neutral ink.
 - [Aging buckets KPI card](components/70-kpi-aging-buckets/README.md): An accounts-receivable aging card: open total and DSO up top, one tall 100% bar split into Current, 1–30, 31–60, 61–90 and 90+ days in a green-to-red status ramp, bucket totals beneath, and an optional list of the largest open balances, each with its own aging mix and its oldest bucket.
 - [KPI lollipop cards](components/72-kpi-lollipop/README.md): KPI cards for a journey with fixed stops (a voyage, a route, a pipeline): a big value and a delta pill on the left, and a mini lollipop chart of every stop on the right, with completed stops solid, the focus stop in the accent colour with a ring, and planned stops dashed. Click a stop to move the focus on every card at once.
+- [KPI metric cards (overview grid)](components/76-kpi-metric-cards/README.md): A paged 'Performance overview' grid of full metric cards. Each card has a period label, a centred title and a big value, then either a trend sparkline or a progress bar to target, with a footer naming the data source and a coloured delta pill. Trend and goal cards mix in one grid.
 
 ## Tables
 
