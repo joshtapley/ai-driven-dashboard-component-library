@@ -389,6 +389,14 @@ body.tile .ctl>div:has(.seg){display:none}
 .cv{position:relative;margin-top:6px}
 .cv canvas{position:absolute;left:0;top:0}
 .cv canvas.top{cursor:pointer}
+.pm h3 .nm{display:inline-flex;align-items:center;gap:5px;min-width:0}
+.info{all:unset;cursor:help;flex:none;width:16px;height:16px;display:grid;place-items:center;border-radius:50%;color:var(--muted)}
+.info:hover,.info:focus-visible{color:var(--s1)}
+.info:focus-visible{outline:2px solid var(--s1);outline-offset:1px}
+.info svg{width:14px;height:14px}
+.v-tip:has(.sumtip){max-width:320px}
+.sumtip ul{margin:4px 0 0;padding-left:15px}
+.sumtip li{margin:0 0 4px}
 .foot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px 24px;flex-wrap:wrap;margin-top:14px}
 .lg{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px;font-size:11px;color:var(--ink-2);font-variant-numeric:tabular-nums}
 .lg .bins{display:flex;width:220px;height:10px;border-radius:3px;overflow:hidden;border:1px solid var(--border)}
@@ -460,7 +468,7 @@ function render() {
   const cols = cw >= 720 ? 3 : cw >= 440 ? 2 : 1, gap = 22, W = Math.floor((cw - gap * (cols - 1)) / cols), k = W / GEO.w, H = Math.round(GEO.h * k), dpr = devicePixelRatio || 1;
   grid.style.gridTemplateColumns = `repeat(${cols},minmax(0,1fr))`;
   const surf = V.css("--surface");
-  grid.innerHTML = list.map((c, j) => `<div class="pm"><h3>${V.esc(c.name)}<small>US ${fmt(c.us)}</small></h3><div class="cv" style="height:${H}px"><canvas class="base" role="img" aria-label="${V.esc(c.name)}: change in death rate by county, US ${fmt(c.us)}"></canvas><canvas class="top" aria-hidden="true"></canvas></div></div>`).join("");
+  grid.innerHTML = list.map((c, j) => `<div class="pm"><h3><span class="nm">${V.esc(c.name)}<button type="button" class="info" aria-label="Summary of ${V.esc(c.name)}"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="4.9" r=".95" fill="currentColor"/></svg></button></span><small>US ${fmt(c.us)}</small></h3><div class="cv" style="height:${H}px"><canvas class="base" role="img" aria-label="${V.esc(c.name)}: change in death rate by county, US ${fmt(c.us)}"></canvas><canvas class="top" aria-hidden="true"></canvas></div></div>`).join("");
   panels = [...grid.querySelectorAll(".pm")].map((el, j) => { const c = list[j], [base, top] = el.querySelectorAll("canvas");
     for (const cv of [base, top]) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + "px"; cv.style.height = H + "px"; }
     const ctx = base.getContext("2d"); ctx.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
@@ -475,6 +483,10 @@ function render() {
     top.addEventListener("mousemove", e => { const i = at(e); if (i !== hot) { hot = i; drawTops(); } i == null ? V.untip() : V.tip(e, tipHtml(i, c)); });
     top.addEventListener("mouseleave", () => { hot = null; drawTops(); V.untip(); });
     top.addEventListener("click", e => { const i = at(e); if (i != null) select(i); });
+    // info icon: hover (or keyboard focus) shows the bulleted summary of this cause
+    const info = el.querySelector(".info"), near = () => { const r = info.getBoundingClientRect(); return { clientX: r.right, clientY: r.bottom }; };
+    V.hover(info, () => sumHtml(c)); info.addEventListener("focus", () => V.tip(near(), sumHtml(c))); info.addEventListener("blur", V.untip);
+    info.addEventListener("click", () => V.tip(near(), sumHtml(c)));
     return { c, tctx, k, W, H }; });
   drawTops(); legend(); summary(); status();
 }
@@ -497,7 +509,38 @@ function select(i) {
   dispatchEvent(new CustomEvent("dc-filter", { detail })); if (parent !== window) parent.postMessage({ dcFilter: detail }, "*");
   drawTops(); status();
 }
-addEventListener("keydown", e => { if (e.key === "Escape" && sel != null) select(sel); });
+addEventListener("keydown", e => { if (e.key !== "Escape") return; V.untip(); if (sel != null) select(sel); });
+// summaries for the info icons: census regions by state FIPS, medians, and how alike the county patterns are
+const REGION = {};
+[["Northeast", "09 23 25 33 34 36 42 44 50"], ["Midwest", "17 18 19 20 26 27 29 31 38 39 46 55"],
+ ["South", "01 05 10 11 12 13 21 22 24 28 37 40 45 47 48 51 54"], ["West", "02 04 06 08 15 16 30 32 35 41 49 53 56"]]
+  .forEach(([r, s]) => s.split(" ").forEach(f => REGION[f] = r));
+const median = a => { const s = [...a].sort((x, y) => x - y), m = s.length / 2; return s.length % 2 ? s[m | 0] : (s[m - 1] + s[m]) / 2; };
+const quant = (a, q) => { const s = [...a].sort((x, y) => x - y); return s[Math.round(q * (s.length - 1))]; };
+const rr = r => (r < 0 ? "−" : "") + Math.abs(r).toFixed(2);
+const corr = (a, b) => { const ma = V.mean(a), mb = V.mean(b); let n = 0, x = 0, y = 0; a.forEach((v, i) => { const da = v - ma, db = b[i] - mb; n += da * db; x += da * da; y += db * db; }); return n / Math.sqrt(x * y); };
+const SUMS = new Map();
+function bullets(c) {
+  const key = c.name + all;
+  if (!SUMS.has(key)) {
+    const v = c.v.map(x => x / 10), N = v.length, up = v.filter(x => x > 0).length, down = v.filter(x => x < 0).length;
+    let lo = 0, hi = 0; v.forEach((x, i) => { if (x < v[lo]) lo = i; if (x > v[hi]) hi = i; });
+    const reg = {}; GEO.shapes.forEach((g, i) => (reg[REGION[g.id.slice(0, 2)]] ||= []).push(v[i]));
+    const meds = Object.entries(reg).map(([r, a]) => [r, median(a)]).sort((a, b) => b[1] - a[1]);
+    const others = shown().filter(o => o !== c).map(o => [o.name, corr(c.v, o.v)]).sort((a, b) => b[1] - a[1]);
+    const n = x => x.toLocaleString("en-US"), share = x => Math.round(x / N * 100) + "%";
+    SUMS.set(key, [
+      `Nationally, the death rate ${c.us < 0 ? "fell" : "rose"} <b>${Math.round(Math.abs(c.us))}%</b> between 1980 and 2014.`,
+      down >= up ? `<b>${n(down)}</b> of ${n(N)} counties (${share(down)}) saw it fall; <b>${n(up)}</b> saw it rise.` : `<b>${n(up)}</b> of ${n(N)} counties (${share(up)}) saw it rise; <b>${n(down)}</b> saw it fall.`,
+      `The typical county changed <b>${fmt(median(v))}</b>; the middle half sit between <b>${fmt(quant(v, .25))}</b> and <b>${fmt(quant(v, .75))}</b>.`,
+      `By region (county median): ` + meds.map(([r, m]) => `${r} <b>${fmt(m)}</b>`).join(", ") + ".",
+      `Largest rise: <b>${V.esc(GEO.shapes[hi].name)}</b> (${fmt(v[hi])}). Largest fall: <b>${V.esc(GEO.shapes[lo].name)}</b> (${fmt(v[lo])}).`,
+      `County pattern most like <b>${V.esc(others[0][0])}</b> (r = ${rr(others[0][1])}); most unlike <b>${V.esc(others.at(-1)[0])}</b> (r = ${rr(others.at(-1)[1])}).`
+    ]);
+  }
+  return SUMS.get(key);
+}
+const sumHtml = c => `<div class="sumtip"><b>${V.esc(c.name)}</b><ul>${bullets(c).map(t => `<li>${t}</li>`).join("")}</ul></div>`;
 function status() {
   const g = sel == null ? null : GEO.shapes[sel];
   sub.innerHTML = g ? `<span class="filter">Pinned <b>${V.esc(g.name)}</b> · <button type="button" id="clr">Clear</button></span>` : `Percent change in deaths per 100,000 · hover a county to compare causes · ${GEO.shapes.length.toLocaleString("en-US")} counties`;
@@ -510,8 +553,7 @@ function legend() {
   document.getElementById("lg").innerHTML = `<span>${lo}</span><span class="bins" role="img" aria-label="Diverging scale from ${CLAMP}% decrease to ${CLAMP}% increase, ${binned ? BINS + " steps of " + STEP + " points" : "smooth"}">${bar}</span><span>${hi}</span>`;
 }
 function summary() {
-  document.getElementById("list").innerHTML = shown().map(c => { let lo = 0, hi = 0; c.v.forEach((x, i) => { if (x < c.v[lo]) lo = i; if (x > c.v[hi]) hi = i; });
-    return `<li>${V.esc(c.name)}: US ${fmt(c.us)}; largest rise ${V.esc(GEO.shapes[hi].name)} (${fmt(val(c, hi))}); largest fall ${V.esc(GEO.shapes[lo].name)} (${fmt(val(c, lo))})</li>`; }).join("");
+  document.getElementById("list").innerHTML = shown().map(c => `<li>${V.esc(c.name)}: ${bullets(c).map(t => t.replace(/<[^>]+>/g, "")).join(" ")}</li>`).join("");
 }
 // Find a county: every name as a suggestion; picking one pins it
 document.getElementById("names").innerHTML = GEO.shapes.map(g => `<option value="${V.esc(g.name)}">`).sort().join("");

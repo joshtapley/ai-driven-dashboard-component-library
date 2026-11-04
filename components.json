@@ -3826,6 +3826,7 @@
    "Hover a county in any panel: it is outlined and ringed in all panels; the tooltip lists its value for every cause (the hovered cause in bold) beside the US figure",
    "Click a county (or pick it in Find a county) to pin it; click again, Clear or Esc to unpin",
    "Pinning fires a dc-filter event on window and postMessage({ dcFilter: { id, name } }) to a parent dashboard",
+   "An info icon beside each map title: hover it (or focus it with the keyboard) for a bulleted summary of that cause: national change, how many counties rose or fell, the typical county and middle half, regional medians, the largest rise and fall, and which other cause has the most and least alike county pattern",
    "Scale switch (Binned / Smooth) and Causes switch (Six / All eight)"
   ],
   "a11y": [
