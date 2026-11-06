@@ -3974,3 +3974,217 @@ pages: [{ title: "Bags roasted by month", kind: "columns", data: [2810, 2640, �
 Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
 
 > Build a flip-book dashboard in one self-contained HTML file with inline SVG and no libraries: a small coffee roaster's year told as a ten-page book (cover, contents, the year in numbers, bags roasted by month as columns, top origins as rounded pill bars, brew methods as a 10×10 waffle, cup score by month against a target line, quotes from cafés, next year's goals with progress bars, back cover). Show two portrait pages side by side with a gutter shadow; the closed cover sits centred and slides over as the book opens. Pages are leaves that rotate 180° around the spine with CSS 3D transforms (backface-visibility hidden, a front and a back face per leaf, a passing shadow while turning). Navigate with curled page corners (bottom-right forward, bottom-left back, 'Turn the page' on the cover), bookmark tabs above the book (Front, Pages 2–3, 4–5, 6–7, 8–9, Back), clickable contents entries and the arrow keys; jumping several spreads turns each leaf a moment after the last. Under 700px wide, show one page at a time and turn single pages. Add Layout (Auto / Spread / Single page) and Flip speed (Slow / Normal / Fast) controls. Pages out of view are inert, tabs use aria-selected, reduced motion swaps pages without the turn. Cover in the theme's first series colour, pages on the card surface, CSS variables for every colour, light and dark themes.
+
+
+---
+
+# Scatter plot with trend line
+
+**Category:** Basic charts · **Tags:** scatter, correlation, relationship, trend line, bubble, quadrants, regression
+
+One dot per store, marketing spend against revenue, coloured by region. Add a least-squares trend line with its R², size dots by footfall to make it a bubble chart, and split the plot into quadrants at the medians to name the stand-outs.
+
+Live demo: [`index.html`](index.html) — one self-contained file, no dependencies. Light and dark themes; add `?theme=dark` or `?embed=1` to the URL.
+
+## Use it when
+- Showing whether two measures move together (spend and revenue, price and volume, tenure and salary)
+- Spotting outliers and clusters among 20–500 items
+- Sorting items into four groups with quadrant lines (high spend, low return …)
+
+## Avoid it when
+- One of the measures is time (use a line chart)
+- Thousands of overlapping points (use a hexbin or 2D density)
+- Readers need exact values for each item (use a table)
+
+## Anatomy
+- x and y on linear scales with horizontal and vertical hairline grids and compact tick labels, both axes titled
+- Dots: radius 5 (or 4–16 by area in bubble mode), 1px surface ring, 85% opacity so overlaps show
+- Colour = region, categorical slots 1–4, with legend chips that dim a region
+- Trend line: least-squares fit across the visible points, 2px ink dashed, labelled with its slope in words and R²
+- Quadrants: dashed lines at the median x and y with a muted name in each corner
+- Highlight: the hovered region keeps its colour, others drop to 25%
+
+## Data shape
+```
+[{ store: "Store 104", region: "North", spend: 42000, revenue: 610000, footfall: 18400 }, …]
+```
+
+## Interactions
+- Trend line: On / Off
+- Size: Same / By footfall (bubble chart)
+- Quadrants: Off / Medians
+- Region chips dim or show each region; the trend line refits to what's shown
+- Hover a dot for the store, region, spend, revenue, return per $ and footfall
+
+## Accessibility
+- The svg has an aria-label with the number of stores, the correlation in words and R²
+- Region is shown by colour plus the legend and tooltip
+- Dimming keeps hidden regions' shape visible
+- Trend summary is printed as text above the chart
+
+## Design tokens used
+`--s1`, `--s2`, `--s3`, `--s4`, `--ink`, `--ink-2`, `--muted`, `--grid`, `--surface` — defined once on `:root` in the demo, with dark-mode values.
+
+## Prompt
+Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
+
+> Build a scatter plot in one self-contained HTML file with inline SVG and no libraries. Seeded data: 120 fictional stores in four regions, each with marketing spend ($8k–$80k), revenue (roughly 12× spend with noise and a few outliers) and footfall. x = spend, y = revenue, both linear with hairline grids, compact tick labels and axis titles. Dots have radius 5, a 1px surface ring and 85% opacity, coloured by region with legend chips that dim a region. Add three segmented controls: Trend line On / Off (least-squares fit across the visible points, a 2px dashed ink line, with a sentence above the chart such as 'Each extra $1k of spend comes with about $11k more revenue · R² 0.71'), Size Same / By footfall (area-scaled bubbles, radius 4–16, drawn largest first), and Quadrants Off / Medians (dashed lines at the median spend and revenue with muted corner labels like 'High spend, high revenue'). Hovering a legend chip highlights that region. Tooltips show store, region, spend, revenue, revenue per $ of spend and footfall. aria-label on the svg summarising the relationship, CSS variables for every colour, light and dark themes.
+
+
+---
+
+# Histogram and density plot
+
+**Category:** Charts · **Tags:** histogram, density, distribution, kde, bins, spread, skew
+
+How 1,400 delivery times are spread: a histogram with a bin-width switch, a smooth density curve, or both, with the mean and median marked. Compare two services on one axis to see which is faster and which is more predictable.
+
+Live demo: [`index.html`](index.html) — one self-contained file, no dependencies. Light and dark themes; add `?theme=dark` or `?embed=1` to the URL.
+
+## Use it when
+- Showing the shape of one measure: where most values sit, how wide the spread is, whether it is skewed or has two peaks
+- Comparing the distributions of two (at most three) groups on the same axis
+- Hundreds to millions of values (each value is not shown, only the shape)
+
+## Avoid it when
+- Fewer than about 30 values (show every value with a beeswarm or strip plot)
+- Comparing many groups (use box and violin plots)
+- Readers expect exact counts per category (use a bar chart; categories are not bins)
+
+## Anatomy
+- x = value on a linear axis; y = count (histogram) or share of values per unit (density)
+- Bars touch (1px surface gap) because bins are continuous; bin width is stated in the subtitle
+- Density: a smooth curve from a Gaussian kernel (bandwidth by Silverman's rule), 2.5px stroke over a 15% fill
+- Mean as a dashed ink line, median as a solid ink line, each with its value
+- Compare mode: two groups in series colours 1 and 2, histograms as overlapping outlines and densities with light fills, plus a legend
+
+## Data shape
+```
+[{ service: "Standard", minutes: 34.5 }, …] — one row per value
+```
+
+## Interactions
+- View: Histogram / Density / Both
+- Bins: 2 / 5 / 10 minutes
+- Compare: One service / Two services
+- Hover a bar for its range, count and share; hover the curve area for the density at that point
+
+## Accessibility
+- The svg has an aria-label giving count, mean, median and the middle 80% range
+- Mean and median printed as text on the chart
+- Groups differ by line style (outline vs filled) as well as colour
+
+## Design tokens used
+`--s1`, `--s2`, `--ink`, `--ink-2`, `--muted`, `--grid`, `--surface` — defined once on `:root` in the demo, with dark-mode values.
+
+## Prompt
+Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
+
+> Build a histogram and density plot in one self-contained HTML file with inline SVG and no libraries. Seeded data: 800 'Standard' delivery times (right-skewed, mostly 25–60 minutes) and 600 'Express' times (tighter, around 22 minutes). x = minutes on a linear axis with compact ticks; y = count for the histogram or density for the curve, with hairline horizontal gridlines. Bars touch with a 1px gap. Draw the density with a Gaussian kernel (Silverman bandwidth) as a 2.5px line over a 15% fill. Mark the mean (dashed) and median (solid) in ink with labels. Controls: View Histogram / Density / Both (density scaled to counts when shown together), Bins 2 / 5 / 10 minutes, and Compare One service / Two services (series colours 1 and 2 with a legend; histograms become overlapping outlines). Tooltips on bars show the range, count and share. aria-label with count, mean, median and the 10th–90th percentile range, CSS variables for every colour, light and dark themes.
+
+
+---
+
+# Box and violin plot
+
+**Category:** Charts · **Tags:** box plot, violin, distribution, quartiles, outliers, compare groups, spread
+
+First-response times for five support channels side by side: box plots (median, quartiles, whiskers and outliers), violins that show the full shape, or both together, with the raw points as an optional jittered strip.
+
+Live demo: [`index.html`](index.html) — one self-contained file, no dependencies. Light and dark themes; add `?theme=dark` or `?embed=1` to the URL.
+
+## Use it when
+- Comparing the spread of one measure across 3–12 groups (channels, teams, regions)
+- Medians alone hide the story: some groups are consistent, others are unpredictable or have two peaks
+- Showing outliers without letting them stretch the picture
+
+## Avoid it when
+- Audiences unfamiliar with quartiles and no room to explain (use a dot plot of medians with ranges)
+- Fewer than about 15 values per group (show every value with a beeswarm)
+- One group only (use a histogram)
+
+## Anatomy
+- One column per group on a shared y axis with hairline horizontal gridlines; group names and counts underneath
+- Box: the middle 50% (Q1 to Q3) as a 15% tinted box with a 1.5px outline, the median as a 2.5px ink line
+- Whiskers: lines to the furthest values within 1.5 × IQR, with short caps; outliers beyond them as open circles
+- Violin: a mirrored Gaussian kernel density, widest at the most common values, in the series colour at 30%
+- Points: every value as a small dot jittered across 60% of the column at 35% opacity
+- Groups coloured by categorical slot 1–5 with no legend (names sit under each column)
+
+## Data shape
+```
+[{ channel: "Chat", minutes: 3.2 }, …] — one row per value
+```
+
+## Interactions
+- Shape: Box / Violin / Both
+- Points: Off / Show all
+- Sort: By median / As listed
+- Hover a group for n, median, quartiles, whisker ends and the number of outliers
+
+## Accessibility
+- The svg has an aria-label giving each group's median and IQR
+- Each group is a focusable element with its summary in an aria-label
+- Medians are drawn as ink lines (not colour alone) and stated in the tooltip
+
+## Design tokens used
+`--s1`, `--s2`, `--s3`, `--s4`, `--s5`, `--ink`, `--ink-2`, `--muted`, `--grid`, `--surface` — defined once on `:root` in the demo, with dark-mode values.
+
+## Prompt
+Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
+
+> Build a box and violin plot in one self-contained HTML file with inline SVG and no libraries. Seeded data: first-response times in minutes for five support channels (Chat ~3 min, tight; Phone ~6; Social ~45, wide; Email ~180 with a long tail; Web form two peaks at ~60 and ~240), 120–300 values each. One column per channel on a shared y axis (minutes, square-root scale so short and long times are both readable) with hairline gridlines, names and counts underneath. Box: Q1–Q3 as a tinted box with an outline, the median as a heavy ink line, whiskers to the furthest values within 1.5 × IQR with caps, outliers as open circles. Violin: a mirrored Gaussian kernel density in the channel's colour. Controls: Shape Box / Violin / Both (a narrow box inside the violin), Points Off / Show all (jittered dots at low opacity) and Sort By median / As listed. Hover or focus a channel for n, median, quartiles, whisker ends and outlier count. aria-label with medians and IQRs, CSS variables for every colour, light and dark themes.
+
+
+---
+
+# Treemap and sunburst
+
+**Category:** Hierarchies · **Tags:** treemap, sunburst, part to whole, hierarchy, nested, drill down, squarified
+
+Revenue by department and category as a squarified treemap or a two-ring sunburst. Area (or angle) is share of the total; click a department to zoom in and the breadcrumb to zoom back out.
+
+Live demo: [`index.html`](index.html) — one self-contained file, no dependencies. Light and dark themes; add `?theme=dark` or `?embed=1` to the URL.
+
+## Use it when
+- Part-to-whole with two levels (department › category, region › country, team › person)
+- 10–60 leaves where the big contributors matter more than exact comparisons
+- Letting readers drill from the whole into one branch
+
+## Avoid it when
+- Precise comparisons between similar values (use a sorted bar chart)
+- Values that can be negative (area can't show them)
+- Deep hierarchies (more than three levels: use a collapsible tree)
+- Only a handful of parts with no nesting (use a bar chart or waffle)
+
+## Anatomy
+- Treemap: departments as squarified blocks with a 20px header strip naming them; categories tiled inside with 2px surface gaps
+- Sunburst: departments on the inner ring, categories on the outer ring, a hole in the middle showing the total (or the zoomed department)
+- Colour: each department takes a categorical slot (1–5); its categories are lighter-to-darker tints of that colour, largest darkest
+- Labels show the name, plus the value and share when there's room; tiles too small for text rely on the tooltip
+- Breadcrumb above the chart: All departments › Electronics
+
+## Data shape
+```
+[{ name: "Electronics", children: [{ name: "Phones", value: 18.4 }, …] }, …] — values in $M
+```
+
+## Interactions
+- Layout: Treemap / Sunburst
+- Labels: Names / Names and values
+- Click (or Enter on) a department or one of its categories to zoom into that department; click the breadcrumb, the centre or press Escape to zoom out
+- Hover a tile or arc for its value, share of its department and share of the total
+
+## Accessibility
+- Each tile and arc is focusable with an aria-label giving name, value and share
+- The breadcrumb is a nav with buttons
+- Departments differ by position and labels as well as colour
+- The svg has an aria-label naming the three largest departments
+
+## Design tokens used
+`--s1`, `--s2`, `--s3`, `--s4`, `--s5`, `--surface`, `--ink`, `--muted`, `--grid` — defined once on `:root` in the demo, with dark-mode values.
+
+## Prompt
+Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
+
+> Build a treemap and sunburst in one self-contained HTML file with inline SVG and no libraries. Data: an online store's revenue in $M for five departments (Electronics, Fashion, Home, Sports, Beauty), each with 3–5 categories (19 leaves). Treemap: use the squarified algorithm; departments are blocks with a 20px header naming them and their total, categories tile inside with 2px surface gaps. Sunburst: departments on an inner ring, categories on an outer ring, angle = share, a centre circle showing the total. Each department takes a categorical colour; its categories are tints of it (largest darkest). Labels show name, and value and share when there's room. Controls: Layout Treemap / Sunburst and Labels Names / Names and values. Clicking a department or category zooms into that department (it fills the chart), with a breadcrumb 'All departments › Electronics'; the breadcrumb, the sunburst centre or Escape zooms out. Tiles and arcs are focusable (Enter zooms) with aria-labels; hover shows value, share of department and share of total. CSS variables for every colour, light and dark themes.

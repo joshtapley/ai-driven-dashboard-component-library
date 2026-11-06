@@ -15,6 +15,7 @@
 - [Donut chart (optional labels)](components/58-donut-labeled/README.md): A clean donut with no legend and the total in the centre. Labels are off by default for a minimal ring with a hover readout; switch them on to name every slice directly with its share, joined by a short leader line.
 - [Lollipop chart](components/71-lollipop/README.md): A bar chart's lighter cousin: a thin stem and a prominent dot per category, sorted by value. Switch between columns and rows, stem from zero or from the average (a diverging view that colours each side), and click a lollipop to highlight it while everything else steps back.
 - [Contribution bars (why it moved)](components/77-contribution-bars/README.md): Explains what drove a change in one KPI: each driver is a row with its label on the left, its signed contribution on the right and a thick, fully rounded bar underneath, sized to the biggest driver. Colour the bars by driver, in one colour or by sign; show amounts or share of the change; click a driver to highlight it.
+- [Scatter plot with trend line](components/79-scatter-plot/README.md): One dot per store, marketing spend against revenue, coloured by region. Add a least-squares trend line with its R², size dots by footfall to make it a bubble chart, and split the plot into quadrants at the medians to name the stand-outs.
 
 ## Maps
 
@@ -83,6 +84,8 @@
 - [Ternary plot](components/46-ternary-plot/README.md): Each store's sales mix across three channels (online, in-store, wholesale) as a point in a triangle, sized by revenue and coloured by format, with guide lines to the three axes on hover and arrows showing how the mix moved since last year.
 - [Gantt chart with progress](components/60-gantt/README.md): A project plan as a Gantt chart: a task table (owner, status, due) beside a month timeline where each task's bar fills with its progress, grouped into collapsible phases with tinted bands, milestones as diamonds and a today line.
 - [Radial bar chart](components/75-radial-bar/README.md): Bars bent into concentric arcs that all start at 12 o'clock and sweep clockwise by value, labelled at their start, with the latest (or fastest) bar highlighted and its value as a big KPI beside the chart. Here: how the fastest scheduled train from Tokyo to Shin-Osaka got shorter.
+- [Histogram and density plot](components/80-histogram-density/README.md): How 1,400 delivery times are spread: a histogram with a bin-width switch, a smooth density curve, or both, with the mean and median marked. Compare two services on one axis to see which is faster and which is more predictable.
+- [Box and violin plot](components/81-box-violin/README.md): First-response times for five support channels side by side: box plots (median, quartiles, whiskers and outliers), violins that show the full shape, or both together, with the raw points as an optional jittered strip.
 
 ## Flows & networks
 
@@ -97,6 +100,7 @@
 
 - [Collapsible tree diagram](components/41-tree-diagram/README.md): A left-to-right tidy tree of an organisation (company › departments › teams › squads): node size = headcount, branches coloured by department, click any node to expand or collapse it, with expand-all, collapse-all and a search that opens the path to a match.
 - [Voronoi treemap](components/42-voronoi-treemap/README.md): A two-level hierarchy (category › product line) packed into a circle as organic Voronoi cells whose areas match their values; click a category to zoom in and re-pack its lines to fill the circle.
+- [Treemap and sunburst](components/82-treemap-sunburst/README.md): Revenue by department and category as a squarified treemap or a two-ring sunburst. Area (or angle) is share of the total; click a department to zoom in and the breadcrumb to zoom back out.
 
 ## UI patterns
 
