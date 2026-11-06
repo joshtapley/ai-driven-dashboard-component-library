@@ -14,6 +14,7 @@
 - [Stacked bar chart](components/56-stacked-bar/README.md): Monthly support tickets stacked by channel, switchable between vertical and horizontal and between absolute and 100%, with 2px surface gaps between segments, totals on top, inside labels where they fit, and per-segment hover.
 - [Donut chart (optional labels)](components/58-donut-labeled/README.md): A clean donut with no legend and the total in the centre. Labels are off by default for a minimal ring with a hover readout; switch them on to name every slice directly with its share, joined by a short leader line.
 - [Lollipop chart](components/71-lollipop/README.md): A bar chart's lighter cousin: a thin stem and a prominent dot per category, sorted by value. Switch between columns and rows, stem from zero or from the average (a diverging view that colours each side), and click a lollipop to highlight it while everything else steps back.
+- [Contribution bars (why it moved)](components/77-contribution-bars/README.md): Explains what drove a change in one KPI: each driver is a row with its label on the left, its signed contribution on the right and a thick, fully rounded bar underneath, sized to the biggest driver. Colour the bars by driver, in one colour or by sign; show amounts or share of the change; click a driver to highlight it.
 
 ## Maps
 
@@ -103,4 +104,8 @@
 - [Slide-out dashboard menu](components/36-slideout-menu/README.md): A dashboard sidebar that collapses to an icon rail and slides out to a full menu: workspace monogram, page links with an active accent bar, a collapsible Reports group, a filters section that drives the page, and an off-canvas drawer with a scrim on narrow screens.
 - [Ask-your-data chat assistant](components/62-data-chat/README.md): An in-dashboard chat panel that answers plain-English questions about the dashboard's data: a value for a period, the monthly trend, the year-over-year change or a split by region, each with an inline chart and a note on how it was calculated. It remembers context, so 'show it trended' and 'what's the YoY change?' follow on from the last answer.
 - [Progress timeline](components/73-progress-timeline/README.md): A journey timeline of fixed stops, horizontal or vertical, in the theme's main colour: completed stops and the route up to the current stop are filled, the current stop is ringed, and each stop shows its Load and Off figures, shortened to fit. Click a stop to move the focus. Animation options: draw the route on load, pulse the current stop's ring (three times or continuously) and refill the route on a repeat timer.
+
+## For Fun
+
+- [Flip-book dashboard](components/78-flip-book/README.md): A dashboard told as a book: a cover, two-page spreads of charts and a back cover. Pages turn with a 3D flip from a curled corner, the arrow keys or bookmark tabs along the top (jumping several spreads riffles through the pages in between). Wide screens show open spreads; narrow screens turn one page at a time.
 

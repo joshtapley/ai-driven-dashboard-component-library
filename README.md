@@ -2,13 +2,13 @@
 
 **[Open the live library →](https://joshtapley.github.io/ai-driven-dashboard-component-library/)**
 
-A reference library of 75 dashboard components for people building dashboards with Claude, Cursor or any AI coding assistant. Every component is one self-contained HTML file with no libraries. Each comes with a spec and a tested, ready-to-paste build prompt, and all of them share one colour-blind-safe token set in light and dark.
+A reference library of 77 dashboard components for people building dashboards with Claude, Cursor or any AI coding assistant. Every component is one self-contained HTML file with no libraries. Each comes with a spec and a tested, ready-to-paste build prompt, and all of them share one colour-blind-safe token set in light and dark.
 
 ## What's inside
 
 | Category | Components |
 |---|---|
-| Basic charts | line, curved line, area, stacked area, column, horizontal bar, grouped bar, stacked bar, donut |
+| Basic charts | line, curved line, area, stacked area, column, horizontal bar, grouped bar, stacked bar, donut, contribution bars (why a KPI moved) |
 | Maps | square, circle, hex and sparkline tile US maps, globe with flight paths |
 | Gauges | speedometer gauge, ring meters, activity rings, bullet charts |
 | KPI cards | sparkline, target and pace, YoY columns, breakdown, hero with range, status tiles, tabs driving a chart, progress donuts, aging buckets |
@@ -17,6 +17,7 @@ A reference library of 75 dashboard components for people building dashboards wi
 | Flows & networks | tapered funnel, Sankey, force-directed network, chord diagram, radial Sankey, tournament bracket |
 | Hierarchies | collapsible tree, Voronoi treemap |
 | UI patterns | toast notifications, slide-out dashboard menu |
+| For Fun | flip-book dashboard with animated page turns |
 
 - **Four sample dashboards:** Disease related deaths (a recreation of FiveThirtyEight's county small multiples), Revenue overview, Product growth and Service health. Each is assembled from live components.
 - **Thirteen themes:** the default, Cobalt Lab (Dark), puts white cards on the navy of [joshtapley.github.io](https://joshtapley.github.io/). Switch themes from any page.
