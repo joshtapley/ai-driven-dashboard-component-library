@@ -86,6 +86,7 @@
 - [Radial bar chart](components/75-radial-bar/README.md): Bars bent into concentric arcs that all start at 12 o'clock and sweep clockwise by value, labelled at their start, with the latest (or fastest) bar highlighted and its value as a big KPI beside the chart. Here: how the fastest scheduled train from Tokyo to Shin-Osaka got shorter.
 - [Histogram and density plot](components/80-histogram-density/README.md): How 1,400 delivery times are spread: a histogram with a bin-width switch, a smooth density curve, or both, with the mean and median marked. Compare two services on one axis to see which is faster and which is more predictable.
 - [Box and violin plot](components/81-box-violin/README.md): First-response times for five support channels side by side: box plots (median, quartiles, whiskers and outliers), violins that show the full shape, or both together, with the raw points as an optional jittered strip.
+- [Cluster scatter with named groups](components/83-cluster-scatter/README.md): An editorial scatter plot that finds its own groups. K-means clusters the points, a dashed organic outline wraps each group, and every group gets a bold name and one or two labelled items. Paste your own CSV, rename groups on the chart and drag any label.
 
 ## Flows & networks
 

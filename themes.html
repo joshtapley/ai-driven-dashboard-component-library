@@ -114,7 +114,7 @@ dd{margin:0;min-width:0}
 
 <div class="wrap">
   <a class="back" href="index.html">← Component library</a> <a class="back" href="https://joshtapley.github.io/">Josh Tapley · home</a><span class="eyebrow">AI Driven Dashboard Component Library · themes</span>
-  <h1>Thirteen themes for the component library</h1>
+  <h1>Fourteen themes for the component library</h1>
   <p class="lede">Each theme below restyles every component: palette, type, shapes and a chart colour strategy. Every preview uses the same components and the same words, so the only thing that changes is the theme.</p>
   <nav class="toc" aria-label="Themes" id="toc"></nav>
 
@@ -175,7 +175,15 @@ const DIRS = [
     chart: "Cobalt shades for series, peach for the one highlight, tints for context.",
     t: { bg: "#F2F4FA", card: "#FFFFFF", ink: "#16213E", muted: "#5A6382", soft: "#2D5BE3", acc: "#2D5BE3", line: "#E2E7F3", chip: "#DDE5FB", up: "#0F8A4F", display: "'Plus Jakarta Sans',system-ui,sans-serif", body: "'Plus Jakarta Sans',system-ui,sans-serif", mono: "'Geist Mono',monospace", btnR: "999px", cardR: "20px", mkR: "8px", hW: 800, track: "-0.025em", chipR: "8px",
       bars: ["#DDE5FB", "#DDE5FB", "#9DB3F1", "#DDE5FB", "#2D5BE3", "#FF8A5B"] } },
-  { id: "retro", name: "Retro Flashback", strat: "more",
+  { id: "retrolight", name: "Retro Flashback", strat: "more",
+    thesis: "Warm and shareable. A clean off-white canvas with 70s teal, orange, yellow and red doing all the talking.",
+    pal: [["Canvas", "#F9F9F7"], ["Card", "#FCFCFB"], ["Ink", "#0B0B0B"], ["Accent", "#63D2BF"], ["Second", "#F7953B"], ["Third", "#FFD978"]],
+    type: "<b>Montserrat</b> 800 for headlines and numbers, Montserrat 500 for labels.",
+    shape: "Rounded cards with soft hairlines and round-ended bars with labels underneath.",
+    chart: "Teal, orange, yellow and red in a fixed order, with dark text and pale neutral gridlines.",
+    t: { bg: "#F9F9F7", card: "#FCFCFB", ink: "#0B0B0B", muted: "#52514E", soft: "#178A78", acc: "#178A78", line: "#E1E0D9", chip: "#F3F2EE", up: "#178A78", display: "'Montserrat',sans-serif", body: "'Montserrat',sans-serif", mono: "'Montserrat',sans-serif", btnR: "999px", cardR: "14px", mkR: "50%", hW: 800, wmW: 800, track: "-0.01em",
+      bars: ["#F7953B", "#63D2BF", "#FFD978", "#F0592A", "#F7953B", "#63D2BF"] } },
+  { id: "retro", name: "Retro (Dark)", strat: "more",
     thesis: "Celebratory and shareable. A deep navy canvas, a white keyline and thin rounded bars in 70s orange, teal, yellow and red.",
     pal: [["Canvas", "#0E2238"], ["Card", "#16304C"], ["Ink", "#FFFFFF"], ["Accent", "#63D2BF"], ["Second", "#F7953B"], ["Third", "#FFD978"]],
     type: "<b>Montserrat</b> 800 for headlines and numbers, Montserrat 500 for labels.",
@@ -267,6 +275,7 @@ const COMPARE = {
   gold: ["Corporate marketing", 0, "", "business owners and marketers who want polished, on-brand dashboards"],
   signal: ["Marketing agency", 0, "", "agencies and freelancers building branded dashboards for clients"],
   news: ["Data journalism", 0, "", "reporters, researchers and analysts publishing charts to the public"],
+  retrolight: ["Bright editorial feature", 0, "", "writers and teams who want the 70s palette on a clean, printable page"],
   retro: ["Social recap card", 0, "", "creators who share year-in-review and leaderboard posts"],
   hex: ["Professional profile", 0, "", "individual analysts building portfolios and résumés"],
   dispatch: ["Operations wall screen", 0, "", "field service, trades and operations teams tracking the day's jobs"]
