@@ -822,6 +822,9 @@ function render() {
   const inPlot = b => b.x >= plot.x0 + 2 && b.x + b.w <= plot.x1 - 2 && b.y >= plot.y0 && b.y + b.h <= plot.y1 - 2;
   const dotPenalty = (b, except) => { let c = 0; for (const p of Pts) if (p !== except && rectPtDist(b, p.px, p.py) < RD + 3) c++; return c * 1500; };
   const clampBox = b => { b.x = V.clamp(b.x, plot.x0 + 2, plot.x1 - 2 - b.w); b.y = V.clamp(b.y, plot.y0, plot.y1 - 2 - b.h); return b; };
+  // the heavy zero lines: a group name stays off them when it can, and gets a backing box when it can't
+  const axisX = xT[0] <= 0 && xT[xT.length - 1] >= 0 ? px(0) : null, axisY = yT[0] <= 0 && yT[yT.length - 1] >= 0 ? py(0) : null;
+  const crossesAxis = (b, m = 4) => (axisX !== null && axisX > b.x - m && axisX < b.x + b.w + m) || (axisY !== null && axisY > b.y - m && axisY < b.y + b.h + m);
   const quota = narrow ? Math.min(S.calls, 1) : S.calls; // a phone-width plot only has room for one callout per group
   const calloutItems = [...groups.flatMap((g, k) => pickCallouts(g, Pts, quota).map(i => ({ g, k, d: Pts[i], lines: splitLines(Pts[i].name, 17) }))), ...loose.filter(i => pinned.has(i)).map(i => ({ g: null, k: -1, d: Pts[i], lines: splitLines(Pts[i].name, 17) }))];
   calloutItems.forEach(c => { c.w = Math.max(...c.lines.map(t => textW(t, callFs, 400))) + 2; c.h = c.lines.length * callLh + 2; const m = moved["p" + c.d.i]; if (m) { c.b = clampBox({ x: px(m.x), y: py(m.y), w: c.w, h: c.h }); taken.push(c.b); leaders.push(leaderFor(c.d, c.b, RD)); } });
@@ -829,7 +832,7 @@ function render() {
   calloutItems.filter(c => !c.b).forEach(c => { let best = null, bs = Infinity;
     for (const r of [26, 38, 52, 70, 92, 118, 148]) for (let a = 0; a < 16; a++) { const an = a / 16 * Math.PI * 2, co = Math.cos(an), si = Math.sin(an), ex = c.d.px + co * r, ey = c.d.py + si * r;
       const b = { x: Math.abs(co) < .3 ? ex - c.w / 2 : co > 0 ? ex + 2 : ex - c.w - 2, y: Math.abs(si) < .3 ? ey - c.h / 2 : si > 0 ? ey + 1 : ey - c.h - 1, w: c.w, h: c.h }; if (!inPlot(b)) continue;
-      let sc = r * .55 + (Math.abs(co) > .3 && Math.abs(si) > .3 ? 5 : 0) + (si > .3 ? 4 : 0) + dotPenalty(b, c.d); if (sc >= bs) continue;
+      let sc = r * .55 + (Math.abs(co) > .3 && Math.abs(si) > .3 ? 5 : 0) + (si > .3 ? 4 : 0) + dotPenalty(b, c.d) + (crossesAxis(b) ? 1100 : 0); if (sc >= bs) continue;
       for (const t of taken) if (overlap(b, t)) sc += 3000;
       sc += cover(b, c.k) * 45 + crossesOutline(b) * 260; if (sc >= bs) continue;
       const l = leaderFor(c.d, b, RD), A = [l.x1, l.y1], B2 = [l.x2, l.y2]; for (const p of Pts) if (p !== c.d && segPtDist(A, B2, p.px, p.py) < RD + 2) sc += 400;
@@ -840,7 +843,7 @@ function render() {
     const bx0 = Math.min(...own.map(p => p[0])) - 170, bx1 = Math.max(...own.map(p => p[0])) + 170, by0 = Math.min(...own.map(p => p[1])) - 80, by1 = Math.max(...own.map(p => p[1])) + 80, cyB = V.mean(own.map(p => p[1]));
     for (const lines of nm.length > 10 && nm.includes(" ") ? [[nm], splitLines(nm, 8)] : [[nm]]) { const w = Math.max(...lines.map(t => textW(t, nameFs, 800))) + 2, h = lines.length * nameLh + 2;
       for (let y = Math.max(plot.y0, by0); y + h <= Math.min(plot.y1 - 2, by1); y += 8) for (let x = Math.max(plot.x0 + 2, bx0); x + w <= Math.min(plot.x1 - 2, bx1); x += 8) { const b = { x, y, w, h };
-        let sc = dotPenalty(b, null) + (lines.length > 1 ? 9 : 0) + (y + h / 2 > cyB ? 5 : 0); if (sc >= bs) continue;
+        let sc = dotPenalty(b, null) + (lines.length > 1 ? 9 : 0) + (y + h / 2 > cyB ? 5 : 0) + (crossesAxis(b) ? 1100 : 0); if (sc >= bs) continue;
         for (const t of taken) if (overlap(b, t, 5)) sc += 3000; if (sc >= bs) continue;
         sc += cover(b, k) * 170 + (cover(b, -1) - cover(b, k)) * 55; if (sc >= bs) continue;
         for (const l of leaders) for (let t = 0; t <= 1; t += .2) if (rectPtDist(b, l.x1 + (l.x2 - l.x1) * t, l.y1 + (l.y2 - l.y1) * t) < 3) sc += 700;
@@ -864,6 +867,9 @@ function render() {
     V.hover(h, () => `<b>${V.esc(d.name)}</b> · Outlier, not in a group<br>${V.esc(S.xt || "x")} ${put(S.xf, d.x)} · ${V.esc(S.yt || "y")} ${put(S.yf, d.y)}`);
     h.addEventListener("click", () => { pinned.has(i) ? pinned.delete(i) : pinned.add(i); hot = null; render(); }); });
 
+  // a label's hit area doubles as its backing box, which only shows while the label sits on a heavy axis line
+  const backingFor = (el, b, pad) => { const bg = V.el("rect", { x: -pad, y: -1, width: b.w + pad * 2, height: b.h + 2, rx: 3 }, el);
+    const paint = () => { const on = crossesAxis(b, 1); bg.setAttribute("fill", on ? "var(--surface)" : "transparent"); bg.setAttribute("fill-opacity", on ? .82 : 1); on ? bg.setAttribute("data-on", "") : bg.removeAttribute("data-on"); }; paint(); return paint; };
   const dragLabel = (el, b, onMove, onDone, onClick) => { let st = null;
     el.addEventListener("pointerdown", e => { st = { cx: e.clientX, cy: e.clientY, bx: b.x, by: b.y, on: false }; el.setPointerCapture(e.pointerId); V.untip(); });
     el.addEventListener("pointermove", e => { if (!st) return; const dx = e.clientX - st.cx, dy = e.clientY - st.cy; if (Math.hypot(dx, dy) > 3) st.on = true; if (!st.on) return; b.x = st.bx + dx; b.y = st.by + dy; clampBox(b); el.setAttribute("transform", `translate(${b.x} ${b.y})`); onMove && onMove(); });
@@ -871,11 +877,12 @@ function render() {
   const textBlock = (parent, lines, w, lh, cls, fill) => lines.forEach((t, i) => { const e = V.el("text", { x: w / 2, y: lh * (i + .82), "text-anchor": "middle", class: cls, style: fill ? `fill:${fill}` : null }, parent); e.textContent = t; });
 
   const gLab = V.el("g", {}, s);
-  calloutItems.forEach(c => { const e = V.el("g", { transform: `translate(${c.b.x} ${c.b.y})`, class: "cs-drag" }, gLab); V.el("rect", { width: c.b.w, height: c.b.h, fill: "transparent" }, e); textBlock(e, c.lines, c.b.w, callLh, "cs-call");
-    dragLabel(e, c.b, () => { const l = leaderFor(c.d, c.b, RD); for (const a in l) leadEls.get(c).setAttribute(a, l[a]); }, () => { moved["p" + c.d.i] = { x: px.inv(c.b.x), y: py.inv(c.b.y) }; }); });
-  groups.forEach((g, k) => { const b = g.place, en = S.names[g.e], e = V.el("g", { transform: `translate(${b.x} ${b.y})`, class: "cs-drag", tabindex: 0, role: "button", "aria-label": `Rename ${en.name}` }, gLab); V.el("rect", { width: b.w, height: b.h, fill: "transparent" }, e); textBlock(e, g.lines, b.w, nameLh, "cs-name", nameCol(g));
+  calloutItems.forEach(c => { const e = V.el("g", { transform: `translate(${c.b.x} ${c.b.y})`, class: "cs-drag" }, gLab), backing = backingFor(e, c.b, 2); textBlock(e, c.lines, c.b.w, callLh, "cs-call");
+    dragLabel(e, c.b, () => { backing(); const l = leaderFor(c.d, c.b, RD); for (const a in l) leadEls.get(c).setAttribute(a, l[a]); }, () => { moved["p" + c.d.i] = { x: px.inv(c.b.x), y: py.inv(c.b.y) }; }); });
+  groups.forEach((g, k) => { const b = g.place, en = S.names[g.e], e = V.el("g", { transform: `translate(${b.x} ${b.y})`, class: "cs-drag", tabindex: 0, role: "button", "aria-label": `Rename ${en.name}` }, gLab), backing = backingFor(e, b, 4);
+    textBlock(e, g.lines, b.w, nameLh, "cs-name", nameCol(g));
     g.lines2 = g.lines.length > 1;
-    dragLabel(e, b, null, () => { moved["n" + g.e] = { x: px.inv(b.x), y: py.inv(b.y) }; }, () => renameGroup(g, b));
+    dragLabel(e, b, backing, () => { moved["n" + g.e] = { x: px.inv(b.x), y: py.inv(b.y) }; }, () => renameGroup(g, b));
     e.addEventListener("keydown", ev => { if (ev.key === "Enter") { ev.preventDefault(); renameGroup(g, b); } }); });
 
   s.setAttribute("aria-label", `Scatter plot of ${Pts.length} items in ${groups.length} groups: ${groups.map(g => `${S.names[g.e].name} (${g.ix.length})`).join(", ")}${loose.length ? `, and ${loose.length} outlier${loose.length > 1 ? "s" : ""} in no group` : ""}. ${S.xt} against ${S.yt}.`);
@@ -917,7 +924,7 @@ function applyPanel(e) { e.preventDefault(); let p; try { p = parseRows($id("cs-
 function exportSvg() { const src = $id("cs-chart").querySelector("svg"), c = src.cloneNode(true), a = [...src.querySelectorAll("*")], b = [...c.querySelectorAll("*")];
   const flat = v => { if (v === "none") return v; measureCtx.clearRect(0, 0, 1, 1); measureCtx.fillStyle = v; measureCtx.fillRect(0, 0, 1, 1); const [r, g, bl] = measureCtx.getImageData(0, 0, 1, 1).data; return "#" + [r, g, bl].map(x => x.toString(16).padStart(2, "0")).join(""); };
   a.forEach((e, i) => { const cs = getComputedStyle(e); ["fill", "stroke"].forEach(p => { b[i].removeAttribute(p); b[i].style.setProperty(p, flat(cs.getPropertyValue(p))); }); ["opacity", "fill-opacity", "stroke-opacity", "stroke-width", "stroke-dasharray"].forEach(p => b[i].style.setProperty(p, cs.getPropertyValue(p))); if (e.tagName === "text") { b[i].style.fontFamily = cs.fontFamily; b[i].style.fontSize = cs.fontSize; b[i].style.fontWeight = cs.fontWeight; } });
-  c.querySelectorAll("[data-hit]").forEach(e => e.remove()); c.querySelectorAll("rect").forEach(e => e.remove());
+  c.querySelectorAll("[data-hit]").forEach(e => e.remove()); c.querySelectorAll("rect:not([data-on])").forEach(e => e.remove());
   const W = +src.getAttribute("width"), H = +src.getAttribute("height"), P = 24, HEAD = 86, FOOT = 40, fam = V.esc(getComputedStyle(document.body).fontFamily).replace(/&quot;/g, "'"), ink = V.css("--ink"), ink2 = V.css("--ink-2"), muted = V.css("--muted"), bg = getComputedStyle(document.querySelector(".viz")).backgroundColor;
   c.removeAttribute("width"); c.removeAttribute("height"); c.setAttribute("x", P); c.setAttribute("y", HEAD); c.setAttribute("width", W); c.setAttribute("height", H);
   const body = new XMLSerializer().serializeToString(c), fullW = W + P * 2, fullH = H + HEAD + FOOT;
