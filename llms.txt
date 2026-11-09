@@ -92,6 +92,7 @@
 - [Box and violin plot](components/81-box-violin/README.md): First-response times for five support channels side by side: box plots (median, quartiles, whiskers and outliers), violins that show the full shape, or both together, with the raw points as an optional jittered strip.
 - [Cluster scatter with named groups](components/83-cluster-scatter/README.md): An editorial scatter plot that finds its own groups and says whether they're real. K-means clusters the points, a built-in test checks the split against what one undivided cloud would produce, a dashed organic outline wraps each group, and every group gets a bold name and one or two labelled items. Paste your own CSV, rename groups on the chart and drag any label.
 - [Bivariate heatmap](components/89-bivariate-heatmap/README.md): A grid where each cell shows two measures at once through one color from a 3 × 3 key, so hot spots where both are high, or where one is high and the other low, stand out. The key shows how many cells fall in each combination, and picking a square isolates them.
+- [Anomaly monitor](components/91-anomaly-monitor/README.md): A time-series monitor that learns each day's expected range from recent history, flags values outside it as Watch or Alert, and explains every incident in plain words. A status strip gives the current state, and clicking an incident finds it on the chart.
 
 ## Flows & networks
 
