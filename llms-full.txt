@@ -4196,7 +4196,7 @@ Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a
 
 **Category:** Charts · **Tags:** scatter, clusters, k-means, segmentation, groups, annotation, editorial, blob, contour, callouts, template
 
-An editorial scatter plot that finds its own groups. K-means clusters the points, a dashed organic outline wraps each group, and every group gets a bold name and one or two labelled items. Paste your own CSV, rename groups on the chart and drag any label.
+An editorial scatter plot that finds its own groups and says whether they're real. K-means clusters the points, a built-in test checks the split against what one undivided cloud would produce, a dashed organic outline wraps each group, and every group gets a bold name and one or two labelled items. Paste your own CSV, rename groups on the chart and drag any label.
 
 Live demo: [`index.html`](index.html) — one self-contained file, no dependencies. Light and dark themes; add `?theme=dark` or `?embed=1` to the URL.
 
@@ -4208,18 +4208,21 @@ Live demo: [`index.html`](index.html) — one self-contained file, no dependenci
 ## Avoid it when
 - The points form one continuous cloud with no real groups (use a scatter plot with a trend line)
 - Thousands of points (use a hexbin or 2D density)
-- Readers need exact values for each item (use a table)
+- Exact values are the main point for every item (use a table component; the built-in table view is for quick lookup)
 - The groups need dozens of names (the chart reads best with 2–6)
 
 ## Anatomy
 - Editorial header: large bold title and one-line subtitle, both editable in place
 - Hairline grid with heavy zero lines; mono tick labels that carry the unit only on the top y tick and the first x tick
-- Clustering: k-means++ on range-normalised x and y, 24 seeded restarts, group count chosen by the best silhouette score or set by hand; a cluster column in the data skips it
+- Clustering: in Auto, k-means++ on x and y robustly scaled by median and IQR, with the group count set by a real-groups test against simulated single clouds; a fixed group count uses range-normalised x and y with 24 seeded restarts; a cluster column in the data skips clustering
+- Verdict note above the plot (Auto only): clear groups or no clear groups, the separation score against a single cloud of the same size, and how many outliers were set aside
+- Outliers: in Auto, a point the test set aside that sits beyond twice its nearest group's reach stays on the plot as a grey dot outside the groups; the rest rejoin their nearest group
 - Blob: the outer contour of a metaball field built from the points and their minimum spanning tree, traced with marching squares, so every group is one connected shape that follows its points; a keep-out band stops neighbouring blobs touching
 - Blob style: categorical fill at 14%, 1.2px dashed outline
 - Dots: radius 6, group colour, darker ring of the same hue
 - Group name: bold, in the group's colour, placed in open space next to its own blob and closer to it than to any other
 - Callouts: one or two per group (the most extreme items by default), with thin leader lines, placed to avoid dots, names and other labels
+- Table view: one section per group, highest average y first, with the group's size and medians on its section row, items sorted by y inside it, and outliers last
 
 ## Data shape
 ```
@@ -4234,12 +4237,15 @@ CSV with a header row: name,x,y and optionally cluster (your own groups) and lab
 - Click a dot to add or remove its callout
 - Hover a blob to spotlight its group and read its size and medians; hover a dot for its values
 - Edit data: paste CSV or tab-separated rows and set axis titles and number formats such as $#m
+- Spreadsheet icon: switch between the chart and a table of every item by group; the table follows the Groups control, renames and new data
 - Download the finished chart with its title and source as PNG or SVG
 
 ## Accessibility
 - The svg has an aria-label listing each group and its size
+- The verdict note is a live status region, so a screen reader hears when it changes
 - Group identity is carried by the enclosing outline and the adjacent name, not by colour alone
 - Group names are focusable; Enter opens the rename box
+- The table view is a real table with row-group headers, and its icon button reports its state with aria-pressed
 - The data stays readable as text in the Edit data panel
 
 ## Design tokens used
@@ -4248,4 +4254,64 @@ CSV with a header row: name,x,y and optionally cluster (your own groups) and lab
 ## Prompt
 Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
 
-> Build an editorial cluster scatter plot in one self-contained HTML file with inline SVG and no libraries. Data: rows of name, x, y, with optional cluster and label columns. If there is no cluster column, normalise x and y to 0–1 and run k-means++ (24 seeded restarts), choosing k from 2–6 by the highest mean silhouette, with a segmented control for Auto or a fixed k. For each group draw one organic outline: on a 4px grid over the plot compute a metaball field F = cube root of the sum of exp(−3d²/2σ²) over the group's points, plus the same term weighted 0.216 using distance to each edge of the group's minimum spanning tree (this guarantees one connected shape); set G = min(F − 0.35, distance to the nearest other group's skeleton − distance to this group's skeleton − 2×gap) so neighbours never touch; trace G = 0 with marching squares, keep the largest loop, apply five 1-2-1 smoothing passes, keep every third point and draw a closed Catmull-Rom path, with a 14% categorical fill and a 1.2px dashed outline. Dots have radius 6 and a darker ring. Pick one or two callouts per group automatically (the point farthest from the centroid, then the point farthest from it) and place each by scoring candidate positions around the dot: penalise overlap with dots, other labels and other blobs, and leaders crossing dots. Place each bold, group-coloured name in open space beside its blob, nearer its own blob than any other. Click a name to rename it, drag names and callouts, click a dot to toggle its callout. Heavy zero axes, hairline grid, mono tick labels with the unit on only the top y tick and first x tick. Large bold title, one-line subtitle, source line. Sample data must be fictional. CSS variables for every colour, light and dark themes.
+> Build an editorial cluster scatter plot in one self-contained HTML file with inline SVG and no libraries. Data: rows of name, x, y, with optional cluster and label columns. If there is no cluster column, offer a segmented control for Auto or a fixed k. A fixed k normalises x and y to 0–1 and runs k-means++ (24 seeded restarts). Auto scales x and y by (value − median) / IQR, sets aside at most 5% of points that are far from every neighbour (after clustering, each rejoins its nearest group unless it lies beyond twice that group's widest member, and then it's drawn as a grey dot in no group), then scores the best k-means split for each k from 2–6 by mean silhouette and compares it with the same steps run on simulated single clouds of matching size, spread and correlation (half Gaussian, half evenly filled). Draw the k that beats those clouds by the widest margin in either case, and show a one-line note above the plot saying clear groups or no clear groups, with the silhouette against the simulated average. Below 12 points, say there are too few to test and use the highest silhouette. Above 100 points, run the test on a seeded random 100 and label every point at the k it finds. For each group draw one organic outline: on a 4px grid over the plot compute a metaball field F = cube root of the sum of exp(−3d²/2σ²) over the group's points, plus the same term weighted 0.216 using distance to each edge of the group's minimum spanning tree (this guarantees one connected shape); set G = min(F − 0.35, distance to the nearest other group's skeleton − distance to this group's skeleton − 2×gap) so neighbours never touch; trace G = 0 with marching squares, keep the largest loop, apply five 1-2-1 smoothing passes, keep every third point and draw a closed Catmull-Rom path, with a 14% categorical fill and a 1.2px dashed outline. Dots have radius 6 and a darker ring. Pick one or two callouts per group automatically (the point farthest from the centroid, then the point farthest from it) and place each by scoring candidate positions around the dot: penalise overlap with dots, other labels and other blobs, and leaders crossing dots. Place each bold, group-coloured name in open space beside its blob, nearer its own blob than any other. Click a name to rename it, drag names and callouts, click a dot to toggle its callout. Heavy zero axes, hairline grid, mono tick labels with the unit on only the top y tick and first x tick. Large bold title, one-line subtitle, source line. Add a spreadsheet icon button that switches the plot to a table with one section per group (name, size and median x and y on the section row, then items by descending y, outliers last) and hides the chart-only controls. Sample data must be fictional. CSS variables for every colour, light and dark themes.
+
+
+---
+
+# Data analyzer
+
+**Category:** UI patterns · **Tags:** analysis, profiling, kpi, breakouts, trends, recommendations, auto dashboard, csv, excel, tool, template
+
+Drop in a CSV or Excel file and it works out the likely KPIs, the most useful breakouts, trends, data problems and the charts that suit the data, then builds a standard and a non-standard dashboard you can adjust with checkboxes. It runs on rules in the browser, so the file never leaves the computer and the same file always gives the same answer.
+
+Live demo: [`index.html`](index.html) — one self-contained file, no dependencies. Light and dark themes; add `?theme=dark` or `?embed=1` to the URL.
+
+## Use it when
+- Exploring a new dataset before designing a dashboard
+- Deciding which KPIs and charts a dataset can support
+- Giving an AI assistant a short summary of a dataset instead of the raw file
+
+## Avoid it when
+- The data needs joining across several tables first (it reads one table)
+- A finished, curated dashboard is the goal (use it to start, then build with the components)
+- Column names are meaningless codes such as val1, because roles are inferred from names and values
+
+## Anatomy
+- Sample switch, file picker and drop zone; a Copy short summary button
+- What stands out: up to six plain-language findings
+- Likely Big Numbers, each with a comparison, sparkline, reason and a checkbox for the KPI bar
+- Recommended charts in Standard and Non-standard lists, each tied to real columns, with a reason and a checkbox
+- Dashboards: tabs for Standard and Non-standard, each a KPI bar above a two-column chart grid
+- Trends with direction, comparisons, seasonality, level shifts and unusual periods
+- Breakouts ranked by how much of the variation a split explains
+- Relationships, the real-groups test, data quality issues and a table of how every column was read
+
+## Data shape
+```
+Any CSV, TSV or Excel (.xlsx) file with a header row. Column roles are inferred: dates, measures, categories, IDs, yes/no flags, states and clock times.
+```
+
+## Interactions
+- Sample: switch between two fictional datasets
+- Drop or choose a file to analyze it in the browser
+- Tick KPIs and charts; both dashboards update at once
+- Standard and Non-standard tabs switch dashboards
+- Hover any mark for exact values
+- Copy short summary puts a few hundred tokens of findings on the clipboard for an AI assistant
+- Each recommendation links to its component
+
+## Accessibility
+- The status line is a live region
+- Every checkbox names the chart or KPI it adds
+- Charts carry an aria-label, and the tables stay real tables
+- Changes carry an arrow as well as a color
+- Multi-series charts always have a legend
+
+## Design tokens used
+`--s1`, `--s2`, `--s3`, `--s4`, `--s5`, `--s6`, `--s7`, `--s8`, `--ink`, `--ink-2`, `--muted`, `--grid`, `--axis`, `--surface`, `--surface-2`, `--up`, `--down`, `--good`, `--crit` — defined once on `:root` in the demo, with dark-mode values.
+
+## Prompt
+Paste this into Claude, Cursor or any coding assistant (attach `index.html` as a reference for an exact match):
+
+> Build a self-contained data analysis page with no AI and no network calls. Parse CSV, TSV or .xlsx in the browser and infer each column's role from its name and values: date, measure (sum or average), category, ordinal, yes/no, ID, label, state or clock time. Rank likely KPIs by column name, with the latest complete period compared to a year earlier or the prior period. Rank breakouts by eta squared adjusted for the number of groups. For trends use a Mann-Kendall test and a Theil-Sen slope, require at least a 5% change, drop partial or nearly empty edge periods, and move scattered events to a coarser time grain. Report correlations, data quality issues and whether two measures form real groups against simulated single clouds. From rules tied to the columns found, recommend standard and non-standard charts, each naming its columns and a reason. Show checkboxes for KPIs and charts, then draw two live dashboards, Standard and Non-standard, each a KPI bar above a chart grid in inline SVG with hover tooltips. Use CSS variables for every color, in light and dark themes, and fictional sample data.

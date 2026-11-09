@@ -395,16 +395,176 @@ const V = (() => {
 </div>
 
 <script>
+// Shared statistics for components. A component opts in by writing the @STATS marker at the top of its script; _build.py inlines this file there.
+// No dependencies, no DOM, deterministic for a given seed. Tests: node _stats_test.js
+const Stats = (() => {
+  const rng = seed => { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+  const sum = a => { let s = 0; for (const x of a) s += x; return s; };
+  const mean = a => a.length ? sum(a) / a.length : 0;
+  const dist2 = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) { const d = a[i] - b[i]; s += d * d; } return s; };
+
+  /* ---------- Summaries ---------- */
+  const quantile = (v, p) => { const s = [...v].sort((a, b) => a - b), i = (s.length - 1) * p, lo = Math.floor(i); return s[lo] + (s[Math.ceil(i)] - s[lo]) * (i - lo); };
+  const median = v => quantile(v, .5);
+  const stdev = v => { const m = mean(v); return Math.sqrt(mean(v.map(x => (x - m) * (x - m)))); }; // population
+
+  /* ---------- Trend line ---------- */
+  // Least squares y = a + b x, with R². A column with no spread gives a flat line and R² 0.
+  function fitLine(xs, ys) {
+    const n = xs.length, mx = mean(xs), my = mean(ys);
+    let sxy = 0, sxx = 0, syy = 0;
+    for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; syy += (ys[i] - my) ** 2; }
+    const b = sxx ? sxy / sxx : 0;
+    return { a: my - b * mx, b, r2: sxx && syy ? sxy * sxy / (sxx * syy) : 0, n };
+  }
+
+  /* ---------- Density ---------- */
+  // Gaussian kernel density of v, evaluated at xs. Bandwidth from Silverman's rule of thumb.
+  function kde(v, xs) {
+    if (!v.length) return xs.map(() => 0);
+    const sd = stdev(v), iqr = quantile(v, .75) - quantile(v, .25), spread = iqr > 0 ? Math.min(sd, iqr / 1.34) : sd, h = .9 * (spread || 1) * v.length ** -.2, norm = v.length * h * Math.sqrt(2 * Math.PI);
+    return xs.map(x => { let s = 0; for (const xi of v) { const u = (x - xi) / h; s += Math.exp(-.5 * u * u); } return s / norm; });
+  }
+
+  /* ---------- Robust scaling ---------- */
+  // (x − median) / IQR, so one extreme value can't compress everything else the way a min–max range does.
+  // When the IQR is zero (a mostly constant column) it falls back to the standard deviation, then to 1.
+  function robustScale(v) {
+    const center = median(v), iqr = quantile(v, .75) - quantile(v, .25), sd = stdev(v);
+    const spread = iqr > 0 ? iqr : sd > 0 ? sd : 1, method = iqr > 0 ? "iqr" : sd > 0 ? "stdev" : "none", at = x => (x - center) / spread;
+    return { values: v.map(at), center, spread, method, at };
+  }
+  // The same, column by column, for rows of numbers. at(row) scales a new row on the same footing.
+  function robustScalePoints(Q) {
+    const columns = Q[0].map((_, j) => robustScale(Q.map(q => q[j])));
+    return { points: Q.map((_, i) => columns.map(c => c.values[i])), columns, at: row => row.map((x, j) => columns[j].at(x)) };
+  }
+
+  /* ---------- Clustering ---------- */
+  // k-means++ with restarts on rows of numbers, keeping the run with the lowest inertia. Scale the columns first.
+  function kmeans(Q, k, { seed = 1, restarts = 24, iters = 40 } = {}) {
+    const r = rng(seed), n = Q.length, dim = Q[0].length; let best = null;
+    for (let t = 0; t < restarts; t++) {
+      const c = [Q[Math.floor(r() * n)].slice()];
+      while (c.length < k) {
+        const d = Q.map(q => { let m = Infinity; for (const x of c) m = Math.min(m, dist2(q, x)); return m; });
+        let u = r() * sum(d), i = 0; for (; i < n - 1 && (u -= d[i]) > 0; i++);
+        c.push(Q[i].slice());
+      }
+      const a = new Array(n).fill(-1);
+      for (let it = 0; it < iters; it++) {
+        let changed = false;
+        for (let i = 0; i < n; i++) { let b = 0, bd = Infinity; for (let j = 0; j < k; j++) { const dd = dist2(Q[i], c[j]); if (dd < bd) { bd = dd; b = j; } } if (a[i] !== b) { a[i] = b; changed = true; } }
+        if (!changed) break;
+        const totals = c.map(() => new Array(dim).fill(0)), counts = new Array(k).fill(0);
+        for (let i = 0; i < n; i++) { counts[a[i]]++; for (let d = 0; d < dim; d++) totals[a[i]][d] += Q[i][d]; }
+        for (let j = 0; j < k; j++) if (counts[j]) for (let d = 0; d < dim; d++) c[j][d] = totals[j][d] / counts[j];
+      }
+      let inertia = 0; for (let i = 0; i < n; i++) inertia += dist2(Q[i], c[a[i]]);
+      if (!best || inertia < best.inertia) best = { assign: a.slice(), centers: c.map(m => m.slice()), inertia };
+    }
+    return best;
+  }
+
+  // Mean silhouette width, −1…1. Assignments can be any labels; fewer than two groups scores −1.
+  function silhouette(Q, assign) {
+    const ids = [...new Set(assign)], g = ids.length; if (g < 2) return -1;
+    const index = new Map(ids.map((id, i) => [id, i])), a = assign.map(id => index.get(id)), n = Q.length, total = new Float64Array(g), count = new Int32Array(g); let width = 0;
+    for (let i = 0; i < n; i++) {
+      total.fill(0); count.fill(0);
+      for (let j = 0; j < n; j++) if (i !== j) { total[a[j]] += Math.sqrt(dist2(Q[i], Q[j])); count[a[j]]++; }
+      if (!count[a[i]]) continue;
+      const own = total[a[i]] / count[a[i]]; let near = Infinity;
+      for (let c = 0; c < g; c++) if (c !== a[i] && count[c]) near = Math.min(near, total[c] / count[c]);
+      width += (near - own) / Math.max(near, own);
+    }
+    return width / n;
+  }
+
+  /* ---------- Are there real groups? ---------- */
+  // Stragglers far from any neighbours, at most 5% of the points. Left in, one straggler scores as a perfect "group of its own".
+  function stragglers(P) {
+    const n = P.length, near = Math.min(3, n - 1), reach = P.map((p, i) => { const d = []; for (let j = 0; j < n; j++) if (j !== i) d.push(dist2(p, P[j])); d.sort((a, b) => a - b); return Math.sqrt(d[near - 1]); });
+    const mid = median(reach), mad = median(reach.map(x => Math.abs(x - mid))); if (!mad) return [];
+    const cut = mid + 5 * 1.4826 * mad;
+    return reach.map((x, i) => [x, i]).filter(([x]) => x > cut).sort((a, b) => b[0] - a[0]).slice(0, Math.max(1, Math.floor(n * .05))).map(([, i]) => i);
+  }
+  const prepare = Q => { const scaled = robustScalePoints(Q), live = scaled.columns.flatMap((c, j) => c.method === "none" ? [] : [j]), P = scaled.points.map(p => live.map(j => p[j])); // a constant column can't separate anything
+    if (!live.length) return { points: [], kept: [], out: [] };
+    const out = new Set(stragglers(P)), kept = []; P.forEach((_, i) => { if (!out.has(i)) kept.push(i); }); return { points: kept.map(i => P[i]), kept, out: [...out] }; };
+  function splits(P, maxK, seed, restarts) { // silhouette of the best k-means split for each k; −1 when a split leaves a group of one
+    const out = [];
+    for (let k = 2; k <= maxK; k++) {
+      let score = -1, assign = null;
+      if (k < P.length) { assign = kmeans(P, k, { seed: seed + k, restarts }).assign; const sizes = {}; assign.forEach(c => { sizes[c] = (sizes[c] || 0) + 1; }); const v = Object.values(sizes); if (v.length >= 2 && Math.min(...v) >= 2) score = silhouette(P, assign); }
+      out.push({ k, score, assign });
+    }
+    return out;
+  }
+  function cholesky(P) { // lower-triangular factor of the covariance of P, nudged so a flat column can't break it
+    const d = P[0].length, means = P[0].map((_, j) => mean(P.map(p => p[j]))), L = means.map(() => new Array(d).fill(0));
+    const cov = (a, b) => mean(P.map(p => (p[a] - means[a]) * (p[b] - means[b])));
+    for (let i = 0; i < d; i++) for (let j = 0; j <= i; j++) { let s = cov(i, j) + (i === j ? 1e-9 : 0); for (let k = 0; k < j; k++) s -= L[i][k] * L[j][k]; L[i][j] = i === j ? Math.sqrt(Math.max(s, 1e-12)) : s / L[j][j]; }
+    return { means, L };
+  }
+  // Could this structure have come from one undivided cloud? Scores the best split at each k from 2 to maxK, then runs the identical
+  // pipeline on simulated single clouds with the same size, spread and correlation (half bell-shaped, half evenly filled).
+  // Each k is judged against clouds split into that same k. The strongest margin must beat what the clouds themselves reach.
+  // real: true / false, or null when there are too few points to say. assign holds −1 for stragglers left out of the test.
+  function testGroups(Q, { seed, draws, maxK, restarts, level, minPoints }) {
+    const n = Q.length, one = (real, note, outliers = []) => ({ real, k: 1, bestK: 1, silhouette: null, typical: null, margin: null, threshold: null, p: real === null ? null : 1, n, assign: Q.map(() => 0), outliers, note });
+    if (Q.some(q => q.some(x => !Number.isFinite(x)))) return one(null, "Can't test: some values are missing or not numbers.");
+    if (n < minPoints) return one(null, `Too few points to test: ${n}, and the test needs at least ${minPoints}.`);
+    const { points, kept, out } = prepare(Q), found = points.length > 2 ? splits(points, maxK, seed, restarts) : [];
+    if (!found.some(f => f.score > -1)) return one(false, "No split produced groups of at least two items, so this reads as one group.", out);
+    const { means, L } = cholesky(points), r = rng(seed + 7919), m = points.length, sims = [[], []];
+    const gauss = () => { let u, v, q; do { u = r() * 2 - 1; v = r() * 2 - 1; q = u * u + v * v; } while (!q || q >= 1); return u * Math.sqrt(-2 * Math.log(q) / q); };
+    const even = () => (r() * 2 - 1) * Math.sqrt(3); // unit variance, like gauss
+    for (let t = 0; t < draws; t++) {
+      const shape = t % 2, cloud = Array.from({ length: m }, () => { const z = means.map(() => shape ? even() : gauss()); return means.map((c, i) => { let x = c; for (let j = 0; j <= i; j++) x += L[i][j] * z[j]; return x; }); });
+      sims[shape].push(splits(prepare(cloud).points, maxK, seed + 1009 * (t + 1), restarts).map(f => f.score));
+    }
+    const norms = sims.map(set => found.map((_, c) => { const v = set.map(s => s[c]); return { mean: mean(v), sd: Math.max(stdev(v), .01) }; }));
+    const margins = scores => scores.map((x, c) => x <= -1 ? -Infinity : Math.min(...norms.map(N => (x - N[c].mean) / N[c].sd))); // how far each k clears the harder kind of cloud, in standard deviations
+    const obs = margins(found.map(f => f.score)), c = obs.indexOf(Math.max(...obs)), margin = obs[c], best = found[c];
+    const nulls = sims.map(set => set.map(s => Math.max(...margins(s)))), threshold = Math.max(...nulls.map(v => quantile(v, level))), p = Math.max(...nulls.map(v => (1 + v.filter(x => x >= margin).length) / (v.length + 1))), real = margin > threshold;
+    const assign = new Array(n).fill(-1); kept.forEach((i, x) => { assign[i] = best.assign[x]; });
+    const typical = Math.max(...norms.map(N => N[c].mean)), a = best.score.toFixed(2), b = typical.toFixed(2);
+    return { real, k: real ? best.k : 1, bestK: best.k, silhouette: best.score, typical, margin, threshold, p, n, assign: real ? assign : Q.map(() => 0), outliers: out,
+      note: (real ? `${best.k} groups look real: silhouette ${a}, where a single undivided cloud of the same size split into ${best.k} averages ${b}.` : `No clear groups: the strongest split (${best.k} groups) scored ${a}, too close to the ${b} a single undivided cloud of the same size averages.`) };
+  }
+
+  // Groups separated on one measure, with wide noise on another, can look like one cloud or a grid of pieces in the full space, so when the full-space result is weak each measure gets its own stricter test and the strongest result wins.
+  // Simulating clouds is the slow step, so a set above maxTestPoints is judged on a seeded random sample of that size, then every point is labelled at the group count the sample found.
+  function realGroups(Q, { seed = 1, draws = 40, maxK = 6, restarts = 8, level = .95, minPoints = 12, oneMeasureLevel = .99, oneMeasureDraws = 160, maxTestPoints = 100, decisive = 5 } = {}) {
+    const o = { seed, draws, maxK, restarts, level, minPoints };
+    const judge = R => { const full = testGroups(R, o), d = R.length ? R[0].length : 0;
+      if (full.real === null || d < 2 || (full.real && full.margin >= decisive)) return full; // clearly separated groups clear the simulated clouds by far more than `decisive`
+      let best = full;
+      for (let j = 0; j < d; j++) {
+        const one = testGroups(R.map(q => [q[j]]), { ...o, seed: seed + 31 * (j + 1), draws: oneMeasureDraws, level: oneMeasureLevel });
+        if (one.real && (!best.real || one.margin > best.margin)) best = { ...one, measure: j, note: `${one.note} The separation shows on measure ${j + 1} alone.` };
+      }
+      return best; };
+    const finish = v => ({ ...v, note: v.note + (v.outliers.length ? ` ${v.outliers.length} straggler${v.outliers.length > 1 ? "s were" : " was"} left out of the test.` : "") });
+    const n = Q.length;
+    if (n <= maxTestPoints || Q.some(q => q.some(x => !Number.isFinite(x)))) return finish({ ...judge(Q), tested: n });
+    const r = rng(seed + 104729), idx = Q.map((_, i) => i);
+    for (let i = 0; i < maxTestPoints; i++) { const j = i + Math.floor(r() * (n - i)), t = idx[i]; idx[i] = idx[j]; idx[j] = t; }
+    const v = judge(idx.slice(0, maxTestPoints).sort((a, b) => a - b).map(i => Q[i]));
+    const { points, kept, out } = prepare(v.measure === undefined ? Q : Q.map(q => [q[v.measure]])), assign = new Array(n).fill(v.real ? -1 : 0);
+    if (v.real) { const t = kmeans(points, v.k, { seed: seed + v.k, restarts }).assign; kept.forEach((i, x) => { assign[i] = t[x]; }); }
+    return finish({ ...v, n, tested: maxTestPoints, assign, outliers: out, note: `${v.note} Tested on a random ${maxTestPoints} of the ${n} points.` });
+  }
+
+  return { rng, mean, stdev, quantile, median, dist2, fitLine, kde, robustScale, robustScalePoints, kmeans, silhouette, realGroups };
+})();
 const R = V.rng(80);
 const G = [["Standard", "--s1", Array.from({ length: 800 }, () => V.clamp(18 + Math.exp(3 + R.g() * .42), 12, 118))],
            ["Express", "--s2", Array.from({ length: 600 }, () => V.clamp(22 + R.g() * 4.5 + (R.r() < .08 ? 10 + R.r() * 14 : 0), 10, 118))]]
   .map(([name, col, v]) => ({ name, col, v: v.map(x => Math.round(x * 10) / 10).sort((a, b) => a - b) }));
 let view = "both", bin = 5, cmp = "one";
-const q = (v, p) => { const i = (v.length - 1) * p, lo = Math.floor(i); return v[lo] + (v[Math.ceil(i)] - v[lo]) * (i - lo); };
-function kde(v, xs) { // Gaussian kernel, Silverman's rule of thumb
-  const sd = Math.sqrt(V.mean(v.map(x => (x - V.mean(v)) ** 2))), iqr = q(v, .75) - q(v, .25), h = .9 * Math.min(sd, iqr / 1.34) * v.length ** -.2;
-  return xs.map(x => { let s = 0; for (const xi of v) { const u = (x - xi) / h; s += Math.exp(-.5 * u * u); } return s / (v.length * h * Math.sqrt(2 * Math.PI)); });
-}
+const q = Stats.quantile;
 
 function render() {
   V.seg(document.getElementById("o-v"), [["hist", "Histogram"], ["dens", "Density"], ["both", "Both"]], view, v => { view = v; render(); });
@@ -414,7 +574,7 @@ function render() {
   document.getElementById("sub").textContent = `${V.comma(V.sum(groups.map(g => g.v.length)))} deliveries, last 30 days` + (view !== "dens" ? ` · ${bin}-minute bins` : "");
   document.getElementById("lg").innerHTML = cmp === "two" ? groups.map(g => `<span><i style="background:var(${g.col})"></i>${g.name} · median ${q(g.v, .5).toFixed(0)} min</span>`).join("") : "";
   const bins = groups.map(g => { const c = []; for (let b = lo; b < hi; b += bin) c.push({ b, n: g.v.filter(x => x >= b && x < b + bin).length }); return c; });
-  const xs = Array.from({ length: 221 }, (_, i) => lo + i * (hi - lo) / 220), dens = groups.map(g => kde(g.v, xs));
+  const xs = Array.from({ length: 221 }, (_, i) => lo + i * (hi - lo) / 220), dens = groups.map(g => Stats.kde(g.v, xs));
   // density is drawn in counts-per-bin units so it sits on the histogram's scale
   const dScale = groups.map(g => g.v.length * bin);
   const ymax = view === "dens" ? Math.max(...dens.flat()) : Math.max(...bins.flat().map(b => b.n), ...(view === "both" ? dens.map((d, k) => Math.max(...d) * dScale[k]) : []));

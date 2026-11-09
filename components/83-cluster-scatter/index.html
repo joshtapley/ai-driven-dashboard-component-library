@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cluster scatter with named groups</title>
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Crect width="32" height="32" rx="7" fill="%230b1220"/%3E%3Crect x="5.5" y="17" width="5.5" height="10" rx="1.2" fill="%234e79a7"/%3E%3Crect x="13.25" y="11" width="5.5" height="16" rx="1.2" fill="%236b9bd1"/%3E%3Crect x="21" y="5" width="5.5" height="22" rx="1.2" fill="%23f28e2b"/%3E%3C/svg%3E'>
-<meta name="description" content="An editorial scatter plot that finds its own groups. K-means clusters the points, a dashed organic outline wraps each group, and every group gets a bold name and one or two labelled items. Paste your own CSV, rename groups on the chart and drag any label.">
+<meta name="description" content="An editorial scatter plot that finds its own groups and says whether they&#x27;re real. K-means clusters the points, a built-in test checks the split against what one undivided cloud would produce, a dashed organic outline wraps each group, and every group gets a bold name and one or two labelled items. Paste your own CSV, rename groups on the chart and drag any label.">
 <!-- Dashboard Components · cluster-scatter · self-contained: no libraries, no network. Synthetic seeded data. -->
 <style>
 /* ---------- Design tokens (swap these for your brand; nothing below hard-codes a colour) ---------- */
@@ -371,7 +371,7 @@ const V = (() => {
 </script>
 <script data-goatcounter="https://joshtapley.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
-<body>
+<body data-tables="1">
 <div class="stage">
 <style>
 .cs-title{font-size:clamp(21px,3.4vw,30px);line-height:1.15;font-weight:800;letter-spacing:-.01em;margin:0;font-family:var(--font-display,var(--font));text-wrap:balance}
@@ -393,6 +393,8 @@ const V = (() => {
 .cs-drag:focus-visible text{text-decoration:underline}
 .cs-hit{cursor:pointer}
 .cs-edit{position:absolute;z-index:5;font-weight:800;font-size:15px;padding:3px 6px;min-width:130px}
+.cs-note{font-size:13px;line-height:1.4;color:var(--ink-2);margin:0 0 10px}
+.cs-note b{color:var(--ink)}
 .cs-foot{display:flex;gap:6px 16px;flex-wrap:wrap;justify-content:space-between;font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:10px;padding-top:8px}
 .cs-source{text-transform:uppercase;letter-spacing:.05em}
 .cs-panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;background:var(--surface-2);border-radius:8px;padding:12px;margin-bottom:12px}
@@ -403,6 +405,22 @@ const V = (() => {
 .cs-panel textarea{width:100%;height:150px;resize:vertical;font:12px/1.45 var(--font-mono,ui-monospace,Consolas,monospace);color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
 .cs-row{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .cs-err{font-size:12px;color:var(--crit)}
+.cs-ctl [hidden]{display:none}
+.cs-ctl .cs-view{display:inline-flex;align-items:center;padding:5px 8px}
+.cs-ctl .cs-view[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);border-color:var(--axis)}
+.cs-table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.cs-table th,.cs-table td{padding:5px 10px;text-align:right}
+.cs-table th:first-child{text-align:left}
+.cs-table thead th{position:sticky;top:0;z-index:1;background:var(--surface);font-size:12px;font-weight:600;color:var(--muted);vertical-align:bottom;border-bottom:2px solid var(--ink-2)}
+.cs-table tbody th{font-weight:400;color:var(--ink)}
+.cs-table tbody td{color:var(--ink-2)}
+.cs-table tbody tr+tr>*{border-top:1px solid var(--grid)}
+.cs-table .cs-tgroup>*{padding-top:18px;padding-bottom:6px;border-bottom:1px solid var(--axis)}
+.cs-table .cs-tgroup th{font-size:17px;font-weight:800;font-family:var(--font-display,var(--font))}
+.cs-table .cs-tgroup td{font-size:12px;font-weight:600}
+.cs-tkey{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:8px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 35%,transparent)}
+.cs-tcount{font-size:12px;font-weight:400;color:var(--muted);font-family:var(--font);margin-left:8px;white-space:nowrap}
+.cs-tmed{font-weight:400;color:var(--muted)}
 @media (max-width:620px){.cs-panel{grid-template-columns:repeat(2,minmax(0,1fr))}.cs-ctl .cs-end{margin-left:0}}
 </style>
 
@@ -419,6 +437,7 @@ const V = (() => {
     <label>Callouts <span class="seg" id="cs-o-c"></span></label>
     <label>Outline <span class="seg" id="cs-o-p"></span></label>
     <div class="cs-end">
+      <button class="btn cs-view" type="button" id="cs-view" aria-pressed="false" aria-label="Table view" title="Table view"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M1.75 3.75a1.5 1.5 0 0 1 1.5-1.5h9.5a1.5 1.5 0 0 1 1.5 1.5V6H1.75z" fill="currentColor" fill-opacity=".3" stroke="none"/><rect x="1.75" y="2.25" width="12.5" height="11.5" rx="1.5"/><path d="M1.75 6h12.5M1.75 9.9h12.5M6 6v7.75M10.1 6v7.75"/></svg></button>
       <button class="btn" type="button" id="cs-toggle" aria-expanded="false">Edit data</button>
       <button class="btn" type="button" id="cs-png">⤓ PNG</button>
       <button class="btn" type="button" id="cs-svg">⤓ SVG</button>
@@ -433,14 +452,179 @@ const V = (() => {
     <label>Y format (# is the number) <input type="text" id="cs-yf"></label>
     <div class="cs-row"><button class="btn" type="submit">Apply data</button><span class="cs-err" id="cs-err" role="alert"></span></div>
   </form>
+  <p class="cs-note" id="cs-note" role="status" hidden></p>
   <div id="cs-chart"></div>
   <div class="cs-foot">
     <span class="cs-source" id="cs-source" contenteditable="plaintext-only" spellcheck="false"></span>
-    <span>Click a name to rename it. Drag names and callouts. Click a dot to label it.</span>
+    <span id="cs-hint">Click a name to rename it. Drag names and callouts. Click a dot to label it.</span>
   </div>
 </div>
 
 <script>
+// Shared statistics for components. A component opts in by writing the @STATS marker at the top of its script; _build.py inlines this file there.
+// No dependencies, no DOM, deterministic for a given seed. Tests: node _stats_test.js
+const Stats = (() => {
+  const rng = seed => { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+  const sum = a => { let s = 0; for (const x of a) s += x; return s; };
+  const mean = a => a.length ? sum(a) / a.length : 0;
+  const dist2 = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) { const d = a[i] - b[i]; s += d * d; } return s; };
+
+  /* ---------- Summaries ---------- */
+  const quantile = (v, p) => { const s = [...v].sort((a, b) => a - b), i = (s.length - 1) * p, lo = Math.floor(i); return s[lo] + (s[Math.ceil(i)] - s[lo]) * (i - lo); };
+  const median = v => quantile(v, .5);
+  const stdev = v => { const m = mean(v); return Math.sqrt(mean(v.map(x => (x - m) * (x - m)))); }; // population
+
+  /* ---------- Trend line ---------- */
+  // Least squares y = a + b x, with R². A column with no spread gives a flat line and R² 0.
+  function fitLine(xs, ys) {
+    const n = xs.length, mx = mean(xs), my = mean(ys);
+    let sxy = 0, sxx = 0, syy = 0;
+    for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; syy += (ys[i] - my) ** 2; }
+    const b = sxx ? sxy / sxx : 0;
+    return { a: my - b * mx, b, r2: sxx && syy ? sxy * sxy / (sxx * syy) : 0, n };
+  }
+
+  /* ---------- Density ---------- */
+  // Gaussian kernel density of v, evaluated at xs. Bandwidth from Silverman's rule of thumb.
+  function kde(v, xs) {
+    if (!v.length) return xs.map(() => 0);
+    const sd = stdev(v), iqr = quantile(v, .75) - quantile(v, .25), spread = iqr > 0 ? Math.min(sd, iqr / 1.34) : sd, h = .9 * (spread || 1) * v.length ** -.2, norm = v.length * h * Math.sqrt(2 * Math.PI);
+    return xs.map(x => { let s = 0; for (const xi of v) { const u = (x - xi) / h; s += Math.exp(-.5 * u * u); } return s / norm; });
+  }
+
+  /* ---------- Robust scaling ---------- */
+  // (x − median) / IQR, so one extreme value can't compress everything else the way a min–max range does.
+  // When the IQR is zero (a mostly constant column) it falls back to the standard deviation, then to 1.
+  function robustScale(v) {
+    const center = median(v), iqr = quantile(v, .75) - quantile(v, .25), sd = stdev(v);
+    const spread = iqr > 0 ? iqr : sd > 0 ? sd : 1, method = iqr > 0 ? "iqr" : sd > 0 ? "stdev" : "none", at = x => (x - center) / spread;
+    return { values: v.map(at), center, spread, method, at };
+  }
+  // The same, column by column, for rows of numbers. at(row) scales a new row on the same footing.
+  function robustScalePoints(Q) {
+    const columns = Q[0].map((_, j) => robustScale(Q.map(q => q[j])));
+    return { points: Q.map((_, i) => columns.map(c => c.values[i])), columns, at: row => row.map((x, j) => columns[j].at(x)) };
+  }
+
+  /* ---------- Clustering ---------- */
+  // k-means++ with restarts on rows of numbers, keeping the run with the lowest inertia. Scale the columns first.
+  function kmeans(Q, k, { seed = 1, restarts = 24, iters = 40 } = {}) {
+    const r = rng(seed), n = Q.length, dim = Q[0].length; let best = null;
+    for (let t = 0; t < restarts; t++) {
+      const c = [Q[Math.floor(r() * n)].slice()];
+      while (c.length < k) {
+        const d = Q.map(q => { let m = Infinity; for (const x of c) m = Math.min(m, dist2(q, x)); return m; });
+        let u = r() * sum(d), i = 0; for (; i < n - 1 && (u -= d[i]) > 0; i++);
+        c.push(Q[i].slice());
+      }
+      const a = new Array(n).fill(-1);
+      for (let it = 0; it < iters; it++) {
+        let changed = false;
+        for (let i = 0; i < n; i++) { let b = 0, bd = Infinity; for (let j = 0; j < k; j++) { const dd = dist2(Q[i], c[j]); if (dd < bd) { bd = dd; b = j; } } if (a[i] !== b) { a[i] = b; changed = true; } }
+        if (!changed) break;
+        const totals = c.map(() => new Array(dim).fill(0)), counts = new Array(k).fill(0);
+        for (let i = 0; i < n; i++) { counts[a[i]]++; for (let d = 0; d < dim; d++) totals[a[i]][d] += Q[i][d]; }
+        for (let j = 0; j < k; j++) if (counts[j]) for (let d = 0; d < dim; d++) c[j][d] = totals[j][d] / counts[j];
+      }
+      let inertia = 0; for (let i = 0; i < n; i++) inertia += dist2(Q[i], c[a[i]]);
+      if (!best || inertia < best.inertia) best = { assign: a.slice(), centers: c.map(m => m.slice()), inertia };
+    }
+    return best;
+  }
+
+  // Mean silhouette width, −1…1. Assignments can be any labels; fewer than two groups scores −1.
+  function silhouette(Q, assign) {
+    const ids = [...new Set(assign)], g = ids.length; if (g < 2) return -1;
+    const index = new Map(ids.map((id, i) => [id, i])), a = assign.map(id => index.get(id)), n = Q.length, total = new Float64Array(g), count = new Int32Array(g); let width = 0;
+    for (let i = 0; i < n; i++) {
+      total.fill(0); count.fill(0);
+      for (let j = 0; j < n; j++) if (i !== j) { total[a[j]] += Math.sqrt(dist2(Q[i], Q[j])); count[a[j]]++; }
+      if (!count[a[i]]) continue;
+      const own = total[a[i]] / count[a[i]]; let near = Infinity;
+      for (let c = 0; c < g; c++) if (c !== a[i] && count[c]) near = Math.min(near, total[c] / count[c]);
+      width += (near - own) / Math.max(near, own);
+    }
+    return width / n;
+  }
+
+  /* ---------- Are there real groups? ---------- */
+  // Stragglers far from any neighbours, at most 5% of the points. Left in, one straggler scores as a perfect "group of its own".
+  function stragglers(P) {
+    const n = P.length, near = Math.min(3, n - 1), reach = P.map((p, i) => { const d = []; for (let j = 0; j < n; j++) if (j !== i) d.push(dist2(p, P[j])); d.sort((a, b) => a - b); return Math.sqrt(d[near - 1]); });
+    const mid = median(reach), mad = median(reach.map(x => Math.abs(x - mid))); if (!mad) return [];
+    const cut = mid + 5 * 1.4826 * mad;
+    return reach.map((x, i) => [x, i]).filter(([x]) => x > cut).sort((a, b) => b[0] - a[0]).slice(0, Math.max(1, Math.floor(n * .05))).map(([, i]) => i);
+  }
+  const prepare = Q => { const scaled = robustScalePoints(Q), live = scaled.columns.flatMap((c, j) => c.method === "none" ? [] : [j]), P = scaled.points.map(p => live.map(j => p[j])); // a constant column can't separate anything
+    if (!live.length) return { points: [], kept: [], out: [] };
+    const out = new Set(stragglers(P)), kept = []; P.forEach((_, i) => { if (!out.has(i)) kept.push(i); }); return { points: kept.map(i => P[i]), kept, out: [...out] }; };
+  function splits(P, maxK, seed, restarts) { // silhouette of the best k-means split for each k; −1 when a split leaves a group of one
+    const out = [];
+    for (let k = 2; k <= maxK; k++) {
+      let score = -1, assign = null;
+      if (k < P.length) { assign = kmeans(P, k, { seed: seed + k, restarts }).assign; const sizes = {}; assign.forEach(c => { sizes[c] = (sizes[c] || 0) + 1; }); const v = Object.values(sizes); if (v.length >= 2 && Math.min(...v) >= 2) score = silhouette(P, assign); }
+      out.push({ k, score, assign });
+    }
+    return out;
+  }
+  function cholesky(P) { // lower-triangular factor of the covariance of P, nudged so a flat column can't break it
+    const d = P[0].length, means = P[0].map((_, j) => mean(P.map(p => p[j]))), L = means.map(() => new Array(d).fill(0));
+    const cov = (a, b) => mean(P.map(p => (p[a] - means[a]) * (p[b] - means[b])));
+    for (let i = 0; i < d; i++) for (let j = 0; j <= i; j++) { let s = cov(i, j) + (i === j ? 1e-9 : 0); for (let k = 0; k < j; k++) s -= L[i][k] * L[j][k]; L[i][j] = i === j ? Math.sqrt(Math.max(s, 1e-12)) : s / L[j][j]; }
+    return { means, L };
+  }
+  // Could this structure have come from one undivided cloud? Scores the best split at each k from 2 to maxK, then runs the identical
+  // pipeline on simulated single clouds with the same size, spread and correlation (half bell-shaped, half evenly filled).
+  // Each k is judged against clouds split into that same k. The strongest margin must beat what the clouds themselves reach.
+  // real: true / false, or null when there are too few points to say. assign holds −1 for stragglers left out of the test.
+  function testGroups(Q, { seed, draws, maxK, restarts, level, minPoints }) {
+    const n = Q.length, one = (real, note, outliers = []) => ({ real, k: 1, bestK: 1, silhouette: null, typical: null, margin: null, threshold: null, p: real === null ? null : 1, n, assign: Q.map(() => 0), outliers, note });
+    if (Q.some(q => q.some(x => !Number.isFinite(x)))) return one(null, "Can't test: some values are missing or not numbers.");
+    if (n < minPoints) return one(null, `Too few points to test: ${n}, and the test needs at least ${minPoints}.`);
+    const { points, kept, out } = prepare(Q), found = points.length > 2 ? splits(points, maxK, seed, restarts) : [];
+    if (!found.some(f => f.score > -1)) return one(false, "No split produced groups of at least two items, so this reads as one group.", out);
+    const { means, L } = cholesky(points), r = rng(seed + 7919), m = points.length, sims = [[], []];
+    const gauss = () => { let u, v, q; do { u = r() * 2 - 1; v = r() * 2 - 1; q = u * u + v * v; } while (!q || q >= 1); return u * Math.sqrt(-2 * Math.log(q) / q); };
+    const even = () => (r() * 2 - 1) * Math.sqrt(3); // unit variance, like gauss
+    for (let t = 0; t < draws; t++) {
+      const shape = t % 2, cloud = Array.from({ length: m }, () => { const z = means.map(() => shape ? even() : gauss()); return means.map((c, i) => { let x = c; for (let j = 0; j <= i; j++) x += L[i][j] * z[j]; return x; }); });
+      sims[shape].push(splits(prepare(cloud).points, maxK, seed + 1009 * (t + 1), restarts).map(f => f.score));
+    }
+    const norms = sims.map(set => found.map((_, c) => { const v = set.map(s => s[c]); return { mean: mean(v), sd: Math.max(stdev(v), .01) }; }));
+    const margins = scores => scores.map((x, c) => x <= -1 ? -Infinity : Math.min(...norms.map(N => (x - N[c].mean) / N[c].sd))); // how far each k clears the harder kind of cloud, in standard deviations
+    const obs = margins(found.map(f => f.score)), c = obs.indexOf(Math.max(...obs)), margin = obs[c], best = found[c];
+    const nulls = sims.map(set => set.map(s => Math.max(...margins(s)))), threshold = Math.max(...nulls.map(v => quantile(v, level))), p = Math.max(...nulls.map(v => (1 + v.filter(x => x >= margin).length) / (v.length + 1))), real = margin > threshold;
+    const assign = new Array(n).fill(-1); kept.forEach((i, x) => { assign[i] = best.assign[x]; });
+    const typical = Math.max(...norms.map(N => N[c].mean)), a = best.score.toFixed(2), b = typical.toFixed(2);
+    return { real, k: real ? best.k : 1, bestK: best.k, silhouette: best.score, typical, margin, threshold, p, n, assign: real ? assign : Q.map(() => 0), outliers: out,
+      note: (real ? `${best.k} groups look real: silhouette ${a}, where a single undivided cloud of the same size split into ${best.k} averages ${b}.` : `No clear groups: the strongest split (${best.k} groups) scored ${a}, too close to the ${b} a single undivided cloud of the same size averages.`) };
+  }
+
+  // Groups separated on one measure, with wide noise on another, can look like one cloud or a grid of pieces in the full space, so when the full-space result is weak each measure gets its own stricter test and the strongest result wins.
+  // Simulating clouds is the slow step, so a set above maxTestPoints is judged on a seeded random sample of that size, then every point is labelled at the group count the sample found.
+  function realGroups(Q, { seed = 1, draws = 40, maxK = 6, restarts = 8, level = .95, minPoints = 12, oneMeasureLevel = .99, oneMeasureDraws = 160, maxTestPoints = 100, decisive = 5 } = {}) {
+    const o = { seed, draws, maxK, restarts, level, minPoints };
+    const judge = R => { const full = testGroups(R, o), d = R.length ? R[0].length : 0;
+      if (full.real === null || d < 2 || (full.real && full.margin >= decisive)) return full; // clearly separated groups clear the simulated clouds by far more than `decisive`
+      let best = full;
+      for (let j = 0; j < d; j++) {
+        const one = testGroups(R.map(q => [q[j]]), { ...o, seed: seed + 31 * (j + 1), draws: oneMeasureDraws, level: oneMeasureLevel });
+        if (one.real && (!best.real || one.margin > best.margin)) best = { ...one, measure: j, note: `${one.note} The separation shows on measure ${j + 1} alone.` };
+      }
+      return best; };
+    const finish = v => ({ ...v, note: v.note + (v.outliers.length ? ` ${v.outliers.length} straggler${v.outliers.length > 1 ? "s were" : " was"} left out of the test.` : "") });
+    const n = Q.length;
+    if (n <= maxTestPoints || Q.some(q => q.some(x => !Number.isFinite(x)))) return finish({ ...judge(Q), tested: n });
+    const r = rng(seed + 104729), idx = Q.map((_, i) => i);
+    for (let i = 0; i < maxTestPoints; i++) { const j = i + Math.floor(r() * (n - i)), t = idx[i]; idx[i] = idx[j]; idx[j] = t; }
+    const v = judge(idx.slice(0, maxTestPoints).sort((a, b) => a - b).map(i => Q[i]));
+    const { points, kept, out } = prepare(v.measure === undefined ? Q : Q.map(q => [q[v.measure]])), assign = new Array(n).fill(v.real ? -1 : 0);
+    if (v.real) { const t = kmeans(points, v.k, { seed: seed + v.k, restarts }).assign; kept.forEach((i, x) => { assign[i] = t[x]; }); }
+    return finish({ ...v, n, tested: maxTestPoints, assign, outliers: out, note: `${v.note} Tested on a random ${maxTestPoints} of the ${n} points.` });
+  }
+
+  return { rng, mean, stdev, quantile, median, dist2, fitLine, kde, robustScale, robustScalePoints, kmeans, silhouette, realGroups };
+})();
 /* ---------- Sample data: fictional. Replace with your own through Edit data, or set SAMPLES. ---------- */
 const scatterGroup = (R, cx, cy, sx, sy, list) => list.map(n => [n, +(cx + V.clamp(R.g(), -1.7, 1.7) * sx).toFixed(1), +(cy + V.clamp(R.g(), -1.7, 1.7) * sy).toFixed(2)]);
 const SAMPLES = {
@@ -462,42 +646,47 @@ const SAMPLES = {
 };
 
 const MAXK = 6, SLOTS = 8, $id = id => document.getElementById(id);
-const S = { sample: "dining", rows: [], names: [], k: "auto", calls: 2, pad: "1", xt: "", xf: "#", yt: "", yf: "#", hasGroups: false };
-let groups = [], chosenK = 0, pinned = new Set(), manual = new Set(), moved = {}, hot = null;
+const S = { sample: "dining", rows: [], names: [], k: "auto", calls: 2, pad: "1", xt: "", xf: "#", yt: "", yf: "#", hasGroups: false, view: "chart" };
+let groups = [], loose = [], chosenK = 0, pinned = new Set(), manual = new Set(), moved = {}, hot = null, tested = null;
 
 /* ---------- Clustering ---------- */
-const dist2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
-function kmeans(Q, k, seed) { // k-means++ with restarts; returns the assignment with the lowest inertia
-  const r = V.rng(seed); let best = null, bestI = Infinity;
-  for (let t = 0; t < 24; t++) {
-    const c = [Q[Math.floor(r.r() * Q.length)].slice()];
-    while (c.length < k) { const d = Q.map(q => Math.min(...c.map(m => dist2(q, m)))); let u = r.r() * V.sum(d), i = 0; for (; i < Q.length - 1 && (u -= d[i]) > 0; i++); c.push(Q[i].slice()); }
-    const a = new Array(Q.length).fill(-1);
-    for (let it = 0; it < 40; it++) { let ch = false;
-      Q.forEach((q, i) => { let b = 0, bd = Infinity; c.forEach((m, j) => { const d = dist2(q, m); if (d < bd) { bd = d; b = j; } }); if (a[i] !== b) { a[i] = b; ch = true; } });
-      if (!ch) break;
-      c.forEach((m, j) => { const p = Q.filter((_, i) => a[i] === j); if (p.length) { m[0] = V.mean(p.map(q => q[0])); m[1] = V.mean(p.map(q => q[1])); } }); }
-    const I = V.sum(Q.map((q, i) => dist2(q, c[a[i]]))); if (I < bestI) { bestI = I; best = a.slice(); }
-  }
-  return best;
+const dist2 = Stats.dist2;
+// The test is the slow step, so its result is kept until the rows change.
+function verdictFor(R0) { if (!tested || tested.rows !== R0) tested = { rows: R0, v: Stats.realGroups(R0.map(d => [d.x, d.y]), { seed: 830, maxK: MAXK }) }; return tested.v; }
+function autoAssign(R0, scaled) { // the groups the test found, or the best split it can offer; −1 marks an outlier left out of every group
+  const v = verdictFor(R0); if (v.real) return rejoin(v.assign.slice(), scaled.points);
+  const out = new Set(v.outliers), kept = R0.flatMap((_, i) => out.has(i) ? [] : [i]), P = kept.map(i => scaled.points[i]), lim = Math.min(MAXK, P.length - 1);
+  let t = P.map(() => 0);
+  if (v.real === false) { if (v.bestK > 1) t = Stats.kmeans(P, v.bestK, { seed: 830 + v.bestK }).assign; }
+  else { let bs = -2; for (let k = 2; k <= lim; k++) { const c = Stats.kmeans(P, k, { seed: 830 + k }).assign, s = Stats.silhouette(P, c); if (s > bs + 1e-6) { bs = s; t = c; } } }
+  const a = new Array(R0.length).fill(-1); kept.forEach((i, x) => { a[i] = t[x]; }); return rejoin(a, scaled.points);
 }
-function silhouette(Q, a) { // mean silhouette width, -1…1
-  const ids = [...new Set(a)]; if (ids.length < 2) return -1; let tot = 0;
-  Q.forEach((q, i) => { const m = {}, n = {}; Q.forEach((p, j) => { if (i !== j) { m[a[j]] = (m[a[j]] || 0) + Math.sqrt(dist2(q, p)); n[a[j]] = (n[a[j]] || 0) + 1; } });
-    if (!n[a[i]]) return; const own = m[a[i]] / n[a[i]]; let near = Infinity; ids.forEach(c => { if (c !== a[i] && n[c]) near = Math.min(near, m[c] / n[c]); }); tot += (near - own) / Math.max(near, own); });
-  return tot / Q.length;
+function rejoin(a, P) { // the test sets aside the edges of ordinary clouds too; only a point beyond twice its nearest group's reach stays outside
+  const ids = [...new Set(a)].filter(c => c >= 0), cen = ids.map(c => { const m = P.filter((_, i) => a[i] === c); return [V.mean(m.map(p => p[0])), V.mean(m.map(p => p[1]))]; });
+  const reach = ids.map((c, g) => Math.max(0, ...P.flatMap((p, i) => a[i] === c ? [Math.sqrt(dist2(p, cen[g]))] : [])));
+  return a.map((c, i) => { if (c >= 0) return c; let g = 0, best = Infinity; cen.forEach((m, j) => { const d = Math.sqrt(dist2(P[i], m)); if (d < best) { best = d; g = j; } }); return best <= 2 * reach[g] ? ids[g] : -1; });
+}
+function writeNote(v) { // the test's result in words, under the controls; only Auto mode makes a claim that needs it
+  const el = $id("cs-note"), n = loose.length, score = v.silhouette === null ? "" : `Separation score ${v.silhouette.toFixed(2)}, against ${v.typical.toFixed(2)} for one undivided cloud of this size`;
+  let t = v.real === null ? `Too few points to test whether these groups are real. The test needs at least 12.`
+    : v.real ? `<b>${v.k} clear groups.</b> ${score}.${v.measure === undefined ? "" : ` The split shows on ${V.esc((v.measure ? S.yt : S.xt) || (v.measure ? "y" : "x"))} alone.`}`
+    : chosenK > 1 ? `<b>No clear groups.</b> ${score}, so the ${chosenK} groups drawn are a convenient split rather than a finding.` : `<b>No clear groups.</b> These points read as one group.`;
+  if (v.tested < v.n) t += ` Tested on a random ${v.tested} of ${v.n} items.`;
+  if (n) t += ` ${n} outlier${n > 1 ? "s" : ""} shown in grey and left out of the groups.`;
+  el.innerHTML = t; el.hidden = false;
 }
 function recluster() {
-  const R0 = S.rows, xs = R0.map(d => d.x), ys = R0.map(d => d.y), x0 = Math.min(...xs), y0 = Math.min(...ys), sx = (Math.max(...xs) - x0) || 1, sy = (Math.max(...ys) - y0) || 1;
-  const norm = (x, y) => [(x - x0) / sx, (y - y0) / sy], Q = R0.map(d => norm(d.x, d.y));
-  let a;
+  const R0 = S.rows, auto = S.k === "auto", xs = R0.map(d => d.x), ys = R0.map(d => d.y), x0 = Math.min(...xs), y0 = Math.min(...ys), sx = (Math.max(...xs) - x0) || 1, sy = (Math.max(...ys) - y0) || 1;
+  const scaled = auto ? Stats.robustScalePoints(R0.map(d => [d.x, d.y])) : null, norm = auto ? (x, y) => scaled.at([x, y]) : (x, y) => [(x - x0) / sx, (y - y0) / sy], Q = R0.map(d => norm(d.x, d.y));
+  let a; loose = [];
+  if (!auto) { $id("cs-note").hidden = true; }
   if (S.k === "data") { a = R0.map(d => S.names.findIndex(n => n.name === d.cluster)); chosenK = S.names.length; groups = S.names.map((_, e) => ({ e, ix: a.flatMap((v, i) => v === e ? [i] : []) })).filter(g => g.ix.length); return; }
   const lim = Math.min(MAXK, R0.length - 1);
-  if (lim < 2) { a = R0.map(() => 0); chosenK = 1; }
-  else if (S.k === "auto") { let bs = -2; for (let k = 2; k <= lim; k++) { const t = kmeans(Q, k, 830 + k), s = silhouette(Q, t); if (s > bs + 1e-6) { bs = s; a = t; chosenK = k; } } }
-  else { chosenK = Math.min(+S.k, lim); a = kmeans(Q, chosenK, 830 + chosenK); }
+  if (auto) { a = lim < 2 ? R0.map(() => 0) : autoAssign(R0, scaled); loose = a.flatMap((v, i) => v < 0 ? [i] : []); chosenK = new Set(a.filter(v => v >= 0)).size; if (lim >= 2) writeNote(verdictFor(R0)); else $id("cs-note").hidden = true; }
+  else if (lim < 2) { a = R0.map(() => 0); chosenK = 1; }
+  else { chosenK = Math.min(+S.k, lim); a = Stats.kmeans(Q, chosenK, { seed: 830 + chosenK }).assign; }
   // a group keeps its name and colour by matching the nearest saved name, so re-clustering never repaints the survivors
-  const raw = [...new Set(a)].map(c => { const ix = a.flatMap((v, i) => v === c ? [i] : []); return { ix, cx: V.mean(ix.map(i => R0[i].x)), cy: V.mean(ix.map(i => R0[i].y)), e: -1 }; });
+  const raw = [...new Set(a)].filter(c => c >= 0).map(c => { const ix = a.flatMap((v, i) => v === c ? [i] : []); return { ix, cx: V.mean(ix.map(i => R0[i].x)), cy: V.mean(ix.map(i => R0[i].y)), e: -1 }; });
   const pairs = raw.flatMap((g, i) => S.names.map((n, j) => [dist2(norm(g.cx, g.cy), norm(n.x, n.y)), i, j])).sort((p, q) => p[0] - q[0]), used = new Set();
   pairs.forEach(([, i, j]) => { if (raw[i].e < 0 && !used.has(j)) { raw[i].e = j; used.add(j); } });
   raw.forEach(g => { if (g.e < 0) { g.e = S.names.push({ name: "Group " + (S.names.length + 1), x: g.cx, y: g.cy }) - 1; } });
@@ -571,6 +760,20 @@ function pickCallouts(g, Pts, quota) { // pinned items, then the most extreme it
   return out;
 }
 
+const num = v => Math.abs(v) >= 1000 ? V.comma(v) : String(+v.toFixed(2)), put = (pat, v) => (pat || "#").replace("#", num(v));
+const med = a => { const v = [...a].sort((p, q) => p - q), n = v.length; return n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2; };
+const col = g => `var(--s${g.e % SLOTS + 1})`, nameCol = g => `color-mix(in srgb,${col(g)} 72%,var(--ink))`;
+
+/* ---------- Table view: the same groups as the chart, one section each, biggest y first ---------- */
+function renderTable(H) {
+  const box = $id("cs-chart"), xh = V.esc(S.xt || "x"), yh = V.esc(S.yt || "y"), items = n => `${n} item${n === 1 ? "" : "s"}`;
+  const section = (head, ix) => { const R = ix.map(i => S.rows[i]).sort((a, b) => b.y - a.y || b.x - a.x);
+    return `<tbody><tr class="cs-tgroup"><th scope="rowgroup">${head}<span class="cs-tcount">${items(R.length)}</span></th><td><span class="cs-tmed">Median</span> ${V.esc(put(S.xf, med(R.map(d => d.x))))}</td><td><span class="cs-tmed">Median</span> ${V.esc(put(S.yf, med(R.map(d => d.y))))}</td></tr>${R.map(d => `<tr><th scope="row">${V.esc(d.name)}</th><td>${V.esc(put(S.xf, d.x))}</td><td>${V.esc(put(S.yf, d.y))}</td></tr>`).join("")}</tbody>`; };
+  const sorted = [...groups].sort((a, b) => V.mean(b.ix.map(i => S.rows[i].y)) - V.mean(a.ix.map(i => S.rows[i].y)));
+  box.innerHTML = `<div class="cs-table-wrap"><table class="cs-table" aria-label="${items(S.rows.length)} listed by group"><thead><tr><th scope="col">Name</th><th scope="col">${xh}</th><th scope="col">${yh}</th></tr></thead>${sorted.map(g => section(`<span class="cs-tkey" style="background:${col(g)}"></span><span style="color:${nameCol(g)}">${V.esc(S.names[g.e].name)}</span>`, g.ix)).join("")}${loose.length ? section("Outliers, not in a group", loose) : ""}</table></div>`;
+  if (document.body.classList.contains("tile")) { const w = box.firstChild; w.style.maxHeight = H + "px"; w.style.overflow = "auto"; } // in a dashboard tile the table scrolls inside the row it was given
+}
+
 function render() {
   const sampleOpts = Object.entries(SAMPLES).map(([k, v]) => [k, v.label]);
   V.seg($id("cs-o-s"), sampleOpts, S.sample, v => loadSample(v));
@@ -579,14 +782,15 @@ function render() {
   V.seg($id("cs-o-c"), [["0", "None"], ["1", "1"], ["2", "2"]], S.calls, v => { S.calls = +v; manual.clear(); keepDataPins(); render(); });
   V.seg($id("cs-o-p"), [[".78", "Snug"], ["1", "Medium"], ["1.28", "Roomy"]], S.pad, v => { S.pad = v; render(); });
 
-  const box = $id("cs-chart"), W = box.clientWidth, H = V.fill(W < 560 ? 430 : 560), narrow = W < 560, RD = narrow ? 5 : 6;
+  const box = $id("cs-chart"), W = box.clientWidth, H = V.fill(W < 560 ? 430 : 560), narrow = W < 560, RD = narrow ? 5 : 6, table = S.view === "table";
+  $id("cs-view").setAttribute("aria-pressed", String(table)); ["cs-png", "cs-svg", "cs-hint"].forEach(id => { $id(id).hidden = table; }); ["cs-o-c", "cs-o-p"].forEach(id => { $id(id).parentElement.hidden = table; });
+  if (table) { renderTable(H); return; }
   const sigma = V.clamp(Math.min(W, H) * .038, 13, 24) * +S.pad, inset = sigma * 2.1;
   box.style.setProperty("--cs-name", (narrow ? 16 : W < 760 ? 18 : 21) + "px");
   const nameFs = narrow ? 16 : W < 760 ? 18 : 21, nameLh = nameFs * 1.14, callFs = 13, callLh = 15;
 
   const nice = (vals, n) => { const lo = Math.min(...vals), hi = Math.max(...vals), a = lo >= 0 && lo < (hi - lo) * .7 ? 0 : lo, t = V.ticks(a, hi === a ? a + 1 : hi, n), st = (t[1] - t[0]) || 1, s0 = Math.floor(a / st + 1e-9) * st, s1 = Math.ceil(hi / st - 1e-9) * st, out = []; for (let v = s0; v <= s1 + st * 1e-6; v += st) out.push(+v.toFixed(8)); return out.length > 1 ? out : [s0, s0 + st]; };
   const xT = nice(S.rows.map(d => d.x), narrow ? 3 : 4), yT = nice(S.rows.map(d => d.y), 5);
-  const num = v => Math.abs(v) >= 1000 ? V.comma(v) : String(+v.toFixed(2)), put = (pat, v) => (pat || "#").replace("#", num(v));
   const yLabelW = Math.max(...yT.map(v => textW(put(S.yf, v), 12, 400))) * 1.12, L = yLabelW + 34, Rt = 6, Tp = 8, B = 54;
   const px = V.scale(xT[0], xT[xT.length - 1], L + inset, W - Rt - inset), py = V.scale(yT[0], yT[yT.length - 1], H - B - inset, Tp + inset);
   const { s } = V.svg(box, H, W), Pts = S.rows.map((d, i) => ({ ...d, i, px: px(d.x), py: py(d.y) }));
@@ -603,12 +807,11 @@ function render() {
 
   // blobs
   const sets = groups.map(g => ({ pts: g.ix.map(i => Pts[i]) })), fld = buildFields(sets, { x0: plot.x0 + 1, x1: plot.x1 - 1, y0: plot.y0 + 1, y1: plot.y1 - 1 }, 4, sigma);
-  const col = g => `var(--s${g.e % SLOTS + 1})`, nameCol = g => `color-mix(in srgb,${col(g)} 72%,var(--ink))`, ringCol = g => `color-mix(in srgb,${col(g)} 52%,var(--ink))`;
+  const ringCol = g => `color-mix(in srgb,${col(g)} 52%,var(--ink))`;
   const blobs = fld.G.map(G => smoothLoop(contour(G, fld.nx, fld.ny, fld.step, fld.x0, fld.y0)));
   const inBlob = (k, x, y) => { const i = Math.round((x - fld.x0) / fld.step), j = Math.round((y - fld.y0) / fld.step); return i >= 0 && j >= 0 && i < fld.nx && j < fld.ny && fld.G[k][j * fld.nx + i] > 0; };
   const cover = (b, skip) => { let c = 0; const xs = [b.x, b.x + b.w / 2, b.x + b.w], ys = [b.y, b.y + b.h / 2, b.y + b.h]; for (let k = 0; k < groups.length; k++) { if (k === skip) continue; for (const x of xs) for (const y of ys) if (inBlob(k, x, y)) c++; } return c; };
   const crossesOutline = b => { for (const L2 of blobs) for (const p of L2) if (rectPtDist(b, p[0], p[1]) < 3) return 1; return 0; };
-  const med = a => { const v = [...a].sort((p, q) => p - q), n = v.length; return n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2; };
   const gBlobs = V.el("g", {}, s);
   groups.forEach((g, k) => { const p = V.el("path", { d: splinePath(blobs[k]), fill: col(g), "fill-opacity": .14, stroke: "var(--ink-2)", "stroke-width": 1.2, "stroke-dasharray": "4 3", "stroke-opacity": .75, "data-c": k }, gBlobs);
     p.addEventListener("mouseenter", () => { hot = k; spotlight(); }); p.addEventListener("mouseleave", () => { hot = null; spotlight(); });
@@ -620,7 +823,7 @@ function render() {
   const dotPenalty = (b, except) => { let c = 0; for (const p of Pts) if (p !== except && rectPtDist(b, p.px, p.py) < RD + 3) c++; return c * 1500; };
   const clampBox = b => { b.x = V.clamp(b.x, plot.x0 + 2, plot.x1 - 2 - b.w); b.y = V.clamp(b.y, plot.y0, plot.y1 - 2 - b.h); return b; };
   const quota = narrow ? Math.min(S.calls, 1) : S.calls; // a phone-width plot only has room for one callout per group
-  const calloutItems = groups.flatMap((g, k) => pickCallouts(g, Pts, quota).map(i => ({ g, k, d: Pts[i], lines: splitLines(Pts[i].name, 17) })));
+  const calloutItems = [...groups.flatMap((g, k) => pickCallouts(g, Pts, quota).map(i => ({ g, k, d: Pts[i], lines: splitLines(Pts[i].name, 17) }))), ...loose.filter(i => pinned.has(i)).map(i => ({ g: null, k: -1, d: Pts[i], lines: splitLines(Pts[i].name, 17) }))];
   calloutItems.forEach(c => { c.w = Math.max(...c.lines.map(t => textW(t, callFs, 400))) + 2; c.h = c.lines.length * callLh + 2; const m = moved["p" + c.d.i]; if (m) { c.b = clampBox({ x: px(m.x), y: py(m.y), w: c.w, h: c.h }); taken.push(c.b); leaders.push(leaderFor(c.d, c.b, RD)); } });
   groups.forEach(g => { const m = moved["n" + g.e]; if (!m) return; const lines = splitLines(S.names[g.e].name, g.lines2 ? 12 : 60); g.place = clampBox({ x: px(m.x), y: py(m.y), w: Math.max(...lines.map(t => textW(t, nameFs, 800))) + 2, h: lines.length * nameLh + 2 }); g.lines = lines; taken.push(g.place); });
   calloutItems.filter(c => !c.b).forEach(c => { let best = null, bs = Infinity;
@@ -656,6 +859,10 @@ function render() {
     h.addEventListener("mouseenter", () => { hot = k; spotlight(); }); h.addEventListener("mouseleave", () => { hot = null; spotlight(); });
     V.hover(h, () => `<span class="k" style="background:${col(g)};border-radius:50%"></span><b>${V.esc(d.name)}</b> · ${V.esc(S.names[g.e].name)}<br>${V.esc(S.xt || "x")} ${put(S.xf, d.x)} · ${V.esc(S.yt || "y")} ${put(S.yf, d.y)}`);
     h.addEventListener("click", () => { if (!manual.has(g.e)) { pickCallouts(g, Pts, quota).forEach(p => pinned.add(p)); manual.add(g.e); } pinned.has(i) ? pinned.delete(i) : pinned.add(i); hot = null; render(); }); }));
+  loose.forEach(i => { const d = Pts[i]; V.el("circle", { cx: d.px, cy: d.py, r: RD, fill: "var(--muted)", "fill-opacity": .55, stroke: "var(--ink-2)", "stroke-width": 1.3, "data-c": -1 }, gDots);
+    const h = V.el("circle", { cx: d.px, cy: d.py, r: RD + 5, fill: "transparent", class: "cs-hit", "data-hit": i }, gHit);
+    V.hover(h, () => `<b>${V.esc(d.name)}</b> · Outlier, not in a group<br>${V.esc(S.xt || "x")} ${put(S.xf, d.x)} · ${V.esc(S.yt || "y")} ${put(S.yf, d.y)}`);
+    h.addEventListener("click", () => { pinned.has(i) ? pinned.delete(i) : pinned.add(i); hot = null; render(); }); });
 
   const dragLabel = (el, b, onMove, onDone, onClick) => { let st = null;
     el.addEventListener("pointerdown", e => { st = { cx: e.clientX, cy: e.clientY, bx: b.x, by: b.y, on: false }; el.setPointerCapture(e.pointerId); V.untip(); });
@@ -671,7 +878,7 @@ function render() {
     dragLabel(e, b, null, () => { moved["n" + g.e] = { x: px.inv(b.x), y: py.inv(b.y) }; }, () => renameGroup(g, b));
     e.addEventListener("keydown", ev => { if (ev.key === "Enter") { ev.preventDefault(); renameGroup(g, b); } }); });
 
-  s.setAttribute("aria-label", `Scatter plot of ${Pts.length} items in ${groups.length} groups: ${groups.map(g => `${S.names[g.e].name} (${g.ix.length})`).join(", ")}. ${S.xt} against ${S.yt}.`);
+  s.setAttribute("aria-label", `Scatter plot of ${Pts.length} items in ${groups.length} groups: ${groups.map(g => `${S.names[g.e].name} (${g.ix.length})`).join(", ")}${loose.length ? `, and ${loose.length} outlier${loose.length > 1 ? "s" : ""} in no group` : ""}. ${S.xt} against ${S.yt}.`);
   spotlight();
 }
 function spotlight() { document.querySelectorAll("#cs-chart [data-c]").forEach(e => { e.style.opacity = hot !== null && +e.dataset.c !== hot ? .28 : ""; }); }
@@ -721,7 +928,8 @@ const fileStem = () => ($id("cs-title").textContent.toLowerCase().replace(/[^a-z
 function saveSvg() { V.save(fileStem() + ".svg", new Blob([exportSvg().svg], { type: "image/svg+xml" })); }
 function savePng() { const { svg, w, h } = exportSvg(), img = new Image(); img.onload = () => { const cv = document.createElement("canvas"); cv.width = w * 2; cv.height = h * 2; const g = cv.getContext("2d"); g.scale(2, 2); g.drawImage(img, 0, 0, w, h); cv.toBlob(b => V.save(fileStem() + ".png", b), "image/png"); }; img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); }
 
-addEventListener("DOMContentLoaded", () => { $id("cs-panel").addEventListener("submit", applyPanel); $id("cs-svg").onclick = saveSvg; $id("cs-png").onclick = savePng;
+addEventListener("DOMContentLoaded", () => { $id("cs-panel").addEventListener("submit", applyPanel); $id("cs-svg").onclick = () => { if (S.view === "chart") saveSvg(); }; $id("cs-png").onclick = () => { if (S.view === "chart") savePng(); };
+  $id("cs-view").onclick = () => { S.view = S.view === "table" ? "chart" : "table"; hot = null; V.untip(); render(); };
   $id("cs-toggle").onclick = () => { const p = $id("cs-panel"); p.hidden = !p.hidden; $id("cs-toggle").setAttribute("aria-expanded", String(!p.hidden)); if (!p.hidden) fillPanel(); };
   ["cs-title", "cs-sub", "cs-source"].forEach(id => $id(id).addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.target.blur(); } }));
   const c = SAMPLES[S.sample]; Object.assign(S, { rows: c.rows.map(([name, x, y]) => ({ name, x, y })), names: c.names.map(n => ({ ...n })), calls: c.callouts, xt: c.xt, xf: c.xf, yt: c.yt, yf: c.yf });
