@@ -107,6 +107,7 @@
 - [Collapsible tree diagram](components/41-tree-diagram/README.md): A left-to-right tidy tree of an organisation (company › departments › teams › squads): node size = headcount, branches coloured by department, click any node to expand or collapse it, with expand-all, collapse-all and a search that opens the path to a match.
 - [Voronoi treemap](components/42-voronoi-treemap/README.md): A two-level hierarchy (category › product line) packed into a circle as organic Voronoi cells whose areas match their values; click a category to zoom in and re-pack its lines to fill the circle.
 - [Treemap and sunburst](components/82-treemap-sunburst/README.md): Revenue by department and category as a squarified treemap or a two-ring sunburst. Area (or angle) is share of the total; click a department to zoom in and the breadcrumb to zoom back out.
+- [Dendrogram with draggable cut](components/90-dendrogram/README.md): A dendrogram that clusters items on several measures and shows how they merge, step by step. Drag the cut line to choose the groups, switch between tree and radial layouts, and read a profile strip and plain-language descriptions of what makes each group different.
 
 ## UI patterns
 
