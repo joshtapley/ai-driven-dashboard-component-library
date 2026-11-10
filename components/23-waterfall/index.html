@@ -249,17 +249,19 @@ const V = (() => {
       seg(box.querySelector(".seg"), [["0", "Off"], ["1", "On"]], on ? "1" : "0", v => { on = v === "1"; sync(); });
       btn.onclick = exportExcel; new MutationObserver(sync).observe(viz, { childList: true, subtree: true }); setTimeout(sync); }
     const bar = document.createElement("div"); bar.className = "theme-bar";
+    // inside the gallery's detail view, tell it what was picked so the next component opens the same way
+    const tell = () => { if (parent !== window) parent.postMessage({ dcPick: { brand: document.documentElement.dataset.brand || "", theme: getComputedStyle(document.documentElement).colorScheme, shadow: document.documentElement.dataset.shadow || "flat" } }, "*"); };
     const sel = document.createElement("select"); sel.setAttribute("aria-label", "Theme");
     sel.innerHTML = Object.entries(BRANDS).map(([id, b]) => `<option value="${id}">${esc(b.name)}</option>`).join("");
     sel.value = document.documentElement.dataset.brand || DEF_BRAND;
     sel.onchange = () => { const id = sel.value, b = BRANDS[id]; setBrand(id);
       try { const u = new URL(location.href); id ? u.searchParams.set("brand", id) : u.searchParams.delete("brand"); history.replaceState(null, "", u); } catch {} // keep the theme on reload where the page allows it
-      if (b && b.mode !== getComputedStyle(document.documentElement).colorScheme) setTheme(b.mode); else dispatchEvent(new Event("v-theme")); };
+      if (b && b.mode !== getComputedStyle(document.documentElement).colorScheme) setTheme(b.mode); else dispatchEvent(new Event("v-theme")); tell(); };
     const b = document.createElement("button"); b.className = "btn"; b.type = "button"; b.textContent = "◐ Light / dark"; b.title = "Toggle light / dark";
-    b.onclick = () => setTheme(getComputedStyle(document.documentElement).colorScheme === "dark" ? "light" : "dark");
+    b.onclick = () => { setTheme(getComputedStyle(document.documentElement).colorScheme === "dark" ? "light" : "dark"); tell(); };
     const sh = document.createElement("select"); sh.setAttribute("aria-label", "Card shadow"); sh.title = "Card shadow";
     sh.innerHTML = SHADOWS.map(([v, l]) => `<option value="${v}">${l === "Flat" ? "Shadow: flat" : l}</option>`).join(""); sh.value = document.documentElement.dataset.shadow || "flat";
-    sh.onchange = () => { setShadow(sh.value); try { const u = new URL(location.href); sh.value === "flat" ? u.searchParams.delete("shadow") : u.searchParams.set("shadow", sh.value); history.replaceState(null, "", u); } catch {} };
+    sh.onchange = () => { setShadow(sh.value); try { const u = new URL(location.href); sh.value === "flat" ? u.searchParams.delete("shadow") : u.searchParams.set("shadow", sh.value); history.replaceState(null, "", u); } catch {} tell(); };
     bar.append(...(viz ? [sel, sh, b] : [sel, b])); document.body.appendChild(bar); });   // dashboards pick the shadow from their menu
   // ---------- save(filename, blob): the claude.ai viewer grants downloads to the top page, so a framed page hands the file up ----------
   const save = async (filename, blob) => {
